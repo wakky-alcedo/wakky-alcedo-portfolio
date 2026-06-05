@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alcedo Works</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="14" cy="15" rx="7" ry="4.5" fill="#00B4D8"/>
+      <ellipse cx="14" cy="15" rx="5" ry="3" fill="#FF6B35" transform="rotate(10 14 15)"/>
+      <circle cx="19" cy="11" r="3.5" fill="#00B4D8"/>
+      <circle cx="20" cy="10.5" r="1" fill="#0D1B2A"/>
+      <polygon points="22,11 26,10 22,13" fill="#FF6B35"/>
+      <polygon points="7,15 2,16 7,18" fill="#00B4D8"/>
+    </svg>
+    Alcedo Works
+  </a>
+  <ul class="nav-links">
+    <li><a href="portfolio/index.html">Portfolio</a></li>
+    <li><a href="blog/index.html">Blog</a></li>
+    <li><a href="index.html#about">About</a></li>
+    <li><a href="contact.html">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- ── Hero ─────────────────────────────────────────────────────────── -->
+<section class="hero" id="hero">
+  <!-- sticky viewport -->
+  <div class="hero-sticky" id="heroSticky">
+
+    <!-- Background images (crossfade, height=200vh to show both halves) -->
+    <div class="hero-bg-wrap">
+      <img class="hero-bg-img" id="heroBgA" src="images/bg_day.png" alt="">
+      <img class="hero-bg-img" id="heroBgB" src=""                  alt="" style="opacity:0">
+      <div class="hero-night-layer" id="heroNightLayer"></div>
+    </div>
+
+    <!-- Canvas: bird animation + ripples + stars -->
+    <canvas id="heroCanvas"></canvas>
+
+    <!-- Text overlay -->
+    <div class="hero-text-block" id="heroTextBlock">
+      <p class="hero-label">— Alcedo atthis —</p>
+      <h1 class="hero-title-big">Alcedo<br><span>Works</span></h1>
+      <p class="hero-sub">
+        ものづくり・トライアスロン・好奇心。<br>
+        カワセミのように、深く鮮やかに。
+      </p>
+      <div class="hero-badges">
+        <span class="badge">Hardware</span>
+        <span class="badge">IoT</span>
+        <span class="badge">Triathlon</span>
+        <span class="badge">Maker</span>
+        <span class="badge">AI / Simulator</span>
+      </div>
+    </div>
+
+    <!-- Scroll hint -->
+    <div class="hero-scroll-hint" id="scrollHint">
+      <span class="scroll-label">SCROLL TO DIVE</span>
+      <div class="scroll-arrow"></div>
+    </div>
+
+    <!-- Click hint -->
+    <div class="hero-click-hint" id="clickHint">クリックで飛び立つ</div>
+
+  </div><!-- /hero-sticky -->
+</section>
+
+<!-- ── Main content ──────────────────────────────────────────────────── -->
+<div id="main-content">
+
+  <!-- ── Portfolio ── -->
+  <section class="top-section" id="portfolio">
+    <div class="top-section-inner">
+      <div class="section-header">
+        <div class="section-title">Portfolio</div>
+        <a href="portfolio/index.html" class="section-more">すべての作品を見る →</a>
+      </div>
+      <p class="section-sub">ハードウェア・IoT・AIシミュレーターなど</p>
+      <div class="portfolio-grid" id="top-portfolio-grid"></div>
+    </div>
+  </section>
+
+  <!-- ── Blog ── -->
+  <section class="top-section" id="blog">
+    <div class="top-section-inner">
+      <div class="section-header">
+        <div class="section-title">Blog</div>
+        <a href="blog/index.html" class="section-more">すべての記事を見る →</a>
+      </div>
+      <p class="section-sub">トライアスロン・展示会・日々の記録</p>
+      <div class="blog-list" id="top-blog-list"></div>
+    </div>
+  </section>
+
+  <!-- ── About ── -->
+  <section class="top-section" id="about">
+    <div class="top-section-inner">
+      <div class="section-title">About</div>
+      <div id="about-body" class="md-content"></div>
+    </div>
+  </section>
+
+  <!-- ── Contact ── -->
+  <section class="top-section" id="contact">
+    <div class="top-section-inner">
+      <div class="section-title">Contact</div>
+      <div id="contact-body" class="md-content"></div>
+    </div>
+  </section>
+
+</div><!-- /main-content -->
+
+<!-- Footer -->
+<footer>
+  <span class="footer-logo">Alcedo Works</span>
+  &copy; 2026 Alcedo Works. All rights reserved.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="js/md-render.js"></script>
+<script src="js/hero.js"></script>
+<script>
+// About・Contact を Markdown からレンダリング
+renderMarkdown('content/about.md',   'about-body');
+renderMarkdown('content/contact.md', 'contact-body');
+
+// Portfolio プレビュー（最新3件）
+(async () => {
+  const grid = document.getElementById('top-portfolio-grid');
+  const res  = await fetch('data/portfolio.json');
+  const items = await res.json();
+  const featured = items.filter(i => i.featured).slice(0, 3);
+
+  grid.innerHTML = featured.map(item => `
+    <a href="portfolio/item.html?slug=${item.slug}" style="text-decoration:none;">
+      <div class="portfolio-card">
+        <div class="portfolio-card-img">
+          ${item.thumbnail
+            ? `<img src="${item.thumbnail}" alt="${item.title}" style="width:100%;height:100%;object-fit:cover;">`
+            : `<span style="font-size:2.5rem;">⚙️</span>`}
+        </div>
+        <div class="portfolio-card-body">
+          <div class="portfolio-card-tag">${item.category}</div>
+          <div class="portfolio-card-title">${item.title}</div>
+          <p class="portfolio-card-desc">${item.summary}</p>
+        </div>
+      </div>
+    </a>
+  `).join('');
+})();
+
+// Blog プレビュー（最新3件）
+(async () => {
+  const list = document.getElementById('top-blog-list');
+  const res  = await fetch('data/blog.json');
+  const posts = await res.json();
+  posts.sort((a, b) => b.date.localeCompare(a.date));
+  const recent = posts.slice(0, 3);
+
+  list.innerHTML = recent.map(post => `
+    <a href="blog/post.html?slug=${post.slug}" style="text-decoration:none;">
+      <div class="blog-item">
+        <div class="blog-item-date">${post.date}</div>
+        <div class="blog-item-body">
+          <div class="blog-item-tag">${post.category}</div>
+          <div class="blog-item-title">${post.title}</div>
+          <p class="blog-item-desc">${post.summary}</p>
+        </div>
+      </div>
+    </a>
+  `).join('');
+})();
+</script>
+</body>
+</html>

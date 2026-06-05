@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog — Alcedo Works</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<nav>
+  <a href="../index.html" class="nav-logo">
+    <svg viewBox="0 0 28 28" fill="none"><ellipse cx="14" cy="15" rx="7" ry="4.5" fill="#00B4D8"/><ellipse cx="14" cy="15" rx="5" ry="3" fill="#FF6B35" transform="rotate(10 14 15)"/><circle cx="19" cy="11" r="3.5" fill="#00B4D8"/><circle cx="20" cy="10.5" r="1" fill="#0D1B2A"/><polygon points="22,11 26,10 22,13" fill="#FF6B35"/><polygon points="7,15 2,16 7,18" fill="#00B4D8"/></svg>
+    Alcedo Works
+  </a>
+  <ul class="nav-links">
+    <li><a href="../portfolio/index.html">Portfolio</a></li>
+    <li><a href="../blog/index.html">Blog</a></li>
+    <li><a href="../index.html#about">About</a></li>
+    <li><a href="../contact.html">Contact</a></li>
+  </ul>
+</nav>
+
+<div class="page-header">
+  <h1>Blog</h1>
+  <p>トライアスロン・展示会・日々の記録</p>
+</div>
+
+<section style="padding: 2rem;">
+  <div class="blog-list" id="blog-list">
+    <!-- data/blog.json から動的生成 -->
+  </div>
+</section>
+
+<footer>
+  <span class="footer-logo">Alcedo Works</span>
+  &copy; 2026 Alcedo Works. All rights reserved.
+</footer>
+
+<script>
+(async () => {
+  const list = document.getElementById('blog-list');
+  const res  = await fetch('../data/blog.json');
+  const posts = await res.json();
+
+  // 日付の新しい順に並べる
+  posts.sort((a, b) => b.date.localeCompare(a.date));
+
+  list.innerHTML = posts.map(post => `
+    <a href="post.html?slug=${post.slug}" style="text-decoration:none;">
+      <div class="blog-item">
+        <div class="blog-item-date">${post.date}</div>
+        <div class="blog-item-body">
+          <div class="blog-item-tag">${post.category}</div>
+          <div class="blog-item-title">${post.title}</div>
+          <p class="blog-item-desc">${post.summary}</p>
+        </div>
+      </div>
+    </a>
+  `).join('');
+})();
+</script>
+</body>
+</html>

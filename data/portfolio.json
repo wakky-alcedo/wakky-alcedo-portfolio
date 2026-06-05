@@ -1,0 +1,11 @@
+[
+  {
+    "slug": "sample-project",
+    "title": "作品タイトル（仮）",
+    "category": "IoT系",
+    "date": "2024-01",
+    "summary": "作品の概要を1〜2行で書きます。",
+    "thumbnail": "images/portfolio/sample.jpg",
+    "featured": true
+  }
+]
