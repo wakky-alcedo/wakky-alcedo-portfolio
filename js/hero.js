@@ -29,8 +29,10 @@
   // ── Images ────────────────────────────────────────────────────────────────
   const imgPerch = new Image();
   const imgFly   = new Image();
+  const imgDive  = new Image();
   imgPerch.src = 'images/kawasemi_perch.png';
   imgFly.src   = 'images/kawasemi_fly.png';
+  imgDive.src  = 'images/kawasemi_dive.png';
 
   // ── Layout ────────────────────────────────────────────────────────────────
   let W, H, perchX, perchY;
@@ -204,8 +206,16 @@
     // Y: perch → waterline position, accelerating
     const y = perchY + (waterlineAtHit - perchY) * eT;
 
-    // Rotation: 0 → ~85°  (straight down)
-    const angle = eT * Math.PI * 0.47;
+    // ── Rotation: align image "down" with direction of travel ──
+    // Image forward = downward = π/2 from +X axis
+    // So: rotation = atan2(dy_to_target, dx_to_target) - π/2
+    const targetX = perchX + (W * 0.48 - perchX) * 0.7;
+    const dx = targetX - x;
+    const dy = waterlineAtHit - y;
+    const travelAngle = (dx === 0 && dy === 0)
+      ? Math.PI / 2                          // straight down fallback
+      : Math.atan2(dy, dx);
+    const angle = travelAngle - Math.PI / 2;
 
     // Splash at transition
     if (p >= WATER_HIT && lastSplashProgress < WATER_HIT) {
@@ -219,7 +229,7 @@
       return { show: false };
     }
 
-    // Slightly past waterline: continue downward
+    // Slightly past waterline: continue straight down (angle = 0 = image "down")
     const postT = clamp01(p, WATER_HIT, HIDDEN_FROM);
     const finalX = x;
     const finalY = waterlineAtHit + postT * H * 0.15;
@@ -227,9 +237,9 @@
     return {
       x:     finalX,
       y:     finalY,
-      angle: Math.PI * 0.47,
+      angle: 0,   // straight down — image "down" is already forward
       show:  true,
-      img:   imgFly,   // use flying sprite during dive
+      img:   imgDive,
     };
   }
 
