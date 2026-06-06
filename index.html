@@ -6,6 +6,7 @@
   <title>Alcedo Works</title>
   <link rel="icon" href="images/favicon.png" type="image/png">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/underwater.css">
 </head>
 <body>
 
@@ -77,6 +78,19 @@
 <!-- ── Main content ──────────────────────────────────────────────────── -->
 <div id="main-content">
 
+  <!-- Underwater canvas (fish + bubbles) -->
+  <canvas id="uwCanvas" aria-hidden="true"></canvas>
+
+  <!-- Light rays from above the water surface -->
+  <div class="uw-light-rays" aria-hidden="true">
+    <div class="uw-ray"></div>
+    <div class="uw-ray"></div>
+    <div class="uw-ray"></div>
+    <div class="uw-ray"></div>
+    <div class="uw-ray"></div>
+    <div class="uw-ray"></div>
+  </div>
+
   <!-- ── Portfolio ── -->
   <section class="top-section" id="portfolio">
     <div class="top-section-inner">
@@ -123,11 +137,17 @@
 <footer>
   <span class="footer-logo">Alcedo Works</span>
   &copy; 2026 Alcedo Works. All rights reserved.
+  <br>
+  <label class="uw-tilt-toggle" title="スマートフォンを傾けると魚が重力に従って泳ぎます">
+    <input type="checkbox" id="enableTilt">
+    水中の隠し要素を有効にする 🐟
+  </label>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="js/md-render.js"></script>
 <script src="js/hero.js"></script>
+<script src="js/underwater.js"></script>
 <script>
 // About・Contact を Markdown からレンダリング
 renderMarkdown('content/about.md',   'about-body');

@@ -400,6 +400,23 @@ footer .footer-logo {
   justify-content: center;
   font-size: 3rem;
   color: var(--text-muted);
+  overflow: hidden;
+}
+
+.portfolio-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center bottom;
+  transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.portfolio-card:hover .portfolio-card-img img {
+  transform: scale(1.08) translateY(-4%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-card-img img { transition: none; }
 }
 
 .portfolio-card-body { padding: 1.2rem; }
@@ -597,6 +614,37 @@ footer .footer-logo {
 
 /* コメント行（HTML コメントは表示されないが念のため） */
 .md-error { color: var(--text-muted); font-size: 0.85rem; }
+
+/* ── Hero scene SVG (replaces bitmap backgrounds) ── */
+.hero-scene-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 200vh;
+  object-fit: cover;
+  object-position: center top;
+  will-change: transform;
+}
+
+/* Summer heat shimmer overlay */
+body[data-season="summer"] .hero-sticky::after {
+  content: '';
+  position: absolute;
+  inset: 30% 0 0;
+  background: linear-gradient(180deg, transparent 60%, rgba(255,140,40,0.05));
+  animation: heatShimmer 3s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes heatShimmer {
+  from { transform: scaleY(1)    translateY(0);    opacity: 0.4; }
+  to   { transform: scaleY(1.02) translateY(-3px); opacity: 0.8; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-season="summer"] .hero-sticky::after { animation: none; }
+}
 
 /* ── Responsive ── */
 @media (max-width: 600px) {

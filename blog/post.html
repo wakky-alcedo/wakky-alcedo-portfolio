@@ -6,8 +6,9 @@
   <title>Blog — Alcedo Works</title>
   <link rel="icon" href="../images/favicon.png" type="image/png">
   <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/underwater.css">
 </head>
-<body>
+<body data-page="article">
 
 <nav>
   <a href="../index.html" class="nav-logo">
@@ -35,6 +36,16 @@
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="../js/md-render.js"></script>
+<script>
+  // Lazy-load animation scripts after content is ready
+  window.addEventListener('load', () => {
+    ['../js/article-bird.js', '../js/article-effects.js'].forEach(src => {
+      const s = document.createElement('script');
+      s.src = src;
+      document.body.appendChild(s);
+    });
+  });
+</script>
 <script>
   const slug = getSlug();
   if (slug) {
