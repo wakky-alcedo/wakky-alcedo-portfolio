@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <!-- Sky gradient: CSS vars let JS swap colours per time slot -->
+    <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="var(--sky-top,    #1E90FF)"/>
+      <stop offset="100%" stop-color="var(--sky-bottom, #87CEEB)"/>
+    </linearGradient>
+
+    <!-- Water gradient -->
+    <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="var(--water-top,    #0a6080)"/>
+      <stop offset="100%" stop-color="var(--water-bottom, #031825)"/>
+    </linearGradient>
+
+    <!-- Shimmer overlay on water surface -->
+    <linearGradient id="shimmerGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="rgba(255,255,255,0.07)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+
+    <!-- Distant haze -->
+    <linearGradient id="hazeGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="var(--sky-bottom, #87CEEB)" stop-opacity="0"/>
+      <stop offset="100%" stop-color="var(--sky-bottom, #87CEEB)" stop-opacity="0.18"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ── Sky ── -->
+  <rect width="1440" height="1800" fill="url(#skyGrad)"/>
+
+  <!-- ── Distant mountains (far back) ── -->
+  <path d="M0,560
+    C80,540 160,480 260,460
+    C340,445 400,490 480,470
+    C570,448 620,390 720,375
+    C800,362 860,400 940,385
+    C1020,370 1080,320 1180,310
+    C1260,302 1340,350 1440,340
+    L1440,720 L0,720 Z"
+    fill="var(--mountain-far, #1a2d3e)"
+    opacity="0.7"/>
+
+  <!-- ── Mid hills / treeline ── -->
+  <path d="M0,680
+    C40,665 80,640 130,625
+    C180,610 200,635 250,620
+    C310,603 340,575 400,558
+    C460,542 490,565 550,548
+    C620,528 660,495 740,480
+    C810,466 840,490 900,475
+    C970,458 1010,430 1090,418
+    C1160,407 1200,428 1260,415
+    C1320,402 1380,418 1440,408
+    L1440,750 L0,750 Z"
+    fill="var(--hill-color, #162536)"
+    opacity="0.9"/>
+
+  <!-- ── Left shore / vegetation ── -->
+  <path d="M0,730
+    C20,720 50,710 80,700
+    C120,688 140,695 170,685
+    C210,672 225,655 260,648
+    C295,640 310,652 340,645
+    C370,637 390,622 420,618
+    L420,900 L0,900 Z"
+    fill="var(--shore-color, #0f2418)"
+    opacity="0.95"/>
+
+  <!-- Grass tuft details left -->
+  <path d="M60,700 C62,680 68,670 72,660 C76,670 80,678 78,695 Z" fill="var(--grass-color, #1a3d22)" opacity="0.8"/>
+  <path d="M110,690 C113,672 120,660 124,648 C128,660 131,670 128,685 Z" fill="var(--grass-color, #1a3d22)" opacity="0.8"/>
+  <path d="M200,670 C203,650 210,638 215,624 C220,637 222,648 219,665 Z" fill="var(--grass-color, #1a3d22)" opacity="0.8"/>
+  <path d="M310,648 C314,630 320,618 325,606 C330,618 332,629 329,645 Z" fill="var(--grass-color, #1a3d22)" opacity="0.8"/>
+
+  <!-- ── Right shore / vegetation ── -->
+  <path d="M1020,618
+    C1060,622 1100,638 1140,645
+    C1180,652 1200,640 1240,648
+    C1280,655 1300,670 1340,680
+    C1380,690 1410,700 1440,710
+    L1440,900 L1020,900 Z"
+    fill="var(--shore-color, #0f2418)"
+    opacity="0.95"/>
+
+  <!-- Grass tuft details right -->
+  <path d="M1100,638 C1097,618 1090,606 1086,592 C1082,606 1080,616 1083,632 Z" fill="var(--grass-color, #1a3d22)" opacity="0.8"/>
+  <path d="M1200,648 C1197,628 1190,616 1186,602 C1182,616 1180,626 1183,642 Z" fill="var(--grass-color, #1a3d22)" opacity="0.8"/>
+  <path d="M1310,672 C1307,652 1300,640 1296,626 C1292,640 1290,650 1293,666 Z" fill="var(--grass-color, #1a3d22)" opacity="0.8"/>
+  <path d="M1390,692 C1388,672 1382,660 1378,648 C1374,660 1372,670 1375,686 Z" fill="var(--grass-color, #1a3d22)" opacity="0.8"/>
+
+  <!-- ── Perch branch (extends from right toward bird position ~65% x, ~36% y of viewport) ──
+       In 1440x900 terms: x≈936, y≈324. Branch comes from right edge. -->
+  <!-- Main branch -->
+  <path d="M1440,295 C1340,300 1240,310 1160,315 C1080,320 1020,325 950,328 C920,329 900,328 880,330"
+        stroke="var(--branch-color, #2a1a0a)"
+        stroke-width="10"
+        stroke-linecap="round"
+        fill="none"
+        opacity="0.85"/>
+  <!-- Sub‑branch -->
+  <path d="M1100,308 C1090,295 1080,282 1070,268"
+        stroke="var(--branch-color, #2a1a0a)"
+        stroke-width="6"
+        stroke-linecap="round"
+        fill="none"
+        opacity="0.7"/>
+  <!-- Twig -->
+  <path d="M990,325 C985,312 980,300 972,290"
+        stroke="var(--branch-color, #2a1a0a)"
+        stroke-width="4"
+        stroke-linecap="round"
+        fill="none"
+        opacity="0.6"/>
+
+  <!-- ── Atmospheric haze (distance blur simulation) ── -->
+  <rect x="0" y="400" width="1440" height="350" fill="url(#hazeGrad)" opacity="0.5"/>
+
+  <!-- ── Water surface (top half ends at y=900, bottom half = underwater) ── -->
+  <rect x="0" y="880" width="1440" height="920" fill="url(#waterGrad)"/>
+
+  <!-- Water surface highlight / shimmer strip -->
+  <rect x="0" y="880" width="1440" height="80" fill="url(#shimmerGrad)"/>
+
+  <!-- Gentle water ripple lines -->
+  <ellipse cx="360"  cy="920" rx="200" ry="4" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
+  <ellipse cx="1080" cy="935" rx="160" ry="3" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  <ellipse cx="700"  cy="950" rx="120" ry="2.5" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+
+  <!-- ── Underwater: light caustics effect (bottom half) ── -->
+  <path d="M200,1100 C220,1080 240,1090 260,1070 C280,1050 300,1070 320,1055"
+        stroke="rgba(0,180,216,0.07)" stroke-width="20" fill="none" stroke-linecap="round"/>
+  <path d="M600,1200 C630,1175 660,1190 690,1170 C720,1150 750,1168 780,1148"
+        stroke="rgba(0,180,216,0.06)" stroke-width="15" fill="none" stroke-linecap="round"/>
+  <path d="M1100,1080 C1130,1060 1155,1075 1180,1055"
+        stroke="rgba(0,180,216,0.06)" stroke-width="18" fill="none" stroke-linecap="round"/>
+</svg>

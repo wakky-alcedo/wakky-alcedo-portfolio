@@ -1,92 +1,179 @@
 (function () {
   'use strict';
 
-  // ── Time-based background config ──────────────────────────────────────────
-  const BG_SCHEDULE = [
-    { start:  0, end:  5, src: 'images/bg_sunset.png',  night: true  },
-    { start:  5, end:  8, src: 'images/bg_morning.png', night: false },
-    { start:  8, end: 17, src: 'images/bg_day.png',     night: false },
-    { start: 17, end: 21, src: 'images/bg_sunset.png',  night: false },
-    { start: 21, end: 24, src: 'images/bg_sunset.png',  night: true  },
-  ];
+  // ── Shared RAF namespace (underwater.js also reads this) ──────────────────
+  window.alcedoRAF = { heroActive: true, uwActive: false };
 
-  function getBgForHour(h) {
-    return BG_SCHEDULE.find(b => h >= b.start && h < b.end) || BG_SCHEDULE[2];
+  // ── Time slot config (CSS variables, no bitmap images) ───────────────────
+  const TIME_SLOTS = {
+    morning: {
+      '--sky-top':      '#FF9A5C',
+      '--sky-bottom':   '#FFD49E',
+      '--water-top':    '#4ECDC4',
+      '--water-bottom': '#0a3040',
+      '--mountain-far': '#2a3d4e',
+      '--hill-color':   '#1e3028',
+      '--shore-color':  '#0d2218',
+      '--grass-color':  '#1c4228',
+      '--branch-color': '#2a1a0a',
+      night: false,
+    },
+    day: {
+      '--sky-top':      '#1E90FF',
+      '--sky-bottom':   '#87CEEB',
+      '--water-top':    '#006994',
+      '--water-bottom': '#021828',
+      '--mountain-far': '#1a2d3e',
+      '--hill-color':   '#162536',
+      '--shore-color':  '#0f2418',
+      '--grass-color':  '#1a3d22',
+      '--branch-color': '#2a1a0a',
+      night: false,
+    },
+    sunset: {
+      '--sky-top':      '#C44A00',
+      '--sky-bottom':   '#FF8C42',
+      '--water-top':    '#1a3a6e',
+      '--water-bottom': '#030e1a',
+      '--mountain-far': '#1c1830',
+      '--hill-color':   '#14202a',
+      '--shore-color':  '#0c1c14',
+      '--grass-color':  '#162e1c',
+      '--branch-color': '#1e0e04',
+      night: false,
+    },
+    night: {
+      '--sky-top':      '#0D0D2B',
+      '--sky-bottom':   '#1A1A4E',
+      '--water-top':    '#021028',
+      '--water-bottom': '#010810',
+      '--mountain-far': '#0d1220',
+      '--hill-color':   '#0a1018',
+      '--shore-color':  '#060e0a',
+      '--grass-color':  '#0c1c10',
+      '--branch-color': '#14080a',
+      night: true,
+    },
+  };
+
+  const SEASON_CSS = {
+    spring: { '--sky-bottom': '#b8d8f8', extra: 'rgba(255,192,203,0.04)' },
+    summer: null,
+    autumn: { '--sky-bottom': '#c8a070', extra: 'rgba(255,120,40,0.04)' },
+    winter: { '--sky-bottom': '#c8d8e8', extra: 'rgba(200,220,255,0.03)' },
+  };
+
+  function getTimeSlot(h) {
+    if (h >= 5  && h < 8)  return 'morning';
+    if (h >= 8  && h < 17) return 'day';
+    if (h >= 17 && h < 21) return 'sunset';
+    return 'night';
+  }
+
+  function getSeason(m) {
+    if (m >= 2 && m <= 4)  return 'spring';
+    if (m >= 5 && m <= 7)  return 'summer';
+    if (m >= 8 && m <= 10) return 'autumn';
+    return 'winter';
+  }
+
+  function applyEnvCSSVars() {
+    const now    = new Date();
+    const slot   = getTimeSlot(now.getHours());
+    const season = getSeason(now.getMonth());
+    const cfg    = TIME_SLOTS[slot];
+    const root   = document.documentElement;
+
+    Object.entries(cfg).forEach(([k, v]) => {
+      if (k.startsWith('--')) root.style.setProperty(k, v);
+    });
+
+    // Seasonal tint overrides
+    const sc = SEASON_CSS[season];
+    if (sc) {
+      Object.entries(sc).forEach(([k, v]) => {
+        if (k.startsWith('--')) root.style.setProperty(k, v);
+      });
+    }
+
+    // Body data attributes for CSS hooks
+    document.body.dataset.timeSlot = slot;
+    document.body.dataset.season   = season;
+
+    return { slot, season, night: cfg.night };
   }
 
   // ── DOM refs ──────────────────────────────────────────────────────────────
-  const hero        = document.getElementById('hero');
-  const heroSticky  = document.getElementById('heroSticky');
-  const bgA         = document.getElementById('heroBgA');
-  const bgB         = document.getElementById('heroBgB');
-  const nightLayer  = document.getElementById('heroNightLayer');
-  const canvas      = document.getElementById('heroCanvas');
-  const scrollHint  = document.getElementById('scrollHint');
-  const textBlock   = document.getElementById('heroTextBlock');
-  const clickHint   = document.getElementById('clickHint');
-  const ctx         = canvas.getContext('2d');
+  const hero       = document.getElementById('hero');
+  const heroSticky = document.getElementById('heroSticky');
+  const canvas     = document.getElementById('heroCanvas');
+  const scrollHint = document.getElementById('scrollHint');
+  const textBlock  = document.getElementById('heroTextBlock');
+  const clickHint  = document.getElementById('clickHint');
+  const mainContent = document.getElementById('main-content');
+  const ctx        = canvas.getContext('2d');
+
+  // ── Apply environment & replace old bg with SVG ───────────────────────────
+  let envState = applyEnvCSSVars();
+  setInterval(() => { envState = applyEnvCSSVars(); }, 60000);
+
+  // Remove old bitmap bg elements; insert SVG
+  const bgWrap = document.querySelector('.hero-bg-wrap');
+  if (bgWrap) {
+    bgWrap.innerHTML = `
+      <img class="hero-scene-svg" src="images/hero-scene.svg" alt=""
+           style="position:absolute;top:0;left:0;width:100%;height:200vh;object-fit:cover;object-position:center top;will-change:transform;">
+      <div class="hero-night-layer" id="heroNightLayer" style="position:absolute;inset:0;background:rgba(4,8,24,0.72);transition:opacity 2.5s ease;opacity:0;pointer-events:none;"></div>
+    `;
+  }
+
+  const sceneSvg   = bgWrap.querySelector('.hero-scene-svg');
+  const nightLayer = document.getElementById('heroNightLayer');
+  if (envState.night) nightLayer.style.opacity = '1';
+
+  // Fade in main content when hero is fully scrolled
+  function checkUwVisible() {
+    if (window.scrollY >= window.innerHeight * 0.9) {
+      mainContent.classList.add('uw-visible');
+      window.alcedoRAF.uwActive = true;
+    } else {
+      window.alcedoRAF.uwActive = false;
+    }
+  }
+  window.addEventListener('scroll', checkUwVisible, { passive: true });
+  checkUwVisible();
 
   // ── Images ────────────────────────────────────────────────────────────────
-  const imgPerch = new Image();
-  const imgFly   = new Image();
-  const imgDive  = new Image();
-  imgPerch.src = 'images/kawasemi_perch.png';
-  imgFly.src   = 'images/kawasemi_fly.png';
-  imgDive.src  = 'images/kawasemi_dive.png';
+  const imgPerch = new Image(); imgPerch.src = 'images/kawasemi_perch.png';
+  const imgFly   = new Image(); imgFly.src   = 'images/kawasemi_fly.png';
+  const imgDive  = new Image(); imgDive.src  = 'images/kawasemi_dive.png';
 
-  // ── Layout ────────────────────────────────────────────────────────────────
-  let W, H, perchX, perchY;
+  // ── Layout (DPR-aware) ────────────────────────────────────────────────────
+  let W, H, dpr, perchX, perchY;
 
   function resize() {
-    W = canvas.offsetWidth;
-    H = canvas.offsetHeight;
-    canvas.width  = W;
-    canvas.height = H;
+    dpr = window.devicePixelRatio || 1;
+    W   = canvas.offsetWidth;
+    H   = canvas.offsetHeight;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    ctx.scale(dpr, dpr);
     perchX = W * 0.65;
     perchY = H * 0.36;
   }
-
   window.addEventListener('resize', resize);
 
-  // ── Scroll progress (0 → 1 through the hero scroll range) ─────────────────
-  // hero height = 200vh, so max scroll through hero = 100vh = window.innerHeight
+  // ── Scroll progress ───────────────────────────────────────────────────────
   function heroProgress() {
     return Math.min(1, Math.max(0, window.scrollY / window.innerHeight));
   }
 
-  // ── Background parallax ───────────────────────────────────────────────────
-  // bg images are 200vh tall. Shift them up by scrollY so waterline descends
-  // through the viewport as the user scrolls.
+  // Background parallax (SVG)
   function updateBgParallax() {
-    const shift = window.scrollY; // 0 to windowHeight (=100vh)
-    bgA.style.transform = `translateY(-${shift}px)`;
-    bgB.style.transform = `translateY(-${shift}px)`;
+    if (sceneSvg) sceneSvg.style.transform = `translateY(-${window.scrollY}px)`;
   }
 
-  // ── Time-based background crossfade ──────────────────────────────────────
-  let activeBg = bgA;
-  let inactiveBg = bgB;
-  let currentBgCfg = null;
-
-  function applyBackground() {
-    const cfg = getBgForHour(new Date().getHours());
-    if (currentBgCfg && cfg.src === currentBgCfg.src) return;
-    currentBgCfg = cfg;
-
-    inactiveBg.src = cfg.src;
-    inactiveBg.onload = () => {
-      inactiveBg.style.opacity = '1';
-      activeBg.style.opacity   = '0';
-      [activeBg, inactiveBg]   = [inactiveBg, activeBg];
-    };
-
-    nightLayer.style.opacity = cfg.night ? '1' : '0';
-  }
-
-  applyBackground();
-  setInterval(applyBackground, 60000);
-
-  // ── Stars (night mode) ────────────────────────────────────────────────────
+  // ── Stars ─────────────────────────────────────────────────────────────────
   const stars = Array.from({ length: 90 }, () => ({
     x:     Math.random(),
     y:     Math.random() * 0.44,
@@ -96,24 +183,19 @@
     spd:   0.0007 + Math.random() * 0.001,
   }));
 
-  // ── Ripples ───────────────────────────────────────────────────────────────
-  let ripples = [];
+  // ── Ripples & Splash ──────────────────────────────────────────────────────
+  let ripples = [], particles = [];
 
   function addRipples(x, y, n) {
     for (let i = 0; i < (n || 4); i++) {
       ripples.push({
-        x:    x + (Math.random() - 0.5) * 50,
-        y:    y + (Math.random() - 0.5) * 8,
-        r:    0,
-        maxR: 30 + Math.random() * 40,
-        spd:  20 + Math.random() * 20,
-        a:    0.9,
+        x: x + (Math.random() - 0.5) * 50,
+        y: y + (Math.random() - 0.5) * 8,
+        r: 0, maxR: 30 + Math.random() * 40,
+        spd: 20 + Math.random() * 20, a: 0.9,
       });
     }
   }
-
-  // ── Splash particles ──────────────────────────────────────────────────────
-  let particles = [];
 
   function splash(x, y) {
     for (let i = 0; i < 25; i++) {
@@ -123,11 +205,150 @@
     }
   }
 
+  // ── Seasonal particles ────────────────────────────────────────────────────
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isMobile      = navigator.maxTouchPoints > 0;
+  const animLevel     = reducedMotion ? 0 : (navigator.hardwareConcurrency <= 2 ? 1 : (isMobile ? 2 : 3));
+
+  let seasonParticles = [];
+
+  function initSeasonParticles(season) {
+    if (animLevel < 3) return;
+    const COUNT = { spring: 20, autumn: 15, winter: 30 };
+    const n = COUNT[season] || 0;
+    seasonParticles = Array.from({ length: n }, () => makeSeasonParticle(season, true));
+  }
+
+  function makeSeasonParticle(season, randomY) {
+    const p = {
+      season,
+      x: Math.random() * W,
+      y: randomY ? Math.random() * H : -20,
+      vx: (Math.random() - 0.5) * 0.8,
+      vy: season === 'winter' ? 0.4 + Math.random() * 0.6 : 0.6 + Math.random() * 1.0,
+      angle: Math.random() * Math.PI * 2,
+      angleSpd: (Math.random() - 0.5) * 0.04,
+      size: season === 'winter' ? 1.5 + Math.random() * 2 : 5 + Math.random() * 7,
+      a: 0.5 + Math.random() * 0.5,
+      wobble: Math.random() * Math.PI * 2,
+    };
+    return p;
+  }
+
+  function updateSeasonParticles() {
+    seasonParticles.forEach(p => {
+      p.x += p.vx + Math.sin(p.wobble) * 0.4;
+      p.y += p.vy;
+      p.angle += p.angleSpd;
+      p.wobble += 0.02;
+      if (p.y > H + 20) {
+        p.x = Math.random() * W;
+        p.y = -20;
+      }
+    });
+  }
+
+  function drawSeasonParticles(t) {
+    for (const p of seasonParticles) {
+      ctx.save();
+      ctx.globalAlpha = p.a * 0.7;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+
+      if (p.season === 'winter') {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(220,235,255,0.9)';
+        ctx.fill();
+      } else if (p.season === 'spring') {
+        // Simple 5-petal flower
+        for (let i = 0; i < 5; i++) {
+          ctx.save();
+          ctx.rotate((i / 5) * Math.PI * 2);
+          ctx.beginPath();
+          ctx.ellipse(0, -p.size * 0.6, p.size * 0.4, p.size * 0.6, 0, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255,192,210,0.85)';
+          ctx.fill();
+          ctx.restore();
+        }
+      } else if (p.season === 'autumn') {
+        // Leaf shape
+        ctx.beginPath();
+        ctx.moveTo(0, -p.size);
+        ctx.bezierCurveTo(p.size * 0.6, -p.size * 0.5, p.size * 0.7, p.size * 0.3, 0, p.size);
+        ctx.bezierCurveTo(-p.size * 0.7, p.size * 0.3, -p.size * 0.6, -p.size * 0.5, 0, -p.size);
+        ctx.fillStyle = `rgba(${180 + Math.floor(p.a * 30)},${80 + Math.floor(p.a * 20)},30,0.85)`;
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ── FishCatch module ──────────────────────────────────────────────────────
+  const FishCatch = {
+    active:    false,
+    flopTimer: 0,
+    pending:   false,
+
+    onFlyAway() {
+      this.pending = Math.random() < 0.30;
+    },
+
+    onPerched() {
+      if (this.pending) {
+        this.active    = true;
+        this.flopTimer = 180;
+        this.pending   = false;
+      }
+    },
+
+    update() {
+      if (!this.active) return;
+      this.flopTimer--;
+      if (this.flopTimer <= 0) {
+        // Small splash at beak position, then dismiss
+        if (bird.state === 'perched') {
+          splash(perchX + 18, perchY + 10);
+          addRipples(perchX + 18, perchY + 12, 3);
+        }
+        this.active = false;
+      }
+    },
+
+    draw(ctx) {
+      if (!this.active) return;
+      const angle = Math.sin(this.flopTimer * 0.3) * 0.4;
+      const bx    = perchX + 18;
+      const by    = perchY + 8;
+      ctx.save();
+      ctx.translate(bx, by);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      if (ctx.ellipse) {
+        ctx.ellipse(0, 0, 10, 4, 0, 0, Math.PI * 2);
+      } else {
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+      }
+      ctx.fillStyle = 'rgba(200,225,255,0.9)';
+      ctx.fill();
+      // Tail
+      ctx.beginPath();
+      ctx.moveTo(-10, 0);
+      ctx.lineTo(-16, -4);
+      ctx.lineTo(-16, 4);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(180,210,240,0.8)';
+      ctx.fill();
+      ctx.restore();
+    },
+  };
+
   // ── Bird ──────────────────────────────────────────────────────────────────
   const bird = {
-    x: 0, y: 0,
-    angle: 0,
-    state: 'perched',      // perched | flyaway | flyback
+    x: 0, y: 0, angle: 0,
+    state: 'perched',
     facingLeft: false,
     bobT: 0,
     nextAutoFly: randomInterval(),
@@ -135,11 +356,11 @@
   };
 
   function randomInterval() { return 30000 + Math.random() * 30000; }
-
-  function birdSize() { return Math.min(W, H) * 0.13; }
+  function birdSize()        { return Math.min(W, H) * 0.13; }
 
   function flyAway() {
     if (bird.state !== 'perched' || heroProgress() > 0.05) return;
+    FishCatch.onFlyAway();
     bird.state      = 'flyaway';
     bird.facingLeft = true;
     bird.vx = -(5 + Math.random() * 3);
@@ -155,92 +376,52 @@
     }, 4500);
   }
 
-  // Click = fly away (only at top of page)
   heroSticky.addEventListener('click', flyAway);
 
   // ── Easing helpers ────────────────────────────────────────────────────────
-  function easeInCubic(t)    { return t * t * t; }
-  function easeInOutQuad(t)  { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2; }
-  function clamp01(v, lo, hi) { return Math.max(0, Math.min(1, (v - lo) / (hi - lo))); }
+  function easeInCubic(t)   { return t * t * t; }
+  function easeInOutQuad(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2; }
+  function clamp01(v,lo,hi) { return Math.max(0, Math.min(1, (v - lo) / (hi - lo))); }
 
-  // ── Scroll-driven bird position ───────────────────────────────────────────
-  // The waterline in canvas-space descends as we scroll:
-  //   waterlineCanvasY = H - scrollY   (bg image shifts up by scrollY, waterline was at H)
-  // Bird tracks from perch → waterline over the scroll range 0.08..0.60
-  // After 0.60 the bird goes below the waterline (underwater).
-
+  // ── Scroll-driven bird ────────────────────────────────────────────────────
   let lastSplashProgress = -1;
 
   function getBirdFromScroll(p) {
-    // p = heroProgress() 0..1
-
-    // Waterline descends through the viewport as we scroll
-    const waterlineY = H - window.scrollY;   // px in canvas coords
-
-    // --- Phases ---
-    const DIVE_START  = 0.08;   // bird starts moving
-    const WATER_HIT   = 0.55;   // bird crosses waterline
-    const HIDDEN_FROM = 0.62;   // bird fully hidden (underwater)
+    const waterlineY    = H - window.scrollY;
+    const DIVE_START    = 0.08;
+    const WATER_HIT     = 0.55;
+    const HIDDEN_FROM   = 0.62;
 
     if (p <= DIVE_START) {
-      // Perched — just bobbing, driven by time
       return {
-        x:     perchX,
-        y:     perchY + Math.sin(bird.bobT * 0.0018) * 2.5,
-        angle: 0,
-        show:  true,
-        img:   imgPerch,
+        x: perchX,
+        y: perchY + Math.sin(bird.bobT * 0.0018) * 2.5,
+        angle: 0, show: true, img: imgPerch,
       };
     }
 
-    // During dive: t goes 0..1 across DIVE_START..WATER_HIT
-    const t = clamp01(p, DIVE_START, WATER_HIT);
-    const eT = easeInCubic(t);   // accelerating dive
-
-    // Where will the waterline be when the bird "hits" it?
+    const t  = clamp01(p, DIVE_START, WATER_HIT);
+    const eT = easeInCubic(t);
     const waterlineAtHit = H - WATER_HIT * window.innerHeight;
-
-    // X: drift from perch toward center of river
-    const x = perchX + (W * 0.48 - perchX) * easeInOutQuad(t) * 0.7;
-
-    // Y: perch → waterline position, accelerating
-    const y = perchY + (waterlineAtHit - perchY) * eT;
-
-    // ── Rotation: align image "down" with direction of travel ──
-    // Image forward = downward = π/2 from +X axis
-    // So: rotation = atan2(dy_to_target, dx_to_target) - π/2
+    const x  = perchX + (W * 0.48 - perchX) * easeInOutQuad(t) * 0.7;
+    const y  = perchY + (waterlineAtHit - perchY) * eT;
     const targetX = perchX + (W * 0.48 - perchX) * 0.7;
     const dx = targetX - x;
     const dy = waterlineAtHit - y;
-    const travelAngle = (dx === 0 && dy === 0)
-      ? Math.PI / 2                          // straight down fallback
-      : Math.atan2(dy, dx);
+    const travelAngle = (dx === 0 && dy === 0) ? Math.PI / 2 : Math.atan2(dy, dx);
     const angle = travelAngle - Math.PI / 2;
 
-    // Splash at transition
     if (p >= WATER_HIT && lastSplashProgress < WATER_HIT) {
       splash(x, waterlineAtHit);
       addRipples(x, waterlineAtHit, 6);
     }
     lastSplashProgress = p;
 
-    // Hide once fully underwater
-    if (p > HIDDEN_FROM) {
-      return { show: false };
-    }
+    if (p > HIDDEN_FROM) return { show: false };
 
-    // Slightly past waterline: continue straight down (angle = 0 = image "down")
-    const postT = clamp01(p, WATER_HIT, HIDDEN_FROM);
-    const finalX = x;
+    const postT  = clamp01(p, WATER_HIT, HIDDEN_FROM);
     const finalY = waterlineAtHit + postT * H * 0.15;
-
-    return {
-      x:     finalX,
-      y:     finalY,
-      angle: 0,   // straight down — image "down" is already forward
-      show:  true,
-      img:   imgDive,
-    };
+    return { x, y: finalY, angle: 0, show: true, img: imgDive };
   }
 
   // ── Update ────────────────────────────────────────────────────────────────
@@ -248,7 +429,6 @@
     bird.bobT += dt;
     const p = heroProgress();
 
-    // Fly-away/flyback state machine (independent of scroll)
     switch (bird.state) {
       case 'flyaway':
         bird.x += bird.vx;
@@ -264,36 +444,33 @@
         bird.y  += bird.vy;
         if (Math.abs(dx) < 12 && Math.abs(dy) < 12) {
           bird.state = 'perched';
-          bird.x = perchX;
-          bird.y = perchY;
+          bird.x = perchX; bird.y = perchY;
           bird.facingLeft = false;
+          FishCatch.onPerched();
         }
         break;
       }
       case 'perched':
         bird.nextAutoFly -= dt;
-        if (bird.nextAutoFly <= 0) {
-          flyAway();
-          bird.nextAutoFly = randomInterval();
-        }
+        if (bird.nextAutoFly <= 0) { flyAway(); bird.nextAutoFly = randomInterval(); }
         break;
     }
 
-    // Background parallax (CSS transform)
+    FishCatch.update();
     updateBgParallax();
+    updateSeasonParticles();
 
-    // UI fade-ins/outs based on scroll
-    const hintOpacity  = Math.max(0, 1 - p * 5);      // fades quickly
-    const textOpacity  = Math.max(0, 1 - p * 3);
+    const hintOpacity = Math.max(0, 1 - p * 5);
+    const textOpacity = Math.max(0, 1 - p * 3);
     scrollHint.style.opacity = hintOpacity;
     textBlock.style.opacity  = textOpacity;
     clickHint.style.opacity  = p < 0.05 ? '1' : '0';
 
-    // Ripples
+    // Night layer
+    if (nightLayer) nightLayer.style.opacity = envState.night ? '1' : '0';
+
     ripples.forEach(r => { r.r += r.spd * (dt / 1000); r.a = 1 - r.r / r.maxR; });
     ripples = ripples.filter(r => r.a > 0);
-
-    // Particles
     particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.28; p.a -= 0.025; });
     particles = particles.filter(p => p.a > 0);
   }
@@ -302,8 +479,8 @@
   function draw(t) {
     ctx.clearRect(0, 0, W, H);
 
-    // Night stars (drawn in canvas above the night overlay)
-    if (currentBgCfg && currentBgCfg.night) {
+    // Night stars
+    if (envState.night) {
       for (const s of stars) {
         const alpha = s.base * (0.5 + 0.5 * Math.sin(t * s.spd + s.phase));
         ctx.beginPath();
@@ -313,16 +490,26 @@
       }
     }
 
-    // Ripples (ellipse = water perspective)
+    // Seasonal particles
+    if (animLevel >= 3) drawSeasonParticles(t);
+
+    // Summer heat shimmer (CSS class approach)
+    // Applied via body[data-season="summer"] in CSS
+
+    // Ripples
     for (const r of ripples) {
       ctx.beginPath();
-      ctx.ellipse(r.x, r.y, r.r, r.r * 0.28, 0, 0, Math.PI * 2);
+      if (ctx.ellipse) {
+        ctx.ellipse(r.x, r.y, r.r, r.r * 0.28, 0, 0, Math.PI * 2);
+      } else {
+        ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+      }
       ctx.strokeStyle = `rgba(255,255,255,${r.a * 0.75})`;
       ctx.lineWidth = 1.8;
       ctx.stroke();
     }
 
-    // Splash droplets
+    // Splash
     for (const p of particles) {
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
@@ -330,53 +517,63 @@
       ctx.fill();
     }
 
-    // Bird: fly-away/flyback overrides scroll-driven position
+    // Bird
     const p = heroProgress();
-    let birdData;
-
+    let bd;
     if (bird.state === 'flyaway' || bird.state === 'flyback') {
-      birdData = {
-        x:     bird.x,
-        y:     bird.y,
-        angle: 0,
-        show:  true,
-        img:   imgFly,
-        flipX: bird.facingLeft,
-      };
+      bd = { x: bird.x, y: bird.y, angle: 0, show: true, img: imgFly, flipX: bird.facingLeft };
     } else {
-      birdData = getBirdFromScroll(p);
-      birdData.flipX = false;
+      bd = getBirdFromScroll(p);
+      bd.flipX = false;
     }
 
-    if (birdData.show) {
-      const img = birdData.img || imgPerch;
+    if (bd.show) {
+      const img = bd.img || imgPerch;
       if (img.complete && img.naturalWidth > 0) {
         const bw = birdSize();
         const bh = img.naturalHeight * (bw / img.naturalWidth);
         ctx.save();
-        ctx.translate(birdData.x, birdData.y);
-        if (birdData.flipX) ctx.scale(-1, 1);
-        if (birdData.angle) ctx.rotate(birdData.angle);
+        ctx.translate(bd.x, bd.y);
+        if (bd.flipX) ctx.scale(-1, 1);
+        if (bd.angle) ctx.rotate(bd.angle);
         ctx.drawImage(img, -bw / 2, -bh / 2, bw, bh);
         ctx.restore();
       }
     }
+
+    // Fish in beak
+    if (bird.state === 'perched') FishCatch.draw(ctx);
   }
 
   // ── Main loop ─────────────────────────────────────────────────────────────
   let lastT = 0;
+  let running = true;
 
   function loop(t) {
+    if (!running) return;
     const dt = Math.min(t - lastT, 80);
     lastT = t;
-    update(dt);
-    draw(t);
+    // Skip hero drawing when far below
+    if (window.alcedoRAF.heroActive) {
+      update(dt);
+      draw(t);
+    }
     requestAnimationFrame(loop);
   }
 
+  document.addEventListener('visibilitychange', () => {
+    running = !document.hidden;
+    if (running) requestAnimationFrame(t => { lastT = t; loop(t); });
+  });
+
+  // Pause hero canvas when scrolled far past hero
+  window.addEventListener('scroll', () => {
+    window.alcedoRAF.heroActive = window.scrollY < window.innerHeight * 1.3;
+  }, { passive: true });
+
   // ── Init ──────────────────────────────────────────────────────────────────
   resize();
-  // Reset splash tracker on page load
+  initSeasonParticles(getSeason(new Date().getMonth()));
   lastSplashProgress = heroProgress() - 0.01;
   requestAnimationFrame(t => { lastT = t; loop(t); });
 
