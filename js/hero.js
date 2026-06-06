@@ -145,10 +145,10 @@
   }, { threshold: 0.05 });
   uwObserver.observe(mainContent);
 
-  // ── Scroll 15% → trigger dive (one-shot) ─────────────────────────────────
+  // ── Scroll 70%+ (after dive) → trigger flyAway one-shot ─────────────────
   let diveTriggeredByScroll = false;
   window.addEventListener('scroll', () => {
-    if (!diveTriggeredByScroll && window.scrollY > window.innerHeight * 0.15) {
+    if (!diveTriggeredByScroll && window.scrollY > window.innerHeight * 0.70) {
       diveTriggeredByScroll = true;
       flyAway();
     }
@@ -457,8 +457,11 @@
         break;
       }
       case 'perched':
-        bird.nextAutoFly -= dt;
-        if (bird.nextAutoFly <= 0) { flyAway(); bird.nextAutoFly = randomInterval(); }
+        // Don't auto-fly during scroll-driven dive (p > DIVE_START 0.08)
+        if (heroProgress() < 0.08) {
+          bird.nextAutoFly -= dt;
+          if (bird.nextAutoFly <= 0) { flyAway(); bird.nextAutoFly = randomInterval(); }
+        }
         break;
     }
 
@@ -527,11 +530,8 @@
     if (bird.state === 'flyaway' || bird.state === 'flyback') {
       bd = { x: bird.x, y: bird.y, angle: 0, show: true, img: imgFly, flipX: bird.facingLeft };
     } else {
-      bd = {
-        x: perchX,
-        y: perchY + Math.sin(bird.bobT * 0.0018) * 2.5,
-        angle: 0, show: true, img: imgPerch, flipX: false,
-      };
+      bd = getBirdFromScroll(heroProgress());
+      if (bd.flipX === undefined) bd.flipX = false;
     }
 
     if (bd.show) {
@@ -548,8 +548,8 @@
       }
     }
 
-    // Fish in beak
-    if (bird.state === 'perched') FishCatch.draw(ctx);
+    // Fish in beak (only when perched and not in dive zone)
+    if (bird.state === 'perched' && heroProgress() < 0.08) FishCatch.draw(ctx);
   }
 
   // ── Main loop ─────────────────────────────────────────────────────────────
