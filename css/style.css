@@ -68,28 +68,40 @@ nav {
 
 /* ── Hero ── */
 
-/* Scroll container — tall enough for the full dive journey */
-.hero {
-  position: relative;
-  width: 100%;
-  height: 200vh;   /* 100vh visible + 100vh scroll room */
-}
-
-/* Sticky viewport — stays on screen while scrolling through .hero */
-.hero-sticky {
-  position: sticky;
+/* Fixed layer: always covers the viewport, slides up as content scrolls in */
+.hero-fixed {
+  position: fixed;
   top: 0;
+  left: 0;
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
+  z-index: 10;
   cursor: pointer;
 }
 
-/* Background images — 200vh tall so both above/below water fit */
-.hero-bg-wrap {
+/* Water-surface shimmer line at viewport bottom */
+.hero-fixed::after {
+  content: '';
   position: absolute;
-  inset: 0;
-  overflow: hidden;
+  bottom: 0;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0,180,216,0.75), transparent);
+  animation: waterline-shimmer 3s ease-in-out infinite;
+  z-index: 6;
+  pointer-events: none;
+}
+
+@keyframes waterline-shimmer {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 1; }
+}
+
+/* Spacer: pushes main-content down by one viewport height */
+.hero-spacer {
+  height: 100dvh;
+  pointer-events: none;
 }
 
 .hero-bg-img {
@@ -97,11 +109,10 @@ nav {
   top: 0;
   left: 0;
   width: 100%;
-  height: 200vh;           /* full image: top=above water, bottom=underwater */
+  height: 200dvh; /* 2x tall so overflow:hidden shows only above-water half */
   object-fit: cover;
   object-position: center top;
   transition: opacity 2.5s ease;
-  will-change: transform;  /* scroll-driven translateY */
 }
 
 .hero-night-layer {

@@ -32,48 +32,47 @@
 </nav>
 
 <!-- ── Hero ─────────────────────────────────────────────────────────── -->
-<section class="hero" id="hero">
-  <!-- sticky viewport -->
-  <div class="hero-sticky" id="heroSticky">
+<!-- Fixed hero layer (slides out when main-content rises) -->
+<div class="hero-fixed" id="heroFixed">
 
-    <!-- Background images (crossfade, height=200vh to show both halves) -->
-    <div class="hero-bg-wrap">
-      <img class="hero-bg-img" id="heroBgA" src="images/bg_day.png" alt="">
-      <img class="hero-bg-img" id="heroBgB" src=""                  alt="" style="opacity:0">
-      <div class="hero-night-layer" id="heroNightLayer"></div>
+  <!-- Background images (JS swaps to hero-scene.svg) -->
+  <img class="hero-bg-img" id="heroBgA" src="images/bg_day.png" alt="">
+  <img class="hero-bg-img" id="heroBgB" src=""                  alt="" style="opacity:0">
+  <div class="hero-night-layer" id="heroNightLayer"></div>
+
+  <!-- Canvas: bird animation + ripples + stars -->
+  <canvas id="heroCanvas"></canvas>
+
+  <!-- Text overlay -->
+  <div class="hero-text-block" id="heroTextBlock">
+    <p class="hero-label">— Alcedo atthis —</p>
+    <h1 class="hero-title-big">Alcedo<br><span>Works</span></h1>
+    <p class="hero-sub">
+      ものづくり・トライアスロン・好奇心。<br>
+      カワセミのように、深く鮮やかに。
+    </p>
+    <div class="hero-badges">
+      <span class="badge">Hardware</span>
+      <span class="badge">IoT</span>
+      <span class="badge">Triathlon</span>
+      <span class="badge">Maker</span>
+      <span class="badge">AI / Simulator</span>
     </div>
+  </div>
 
-    <!-- Canvas: bird animation + ripples + stars -->
-    <canvas id="heroCanvas"></canvas>
+  <!-- Scroll hint -->
+  <div class="hero-scroll-hint" id="scrollHint">
+    <span class="scroll-label">SCROLL TO DIVE</span>
+    <div class="scroll-arrow"></div>
+  </div>
 
-    <!-- Text overlay -->
-    <div class="hero-text-block" id="heroTextBlock">
-      <p class="hero-label">— Alcedo atthis —</p>
-      <h1 class="hero-title-big">Alcedo<br><span>Works</span></h1>
-      <p class="hero-sub">
-        ものづくり・トライアスロン・好奇心。<br>
-        カワセミのように、深く鮮やかに。
-      </p>
-      <div class="hero-badges">
-        <span class="badge">Hardware</span>
-        <span class="badge">IoT</span>
-        <span class="badge">Triathlon</span>
-        <span class="badge">Maker</span>
-        <span class="badge">AI / Simulator</span>
-      </div>
-    </div>
+  <!-- Click hint -->
+  <div class="hero-click-hint" id="clickHint">クリックで飛び立つ</div>
 
-    <!-- Scroll hint -->
-    <div class="hero-scroll-hint" id="scrollHint">
-      <span class="scroll-label">SCROLL TO DIVE</span>
-      <div class="scroll-arrow"></div>
-    </div>
+</div><!-- /hero-fixed -->
 
-    <!-- Click hint -->
-    <div class="hero-click-hint" id="clickHint">クリックで飛び立つ</div>
-
-  </div><!-- /hero-sticky -->
-</section>
+<!-- Spacer: creates scroll distance equal to one viewport -->
+<div class="hero-spacer" id="heroSpacer"></div>
 
 <!-- ── Main content ──────────────────────────────────────────────────── -->
 <div id="main-content">

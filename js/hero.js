@@ -104,8 +104,8 @@
   }
 
   // ── DOM refs ──────────────────────────────────────────────────────────────
-  const hero       = document.getElementById('hero');
-  const heroSticky = document.getElementById('heroSticky');
+  const heroFixed  = document.getElementById('heroFixed');
+  const heroSpacer = document.getElementById('heroSpacer');
   const canvas     = document.getElementById('heroCanvas');
   const scrollHint = document.getElementById('scrollHint');
   const textBlock  = document.getElementById('heroTextBlock');
@@ -113,35 +113,46 @@
   const mainContent = document.getElementById('main-content');
   const ctx        = canvas.getContext('2d');
 
-  // ── Apply environment & replace old bg with SVG ───────────────────────────
+  // ── Apply environment & replace old bg imgs with SVG ─────────────────────
   let envState = applyEnvCSSVars();
   setInterval(() => { envState = applyEnvCSSVars(); }, 60000);
 
-  // Remove old bitmap bg elements; insert SVG
-  const bgWrap = document.querySelector('.hero-bg-wrap');
-  if (bgWrap) {
-    bgWrap.innerHTML = `
-      <img class="hero-scene-svg" src="images/hero-scene.svg" alt=""
-           style="position:absolute;top:0;left:0;width:100%;height:200vh;object-fit:cover;object-position:center top;will-change:transform;">
-      <div class="hero-night-layer" id="heroNightLayer" style="position:absolute;inset:0;background:rgba(4,8,24,0.72);transition:opacity 2.5s ease;opacity:0;pointer-events:none;"></div>
-    `;
+  // Swap bitmap placeholders for CSS-variable-driven SVG
+  const heroBgA = document.getElementById('heroBgA');
+  const heroBgB = document.getElementById('heroBgB');
+  if (heroBgA) {
+    heroBgA.src = 'images/hero-scene.svg';
+    heroBgA.classList.add('hero-scene-svg');
+    heroBgA.style.opacity = '1';
   }
+  if (heroBgB) heroBgB.remove();
 
-  const sceneSvg   = bgWrap.querySelector('.hero-scene-svg');
   const nightLayer = document.getElementById('heroNightLayer');
   if (envState.night) nightLayer.style.opacity = '1';
 
-  // Fade in main content when hero is fully scrolled
-  function checkUwVisible() {
-    if (window.scrollY >= window.innerHeight * 0.9) {
-      mainContent.classList.add('uw-visible');
-      window.alcedoRAF.uwActive = true;
-    } else {
-      window.alcedoRAF.uwActive = false;
-    }
+  // ── Slide hero-fixed up as main-content scrolls into view ────────────────
+  function updateHeroFixed() {
+    const spaceH = heroSpacer.offsetHeight;
+    const over   = window.scrollY - spaceH;
+    heroFixed.style.transform = over > 0 ? `translateY(${-over}px)` : '';
   }
-  window.addEventListener('scroll', checkUwVisible, { passive: true });
-  checkUwVisible();
+  window.addEventListener('scroll', updateHeroFixed, { passive: true });
+
+  // ── IntersectionObserver: activate underwater RAF when visible ────────────
+  window.alcedoRAF.uwActive = false;
+  const uwObserver = new IntersectionObserver(([e]) => {
+    window.alcedoRAF.uwActive = e.isIntersecting;
+  }, { threshold: 0.05 });
+  uwObserver.observe(mainContent);
+
+  // ── Scroll 15% → trigger dive (one-shot) ─────────────────────────────────
+  let diveTriggeredByScroll = false;
+  window.addEventListener('scroll', () => {
+    if (!diveTriggeredByScroll && window.scrollY > window.innerHeight * 0.15) {
+      diveTriggeredByScroll = true;
+      flyAway();
+    }
+  }, { passive: true });
 
   // ── Images ────────────────────────────────────────────────────────────────
   const imgPerch = new Image(); imgPerch.src = 'images/kawasemi_perch.png';
@@ -166,11 +177,6 @@
   // ── Scroll progress ───────────────────────────────────────────────────────
   function heroProgress() {
     return Math.min(1, Math.max(0, window.scrollY / window.innerHeight));
-  }
-
-  // Background parallax (SVG)
-  function updateBgParallax() {
-    if (sceneSvg) sceneSvg.style.transform = `translateY(-${window.scrollY}px)`;
   }
 
   // ── Stars ─────────────────────────────────────────────────────────────────
@@ -359,7 +365,7 @@
   function birdSize()        { return Math.min(W, H) * 0.13; }
 
   function flyAway() {
-    if (bird.state !== 'perched' || heroProgress() > 0.05) return;
+    if (bird.state !== 'perched') return;
     FishCatch.onFlyAway();
     bird.state      = 'flyaway';
     bird.facingLeft = true;
@@ -376,7 +382,7 @@
     }, 4500);
   }
 
-  heroSticky.addEventListener('click', flyAway);
+  heroFixed.addEventListener('click', flyAway);
 
   // ── Easing helpers ────────────────────────────────────────────────────────
   function easeInCubic(t)   { return t * t * t; }
@@ -457,7 +463,6 @@
     }
 
     FishCatch.update();
-    updateBgParallax();
     updateSeasonParticles();
 
     const hintOpacity = Math.max(0, 1 - p * 5);
@@ -518,13 +523,15 @@
     }
 
     // Bird
-    const p = heroProgress();
     let bd;
     if (bird.state === 'flyaway' || bird.state === 'flyback') {
       bd = { x: bird.x, y: bird.y, angle: 0, show: true, img: imgFly, flipX: bird.facingLeft };
     } else {
-      bd = getBirdFromScroll(p);
-      bd.flipX = false;
+      bd = {
+        x: perchX,
+        y: perchY + Math.sin(bird.bobT * 0.0018) * 2.5,
+        angle: 0, show: true, img: imgPerch, flipX: false,
+      };
     }
 
     if (bd.show) {
@@ -574,7 +581,6 @@
   // ── Init ──────────────────────────────────────────────────────────────────
   resize();
   initSeasonParticles(getSeason(new Date().getMonth()));
-  lastSplashProgress = heroProgress() - 0.01;
   requestAnimationFrame(t => { lastT = t; loop(t); });
 
 })();
