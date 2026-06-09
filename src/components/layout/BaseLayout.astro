@@ -1,0 +1,40 @@
+---
+import '../../styles/global.css';
+import '../../styles/animations.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+}
+
+const {
+  title,
+  description = 'Wakky-Alcedo のポートフォリオサイト。ロボット・IoT・トライアスロンなど、作品と活動を紹介。',
+  ogImage = '/favicon.ico',
+} = Astro.props;
+
+const siteTitle = title === 'Home' ? "Wakky-Alcedo's Portfolio" : `${title} | Wakky-Alcedo`;
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content={description} />
+
+    <!-- OGP -->
+    <meta property="og:title" content={siteTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" type="image/png" href="/favicon.ico" />
+    <title>{siteTitle}</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

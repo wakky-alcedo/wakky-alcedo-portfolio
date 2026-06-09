@@ -1,0 +1,176 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="footer__inner">
+    <div class="footer__links">
+      <a
+        href="https://twitter.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Twitter"
+        class="footer__sns-link"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.626zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+      </a>
+      <a
+        href="https://note.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="note"
+        class="footer__sns-link"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M3 3h18v18H3V3zm2 2v14h14V5H5zm2 3h10v2H7V8zm0 4h10v2H7v-2zm0 4h6v2H7v-2z"/>
+        </svg>
+      </a>
+    </div>
+
+    <div class="footer__orientation">
+      <label class="footer__toggle-label">
+        <input
+          type="checkbox"
+          id="orientation-toggle"
+          class="footer__toggle-input"
+          disabled
+        />
+        <span class="footer__toggle-track">
+          <span class="footer__toggle-thumb"></span>
+        </span>
+        <span class="footer__toggle-text">水中の立体描画を有効にする</span>
+      </label>
+      <p id="orientation-hint" class="footer__orientation-hint" hidden>
+        Safariの設定 → モーションセンサーを許可 から再許可が必要です
+      </p>
+    </div>
+
+    <p class="footer__copy">&copy; {year} Wakky-Alcedo</p>
+  </div>
+</footer>
+
+<script>
+  import { requestOrientationPermission } from '../../scripts/utils/deviceOrientation';
+
+  const toggle = document.getElementById('orientation-toggle') as HTMLInputElement | null;
+  const hint   = document.getElementById('orientation-hint') as HTMLParagraphElement | null;
+
+  if (toggle) {
+    toggle.disabled = false;
+    toggle.addEventListener('change', async () => {
+      if (!toggle.checked) return;
+      const granted = await requestOrientationPermission();
+      if (!granted) {
+        toggle.checked = false;
+        toggle.disabled = true;
+        if (hint) hint.hidden = false;
+      } else {
+        document.dispatchEvent(new CustomEvent('orientation:enabled'));
+      }
+    });
+  }
+</script>
+
+<style>
+.footer {
+  background: rgba(0, 17, 44, 0.95);
+  border-top: 1px solid rgba(104, 206, 214, 0.15);
+  padding: 2rem 1.5rem;
+}
+
+.footer__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.footer__links {
+  display: flex;
+  gap: 1rem;
+}
+
+.footer__sns-link {
+  color: var(--color-text);
+  opacity: 0.6;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.footer__sns-link:hover {
+  opacity: 1;
+  color: var(--color-secondary);
+}
+
+.footer__orientation {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.footer__toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--color-text);
+  opacity: 0.7;
+}
+
+.footer__toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.footer__toggle-track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.footer__toggle-input:checked + .footer__toggle-track {
+  background: var(--color-secondary);
+}
+
+.footer__toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.footer__toggle-input:checked + .footer__toggle-track .footer__toggle-thumb {
+  transform: translateX(16px);
+}
+
+.footer__toggle-input:disabled + .footer__toggle-track {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.footer__orientation-hint {
+  font-size: 0.75rem;
+  color: var(--color-accent);
+  margin-left: 0.5rem;
+}
+
+.footer__copy {
+  font-size: 0.8rem;
+  color: var(--color-text);
+  opacity: 0.5;
+}
+</style>

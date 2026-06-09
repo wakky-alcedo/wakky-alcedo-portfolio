@@ -1,0 +1,117 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  work: CollectionEntry<'works'>;
+}
+
+const { work } = Astro.props;
+const { title, description, thumbnail, tags } = work.data;
+---
+
+<a href={`/works/${work.id}`} class="work-card">
+  <div class="work-card__thumb">
+    <Image
+      src={thumbnail}
+      alt={title}
+      width={400}
+      height={250}
+      class="work-card__img"
+    />
+    <div class="work-card__overlay">
+      <p class="work-card__desc">{description}</p>
+    </div>
+  </div>
+  <div class="work-card__body">
+    <h3 class="work-card__title">{title}</h3>
+    <ul class="work-card__tags">
+      {tags.map(tag => <li class="work-card__tag">{tag}</li>)}
+    </ul>
+  </div>
+</a>
+
+<style>
+.work-card {
+  display: block;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(0, 99, 170, 0.1);
+  border: 1px solid rgba(104, 206, 214, 0.2);
+  transition: transform 0.3s, border-color 0.3s;
+  min-width: 280px;
+  flex-shrink: 0;
+}
+
+.work-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(104, 206, 214, 0.6);
+}
+
+.work-card__thumb {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+}
+
+.work-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s;
+}
+
+.work-card:hover .work-card__img {
+  transform: scale(1.05);
+}
+
+.work-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 17, 44, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.work-card:hover .work-card__overlay {
+  opacity: 1;
+}
+
+.work-card__desc {
+  font-size: 0.85rem;
+  color: var(--color-text);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.work-card__body {
+  padding: 0.75rem 1rem;
+}
+
+.work-card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+
+.work-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  list-style: none;
+}
+
+.work-card__tag {
+  font-size: 0.7rem;
+  padding: 0.125rem 0.5rem;
+  background: rgba(0, 99, 170, 0.4);
+  border: 1px solid rgba(104, 206, 214, 0.3);
+  border-radius: 100px;
+  color: var(--color-secondary);
+}
+</style>

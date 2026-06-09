@@ -1,0 +1,224 @@
+---
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import WorkCard from '../works/WorkCard.astro';
+import BlogCard from '../blog/BlogCard.astro';
+import SectionTitle from '../common/SectionTitle.astro';
+import profilePicture from '../../assets/images/profile_picture.jpg';
+
+const allWorks = (await getCollection('works', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const allBlog = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+---
+
+<div class="underwater" id="underwater">
+  <!-- Works -->
+  <section class="underwater__section" id="works">
+    <div class="underwater__container">
+      <SectionTitle title="Works" subtitle="制作物・プロジェクト" />
+      <div class="works-scroll" id="works-scroll">
+        {allWorks.map(work => <WorkCard work={work} />)}
+      </div>
+      <a href="/works" class="underwater__more-link">すべての作品を見る →</a>
+    </div>
+  </section>
+
+  <!-- Blog -->
+  <section class="underwater__section" id="blog">
+    <div class="underwater__container">
+      <SectionTitle title="Blog" subtitle="活動記録・思考メモ" />
+      <div class="blog-list">
+        {allBlog.slice(0, 5).map(post => <BlogCard post={post} />)}
+      </div>
+      <a href="/blog" class="underwater__more-link">すべての記事を見る →</a>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="underwater__section" id="about">
+    <div class="underwater__container">
+      <SectionTitle title="About" subtitle="自己紹介" />
+      <div class="about-preview">
+        <Image
+          src={profilePicture}
+          alt="プロフィール写真"
+          width={160}
+          height={160}
+          class="about-preview__photo"
+        />
+        <div class="about-preview__text">
+          <p>ロボット・IoT・トライアスロンが好きなエンジニア。カワセミのように素早く深く飛び込む姿勢で、技術と挑戦に向き合っています。</p>
+          <a href="/about" class="underwater__more-link">もっと読む →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section class="underwater__section" id="contact">
+    <div class="underwater__container">
+      <SectionTitle title="Contact" subtitle="お問い合わせ" />
+      <div class="contact-links">
+        <a href="https://twitter.com/" target="_blank" rel="noopener" class="contact-link">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.626zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+          Twitter / X
+        </a>
+        <a href="https://note.com/" target="_blank" rel="noopener" class="contact-link">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M3 3h18v18H3V3zm2 2v14h14V5H5zm2 3h10v2H7V8zm0 4h10v2H7v-2zm0 4h6v2H7v-2z"/>
+          </svg>
+          note
+        </a>
+        <span class="contact-email" id="contact-email" data-email="dGFrdWppLmNvcm90b24udGhhbmtzQGdtYWlsLmNvbQ==">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+          </svg>
+          <span id="email-text">メールを表示</span>
+        </span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // メールアドレス難読化
+  const emailEl = document.getElementById('contact-email');
+  const emailText = document.getElementById('email-text');
+  if (emailEl && emailText) {
+    emailEl.style.cursor = 'pointer';
+    emailEl.addEventListener('click', () => {
+      const encoded = emailEl.dataset.email ?? '';
+      const decoded = atob(encoded);
+      emailText.textContent = decoded;
+      const link = document.createElement('a');
+      link.href = `mailto:${decoded}`;
+      link.textContent = decoded;
+      emailText.replaceWith(link);
+      emailEl.style.cursor = 'default';
+    });
+  }
+</script>
+
+<style>
+.underwater {
+  background: var(--color-bg);
+  position: relative;
+}
+
+.underwater__section {
+  padding: 5rem 0;
+  border-bottom: 1px solid rgba(104, 206, 214, 0.1);
+}
+
+.underwater__section:last-child {
+  border-bottom: none;
+}
+
+.underwater__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Works横スクロール */
+.works-scroll {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary) transparent;
+}
+
+.works-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.works-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.works-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 2px;
+}
+
+/* Blog一覧 */
+.blog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.underwater__more-link {
+  display: inline-block;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--color-secondary);
+  opacity: 0.8;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.underwater__more-link:hover {
+  opacity: 1;
+  transform: translateX(4px);
+}
+
+/* About */
+.about-preview {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.about-preview__photo {
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 3px solid var(--color-secondary);
+  object-fit: cover;
+}
+
+.about-preview__text p {
+  color: var(--color-text);
+  opacity: 0.85;
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+/* Contact */
+.contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.contact-link,
+.contact-email {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text);
+  opacity: 0.7;
+  font-size: 0.95rem;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.contact-link:hover,
+.contact-email:hover {
+  opacity: 1;
+  color: var(--color-secondary);
+}
+
+@media (max-width: 640px) {
+  .about-preview {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+</style>
