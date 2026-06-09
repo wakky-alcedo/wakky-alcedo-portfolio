@@ -4,6 +4,7 @@ import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
 import HeroSection from '../components/home/HeroSection.astro';
 import UnderwaterSection from '../components/home/UnderwaterSection.astro';
+import ScrollKingfisher from '../components/home/ScrollKingfisher.astro';
 ---
 
 <BaseLayout title="Home">
@@ -13,4 +14,13 @@ import UnderwaterSection from '../components/home/UnderwaterSection.astro';
     <UnderwaterSection />
   </main>
   <Footer />
+  <ScrollKingfisher />
 </BaseLayout>
+
+<script>
+  import { initScrollScene } from '../scripts/animation/scrollScene';
+
+  window.addEventListener('load', () => {
+    initScrollScene();
+  });
+</script>
