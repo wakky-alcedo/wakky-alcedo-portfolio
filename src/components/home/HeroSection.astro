@@ -1,7 +1,10 @@
 ---
 import { Image } from 'astro:assets';
 import kawasemiPerch from '../../assets/images/kawasemi_perch.png';
+import kawasemiDive from '../../assets/images/kawasemi_dive.png';
+import kawasemiFly from '../../assets/images/kawasemi_fly.png';
 import bgDay from '../../assets/images/bg_day.png';
+import WaterSurface from './WaterSurface.astro';
 ---
 
 <section class="hero" id="hero">
@@ -18,6 +21,7 @@ import bgDay from '../../assets/images/bg_day.png';
 
   <!-- 水面ライン -->
   <div class="hero__water-line" aria-hidden="true"></div>
+  <WaterSurface />
 
   <div class="hero__content">
     <div class="hero__text-box">
@@ -30,10 +34,26 @@ import bgDay from '../../assets/images/bg_day.png';
     <div class="hero__bird" id="hero-kingfisher">
       <Image
         src={kawasemiPerch}
-        alt="カワセミのイラスト"
+        alt="とまり木に止まるカワセミのイラスト"
         width={220}
         height={220}
-        class="hero__bird-img animate-float"
+        class="hero__bird-img hero__bird-img--perch animate-float"
+        loading="eager"
+      />
+      <Image
+        src={kawasemiDive}
+        alt=""
+        width={220}
+        height={220}
+        class="hero__bird-img hero__bird-img--dive"
+        loading="eager"
+      />
+      <Image
+        src={kawasemiFly}
+        alt=""
+        width={220}
+        height={220}
+        class="hero__bird-img hero__bird-img--fly"
         loading="eager"
       />
     </div>
@@ -138,11 +158,26 @@ import bgDay from '../../assets/images/bg_day.png';
 }
 
 .hero__bird {
+  position: relative;
   flex-shrink: 0;
+  width: 220px;
+  height: 220px;
+  will-change: transform, opacity;
 }
 
 .hero__bird-img {
   filter: drop-shadow(0 8px 24px rgba(104, 206, 214, 0.3));
+}
+
+.hero__bird-img--perch {
+  position: relative;
+}
+
+.hero__bird-img--dive,
+.hero__bird-img--fly {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
 }
 
 .hero__scroll-hint {
@@ -187,9 +222,6 @@ import bgDay from '../../assets/images/bg_day.png';
 
   .hero__bird {
     order: -1;
-  }
-
-  .hero__bird-img {
     width: 140px;
     height: 140px;
   }

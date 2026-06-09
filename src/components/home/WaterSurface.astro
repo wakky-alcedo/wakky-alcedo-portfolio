@@ -1,0 +1,26 @@
+<canvas
+  id="water-surface"
+  class="water-surface"
+  role="img"
+  aria-label="水面の波紋アニメーション"
+></canvas>
+
+<style>
+.water-surface {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  width: 100%;
+  height: 140px;
+  pointer-events: none;
+  z-index: 3;
+  will-change: contents;
+}
+
+@media (max-width: 640px) {
+  .water-surface {
+    height: 90px;
+  }
+}
+</style>
