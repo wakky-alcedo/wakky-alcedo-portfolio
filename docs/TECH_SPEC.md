@@ -6,29 +6,89 @@
 |----------|----------|----------|
 | フレームワーク | **Astro 5.x** | ポートフォリオに最適な静的サイト生成。コンテンツコレクションでWorks/Blogを型安全に管理。Island Architectureでアニメーションを遅延ロード可能 |
 | 言語 | **TypeScript** | アニメーション/Canvasの複雑なロジックを型安全に記述 |
-| スクロールアニメーション | **GSAP + ScrollTrigger** | 業界標準。カワセミ飛び込み演出のような精密なスクロール連動アニメーションに最適 |
+| スクロールアニメーション | **GSAP + ScrollTrigger** | 業界標準。カワセミ飛び込み演出のような精密なスクロール連動アニメーションに最適。※GSAPは個人ポートフォリオ用途では無料ライセンス可 |
 | Canvas演出 | **Canvas API（ネイティブ）** | 魚シミュレーション・水面リプル。外部ライブラリ不要で軽量 |
 | スタイリング | **CSS Custom Properties** | デザイントークン（カラーパレット）を変数管理。Phase 2の時間帯変化にも対応しやすい |
 | ビルドツール | **Vite**（Astro内蔵） | 高速 HMR、アセット最適化 |
-| パッケージマネージャ | **npm** | |
+| パッケージマネージャ | **npm** | `package-lock.json` を必ずコミットして依存を固定する |
 
 ---
 
 ## アーキテクチャ方針
 
-### Island Architecture（アストロの核心）
+### Island Architecture（Astroの核心）
 
 ```
 静的HTML（コンテンツ）← サーバーサイドレンダリング、JS不要
          +
-アニメーションIsland（client:only）← JSを遅延ロード
+アニメーションIsland ← JSを遅延ロード
+  ├─ Canvas要素（DOM参照必須）→ client:only
+  └─ GSAP ScrollTrigger     → client:load（window.load 後に refresh）
 ```
 
 - コンテンツ（テキスト・画像）は即座に表示 → FCP高速化
-- GSAP・Canvasスクリプトは `client:visible` または `client:idle` で後から注入
+- GSAP・Canvasスクリプトは `client:only` / `client:load` で後から注入
 - これにより非機能要件「段階的読み込み」を構造レベルで担保
 
-### スクロールシーン設計
+> ⚠️ `client:idle` と `client:only` の混在禁止。Canvas島は `client:only`、ScrollTrigger初期化は `client:load` に統一する。
+
+### スクロールアニメーションの制御方針
+
+**CSS変数をアニメーション値に使わない。**
+
+| 用途 | 方法 |
+|------|------|
+| スクロール連動のアニメーション値 | `gsap.set(element, { y, opacity, ... })` で直接制御 |
+| カワセミ位置・魚オフセット等 | GSAPのTweenターゲットプロパティに渡す |
+| デザイントークン（色・余白等） | CSS Custom Properties（静的用途のみ） |
+| シーン境界の定数（水面Y座標等） | JS定数として管理（`WATER_SURFACE_VH = 100`） |
+
+> 理由：CSS変数をJSで毎フレーム `style.setProperty()` 更新すると、スタイル再計算（Recalculate Style）がメインスレッドで走りモバイルでパフォーマンス問題が発生する。
+
+### 横スクロールセクション（Works / Blog）の実装方針
+
+**iOS Safariでの縦×横スクロール干渉を避けるため、`overflow-x: scroll` は使わない。**
+
+GSAPの「水平スクロールセクション」パターンを採用する：
+- `ScrollTrigger` でセクションをピン固定
+- `gsap.to(container, { x: -totalWidth })` で横移動をスクロール量に連動させる
+- タッチデバイスでの動作検証はPhase 2完了時点で必須
+
+### ScrollTrigger 初期化タイミング
+
+```ts
+// 正しい初期化パターン
+window.addEventListener('load', () => {
+  initScrollScene(); // GSAPシーン初期化
+  ScrollTrigger.refresh(); // 全画像ロード後に位置再計算
+});
+```
+
+- Astroの `<Image>` コンポーネントで全画像に `width`/`height` を明示 → CLS防止・高さ事前確定
+
+### アクセシビリティ方針
+
+```css
+/* tokens.css に必ず含める */
+@media (prefers-reduced-motion: reduce) {
+  /* アニメーション全停止フラグ */
+}
+```
+
+```ts
+// JS側でも判定
+const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (prefersReduced) {
+  // Boid・飛び込み・リプルを全停止
+  // 静的なレイアウトのみ表示
+}
+```
+
+> Canvas要素には `role="img"` と `aria-label` を付与する。スクロールバー役カワセミはキーボード操作を阻害しない実装にする。
+
+---
+
+## スクロールシーン設計
 
 ```
 Scroll 0%    ━━━━━━━━━━━━━━━━━━━━━━━━ Hero（水上）
@@ -36,14 +96,14 @@ Scroll 0%    ━━━━━━━━━━━━━━━━━━━━━━�
              放置でアイドルアニメーション（飛び込み→戻り）
 
 Scroll ~70%  ━━━━━━━━━━━━━━━━━━━━━━━━ 飛び込みトリガー
-             カワセミが助走→飛び込み開始
+             GSAPでカワセミが助走→飛び込み開始
 
 Scroll 100%  ━━━━━━━━━━━━━━━━━━━━━━━━ 水面（リプルアニメーション）
              水上↔水中の境界。連続スクロールで自然に遷移
 
 Scroll 100%+ ━━━━━━━━━━━━━━━━━━━━━━━━ 水中コンテンツ
              Works → Blog → About → Contact（縦積み）
-             各セクション内でカード横スクロール
+             各セクションはGSAP水平スクロールパターン
              カワセミが右端でスクロールバー役
 
 最下部クリック━━━━━━━━━━━━━━━━━━━━━━━━ 水上に浮上
@@ -69,14 +129,14 @@ wakky-alcedo-portfolio/
 │   │   └── contact.astro
 │   ├── components/
 │   │   ├── layout/
-│   │   │   ├── Header.astro         # ロゴ＋ナビ（水上/水中で外観変化）
+│   │   │   ├── Header.astro         # ロゴ＋ナビ
 │   │   │   ├── Footer.astro         # SNS・コピーライト・傾きトグル
-│   │   │   └── BaseLayout.astro     # <head>・メタタグ共通レイアウト
+│   │   │   └── BaseLayout.astro     # <head>・OGP・メタタグ共通レイアウト
 │   │   ├── home/
 │   │   │   ├── HeroSection.astro    # 水上エリア全体
-│   │   │   ├── WaterSurface.astro   # 水面リプルCanvas
+│   │   │   ├── WaterSurface.astro   # 水面リプルCanvas（client:only）
 │   │   │   ├── UnderwaterSection.astro # 水中コンテンツエリア
-│   │   │   └── ScrollKingfisher.astro  # 右端スクロールバー役カワセミ
+│   │   │   └── ScrollKingfisher.astro  # 右端スクロールバー役（client:only）
 │   │   ├── works/
 │   │   │   └── WorkCard.astro       # サムネイル・ホバー演出
 │   │   ├── blog/
@@ -84,7 +144,7 @@ wakky-alcedo-portfolio/
 │   │   └── common/
 │   │       └── SectionTitle.astro
 │   ├── content/
-│   │   ├── config.ts                # コレクション型定義
+│   │   ├── config.ts                # zodスキーマ定義（title, date, thumbnail, tags, description 必須）
 │   │   ├── works/
 │   │   │   ├── work1.md
 │   │   │   └── work2.md
@@ -92,18 +152,20 @@ wakky-alcedo-portfolio/
 │   │       └── placeholder.md
 │   ├── scripts/
 │   │   ├── animation/
-│   │   │   ├── scrollScene.ts       # GSAP ScrollTrigger 全体管理
-│   │   │   ├── kingfisher.ts        # カワセミ飛び込み・アイドル
-│   │   │   └── workCardTransition.ts # Works遷移アニメーション
+│   │   │   ├── scrollScene.ts       # オーケストレーター（init/destroyのみ）
+│   │   │   ├── kingfisher.ts        # カワセミアニメーション（自己完結モジュール）
+│   │   │   └── workCardTransition.ts # Works遷移（自己完結モジュール）
 │   │   ├── canvas/
-│   │   │   ├── fish.ts              # 魚シミュレーション（4レイヤー）
+│   │   │   ├── fish.ts              # 魚Boidシミュレーション（4レイヤー）
 │   │   │   └── ripple.ts            # 水面リプル
 │   │   └── utils/
 │   │       ├── visibility.ts        # Page Visibility API（バックグラウンド停止）
-│   │       └── deviceOrientation.ts # iOS/Android 傾き取得
+│   │       ├── deviceOrientation.ts # iOS/Android 傾き取得・requestPermission管理
+│   │       ├── adaptiveQuality.ts   # フレームレート監視・品質自動調整
+│   │       └── motionPreference.ts  # prefers-reduced-motion 判定
 │   ├── styles/
-│   │   ├── tokens.css               # CSS Custom Properties（デザイントークン）
-│   │   ├── global.css               # リセット・ベーススタイル
+│   │   ├── tokens.css               # CSS Custom Properties（デザイントークン専用）
+│   │   ├── global.css               # リセット・ベーススタイル・safe-area-inset
 │   │   └── animations.css           # CSS-only アニメーション定義
 │   └── assets/
 │       ├── images/
@@ -123,7 +185,7 @@ wakky-alcedo-portfolio/
 │   └── favicon.ico
 ├── docs/
 │   ├── REQUIREMENTS.md
-│   └── TECH_SPEC.md                 # このファイル
+│   └── TECH_SPEC.md
 ├── astro.config.mjs
 ├── tsconfig.json
 ├── package.json
@@ -135,7 +197,7 @@ wakky-alcedo-portfolio/
 ## デザインシステム（CSS Custom Properties）
 
 ```css
-/* tokens.css */
+/* tokens.css — デザイントークン専用。アニメーション値には使わない */
 :root {
   /* カラーパレット */
   --color-primary:    #0063AA;
@@ -144,13 +206,9 @@ wakky-alcedo-portfolio/
   --color-bg:         #00112C;
   --color-text:       #F9FFFD;
 
-  /* シーン管理（JSで動的更新） */
-  --scroll-progress:  0;        /* 0.0〜1.0 */
-  --water-surface-y:  100vh;    /* 水面のY座標 */
-
-  /* アニメーション共通イージング */
-  --ease-dive:     cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-surface:  cubic-bezier(0.0, 0.0, 0.2, 1);
+  /* レイアウト定数 */
+  --layout-breakpoint-sm: 640px;
+  --layout-breakpoint-md: 1024px;
 
   /* z-indexレイヤー */
   --z-fish-bg:     1;
@@ -161,6 +219,21 @@ wakky-alcedo-portfolio/
   --z-kingfisher:  20;
   --z-header:      100;
 }
+
+/* アクセシビリティ：アニメーション全停止 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+```css
+/* global.css — safe-area-inset（ノッチ/Dynamic Island対応） */
+.header { padding-top: env(safe-area-inset-top); }
+.footer { padding-bottom: env(safe-area-inset-bottom); }
+.scroll-kingfisher { right: env(safe-area-inset-right, 0); }
 ```
 
 ---
@@ -176,10 +249,60 @@ wakky-alcedo-portfolio/
 | Layer 3 | 中 | 0.8 | blur(0.5px) | 中 | 4匹 |
 | Layer 4（手前）| 最近 | 1.0 | なし | 速 | 3匹 |
 
-各魚はBoidアルゴリズム（分離・整列・結合）の簡易版で動く。
-カーソル/クリックへの逃避行動は Layer 3・4 のみ適用。
+**Canvasのブラー実装方針：**
+CSS `filter: blur()` を Canvas 要素にかけない。代わりに Canvas 2D APIの `ctx.filter = 'blur(3px)'` で描画時に適用する。Layer1〜3はオフスクリーンCanvasに描いてから合成することで負荷を最小化する。
 
-DeviceOrientation時：レイヤーごとに異なるオフセット量でtransformX→奥行き感。
+```ts
+// オフスクリーンCanvas合成パターン
+const offscreen = new OffscreenCanvas(width, height);
+const ctx = offscreen.getContext('2d');
+ctx.filter = 'blur(3px)';
+// ...描画...
+mainCtx.drawImage(offscreen, 0, 0);
+```
+
+**Canvas共通実装ルール：**
+- `will-change: contents` を Canvas 要素に指定（`transform` ではない）
+- `ResizeObserver` でウィンドウリサイズを監視し `canvas.width = width * devicePixelRatio` を再設定
+- 全Canvasで `devicePixelRatio` に対応してRetinaディスプレイの粗さを防ぐ
+
+**アルゴリズム：** Boid軽量版（分離・整列・結合）。O(n²) で合計21匹は問題ないが、空間グリッド分割を用意しておく。
+
+**モバイル最適化：**
+- `adaptiveQuality.ts` でフレームレート監視（16ms超が連続すると `liteMode` 発動）
+- `liteMode` 時はレイヤー数を4→2に削減、個体数を半減
+
+**カーソル逃避：** Layer 3・4 のみ適用。
+
+**DeviceOrientation時：** レイヤーごとに異なるオフセット量で `translateX` → 奥行き感。
+
+---
+
+## DeviceOrientation 実装仕様
+
+iOS 13+ では `requestPermission()` が必須。以下の制約を必ず守る：
+
+```ts
+// deviceOrientation.ts
+export async function requestOrientationPermission(): Promise<boolean> {
+  if (typeof DeviceOrientationEvent === 'undefined') return false;
+
+  // iOS判定
+  if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+    try {
+      // ⚠️ 必ずユーザーのclickハンドラ内から直接呼ぶこと（setTimeout経由は拒否される）
+      const result = await (DeviceOrientationEvent as any).requestPermission();
+      return result === 'granted';
+    } catch {
+      return false; // 拒否時：「設定 → Safari → モーションセンサーを許可」案内UIを表示
+    }
+  }
+  // Android: パーミッション不要
+  return true;
+}
+```
+
+フッターのトグルの `click` ハンドラ内から上記関数を直接呼ぶ。拒否時はトグルを disabled にして「Safariの設定から再許可が必要です」ガイダンスを表示する。
 
 ---
 
@@ -187,11 +310,78 @@ DeviceOrientation時：レイヤーごとに異なるオフセット量でtransf
 
 | 対策 | 実装方法 |
 |------|----------|
-| アニメーション遅延ロード | Astro `client:idle`（Canvasスクリプト）|
-| バックグラウンド停止 | Page Visibility API → Canvas `cancelAnimationFrame` |
-| GPU合成 | Canvas要素に `will-change: transform` |
-| 画像最適化 | Astro組み込みの `<Image>` コンポーネント |
-| GSAP軽量化 | ScrollTriggerのみtree-shaking import |
+| コンテンツ先行表示 | Canvas/GSAP は `client:only` / `client:load` で遅延注入 |
+| ScrollTrigger位置ズレ防止 | `window.load` 後に `ScrollTrigger.refresh()` を呼ぶ |
+| バックグラウンド停止 | Page Visibility API → `cancelAnimationFrame` |
+| アダプティブ品質 | `adaptiveQuality.ts` でフレームレート監視 → `liteMode` 切り替え |
+| Canvas blur 効率化 | CSS filterでなく `ctx.filter` + OffscreenCanvas合成 |
+| Retina対応 | `canvas.width = el.clientWidth * devicePixelRatio` |
+| 画像最適化 | Astro `<Image>` コンポーネント（`width`/`height` 必須指定）|
+| CLS防止 | 全`<Image>`に`width`/`height`明示 |
+| SEO / OGP | BaseLayout.astroでコレクションのfrontmatterからdynamic meta生成 |
+| メールアドレス保護 | Base64エンコードをJSで復元する難読化を適用 |
+
+---
+
+## コンテンツコレクション型定義
+
+```ts
+// content/config.ts
+import { defineCollection, z } from 'astro:content';
+
+const works = defineCollection({
+  type: 'content',
+  schema: ({ image }) => z.object({
+    title:       z.string(),
+    description: z.string(),
+    date:        z.coerce.date(),
+    thumbnail:   image(),          // Astro画像最適化対応
+    tags:        z.array(z.string()).default([]),
+    draft:       z.boolean().default(false),
+  }),
+});
+
+const blog = defineCollection({
+  type: 'content',
+  schema: ({ image }) => z.object({
+    title:       z.string(),
+    description: z.string(),
+    date:        z.coerce.date(),
+    thumbnail:   image().optional(),
+    tags:        z.array(z.string()).default([]),
+    draft:       z.boolean().default(false),
+  }),
+});
+
+export const collections = { works, blog };
+```
+
+---
+
+## アニメーションモジュール設計原則
+
+`scrollScene.ts` はオーケストレーターとして薄く保つ。各モジュールは `init` / `destroy` インターフェースを持ち自己完結する。
+
+```ts
+// 各アニメーションモジュールの共通インターフェース
+interface AnimationModule {
+  init(): void;
+  destroy(): void;
+}
+
+// scrollScene.ts（オーケストレーターの例）
+import { kingfisher } from './kingfisher';
+import { fishSimulation } from '../canvas/fish';
+import { setupVisibility } from '../utils/visibility';
+
+export function initScrollScene() {
+  kingfisher.init();
+  fishSimulation.init();
+  setupVisibility([kingfisher, fishSimulation]); // 一括停止
+}
+```
+
+状態の共有はカスタムイベント（`dispatchEvent(new CustomEvent('scene:underwater'))`）で疎結合に伝達する。
 
 ---
 
@@ -200,39 +390,46 @@ DeviceOrientation時：レイヤーごとに異なるオフセット量でtransf
 ### Phase 0 — プロジェクト初期化（1セッション）
 - [ ] Astroプロジェクト生成 + TypeScript設定
 - [ ] アセットを `tmp_image/` → `src/assets/images/` に移動
-- [ ] CSS デザイントークン（tokens.css）
-- [ ] BaseLayout.astro（head・meta）
-- [ ] Header / Footer コンポーネント
+- [ ] CSS デザイントークン（tokens.css）+ `prefers-reduced-motion` + `safe-area-inset`
+- [ ] BaseLayout.astro（head・OGP・動的meta）
+- [ ] Header / Footer コンポーネント（傾きトグル含む）
+- [ ] `motionPreference.ts` / `visibility.ts` ユーティリティ
 
 ### Phase 1 — 静的ページ（1〜2セッション）
-- [ ] コンテンツコレクション定義（works・blog）
+- [ ] コンテンツコレクション定義（zodスキーマ）
 - [ ] Works・Blog のプレースホルダーコンテンツ作成
-- [ ] トップページ レイアウト（アニメーションなし）
+- [ ] トップページ レイアウト（アニメーションなし、モバイルファーストで実装）
 - [ ] Works一覧・詳細ページ
 - [ ] Blog一覧・詳細ページ
-- [ ] About・Contact ページ
+- [ ] About・Contact ページ（メールアドレス難読化含む）
+- [ ] 全ページレスポンシブ確認
 
 ### Phase 2 — コアアニメーション（1〜2セッション）
-- [ ] 水面リプル（Canvas ripple.ts）
-- [ ] カワセミ飛び込み演出（GSAP ScrollTrigger）
+- [ ] 水面リプル（Canvas ripple.ts、`ctx.filter` + OffscreenCanvas）
+- [ ] カワセミ飛び込み演出（GSAP ScrollTrigger、`window.load`後に初期化）
+- [ ] Works/Blog 横スクロールセクション（GSAPピン固定パターン）
 - [ ] アイドルアニメーション（放置で周期的に飛び込み）
 - [ ] スクロールカワセミ（右端スクロールバー役）
+- [ ] タッチデバイスでの横スクロール動作検証
 
-### Phase 3 — インタラクティブ演出（1セッション）
-- [ ] 魚シミュレーション（Boid軽量版、4レイヤー）
-- [ ] 魚の逃避行動（カーソル/クリック）
-- [ ] カワセミクリック → 水上浮上
-- [ ] WorksCard → クリック時カワセミ演出
+### Phase 3a — 魚シミュレーション（1セッション）
+- [ ] 4レイヤーCanvas構成（OffscreenCanvas + blur合成）
+- [ ] Boidアルゴリズム実装（分離・整列・結合）
+- [ ] `devicePixelRatio` 対応・ResizeObserver
+- [ ] `adaptiveQuality.ts`（フレームレート監視 + liteMode切り替え）
+- [ ] Page Visibility APIによる停止
 
-### Phase 4 — パフォーマンス・品質仕上げ（1セッション）
-- [ ] Page Visibility APIによるアニメーション停止
-- [ ] DeviceOrientation トグル（フッター）
-- [ ] レスポンシブ対応（スマホ）
-- [ ] Lighthouseスコア確認・チューニング
+### Phase 3b — インタラクティブ演出（1セッション）
+- [ ] 魚の逃避行動（カーソル/クリック、Layer 3・4のみ）
+- [ ] DeviceOrientationパララックス（`requestPermission` 実装）
+- [ ] カワセミクリック → 魚をキャッチ → 水上浮上
+- [ ] WorksCard クリック時カワセミ演出
 
-### Phase 5 — Phase 2機能（将来）
-- [ ] 時間帯・季節・天気による背景変化
-- [ ] 多言語対応（i18n）
+### Phase 4 — 品質仕上げ（1セッション）
+- [ ] Lighthouseスコア確認（Performance / Accessibility / SEO）
+- [ ] `prefers-reduced-motion` 全モジュール検証
+- [ ] Canvas `will-change: contents` ・GPU合成確認
+- [ ] 各種ブラウザ（Safari / Chrome / Firefox）動作検証
 
 ---
 
@@ -240,3 +437,4 @@ DeviceOrientation時：レイヤーごとに異なるオフセット量でtransf
 - [要件定義](./REQUIREMENTS.md)
 - [Astro公式](https://docs.astro.build)
 - [GSAP ScrollTrigger](https://gsap.com/docs/v3/Plugins/ScrollTrigger/)
+- [GSAP Horizontal Scrolling](https://gsap.com/docs/v3/Plugins/ScrollTrigger/demos/HorizontalScrolling/)
