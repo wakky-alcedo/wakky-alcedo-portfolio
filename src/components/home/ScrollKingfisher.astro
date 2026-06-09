@@ -1,0 +1,61 @@
+---
+import { Image } from 'astro:assets';
+import kawasemiFly from '../../assets/images/kawasemi_fly.png';
+---
+
+<button
+  type="button"
+  id="scroll-kingfisher"
+  class="scroll-kingfisher"
+  aria-label="水上に戻る"
+>
+  <Image
+    src={kawasemiFly}
+    alt=""
+    width={80}
+    height={80}
+    class="scroll-kingfisher__img"
+  />
+</button>
+
+<style>
+.scroll-kingfisher {
+  position: fixed;
+  top: 8%;
+  right: env(safe-area-inset-right, 0.5rem);
+  z-index: var(--z-kingfisher);
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  will-change: transform, top;
+}
+
+.scroll-kingfisher.is-visible {
+  opacity: 0.85;
+  pointer-events: auto;
+}
+
+.scroll-kingfisher:hover {
+  opacity: 1;
+}
+
+.scroll-kingfisher__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 17, 44, 0.4));
+}
+
+@media (max-width: 640px) {
+  .scroll-kingfisher {
+    width: 40px;
+    height: 40px;
+  }
+}
+</style>

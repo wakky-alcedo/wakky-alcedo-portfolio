@@ -35,6 +35,8 @@ const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month:
   background: rgba(0, 99, 170, 0.08);
   border: 1px solid rgba(104, 206, 214, 0.15);
   transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  flex-shrink: 0;
+  width: min(85vw, 420px);
 }
 
 .blog-card:hover {

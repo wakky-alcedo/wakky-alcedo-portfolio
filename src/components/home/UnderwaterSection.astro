@@ -15,24 +15,24 @@ const allBlog = (await getCollection('blog', ({ data }) => !data.draft))
 
 <div class="underwater" id="underwater">
   <!-- Works -->
-  <section class="underwater__section" id="works">
-    <div class="underwater__container">
+  <section class="underwater__section hscroll" id="works" data-hscroll>
+    <div class="underwater__container hscroll__head">
       <SectionTitle title="Works" subtitle="制作物・プロジェクト" />
-      <div class="works-scroll" id="works-scroll">
-        {allWorks.map(work => <WorkCard work={work} />)}
-      </div>
-      <a href="/works" class="underwater__more-link">すべての作品を見る →</a>
+    </div>
+    <div class="hscroll__track" data-hscroll-track>
+      {allWorks.map(work => <WorkCard work={work} />)}
+      <a href="/works" class="hscroll__more">すべての作品を見る →</a>
     </div>
   </section>
 
   <!-- Blog -->
-  <section class="underwater__section" id="blog">
-    <div class="underwater__container">
+  <section class="underwater__section hscroll" id="blog" data-hscroll>
+    <div class="underwater__container hscroll__head">
       <SectionTitle title="Blog" subtitle="活動記録・思考メモ" />
-      <div class="blog-list">
-        {allBlog.slice(0, 5).map(post => <BlogCard post={post} />)}
-      </div>
-      <a href="/blog" class="underwater__more-link">すべての記事を見る →</a>
+    </div>
+    <div class="hscroll__track" data-hscroll-track>
+      {allBlog.slice(0, 5).map(post => <BlogCard post={post} />)}
+      <a href="/blog" class="hscroll__more">すべての記事を見る →</a>
     </div>
   </section>
 
@@ -125,48 +125,47 @@ const allBlog = (await getCollection('blog', ({ data }) => !data.draft))
   padding: 0 2rem;
 }
 
-/* Works横スクロール */
-.works-scroll {
-  display: flex;
-  gap: 1.25rem;
-  overflow-x: auto;
-  padding-bottom: 1rem;
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-primary) transparent;
-}
-
-.works-scroll::-webkit-scrollbar {
-  height: 4px;
-}
-
-.works-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.works-scroll::-webkit-scrollbar-thumb {
-  background: var(--color-primary);
-  border-radius: 2px;
-}
-
-/* Blog一覧 */
-.blog-list {
+/* 横スクロールセクション（GSAPピン固定パターン） */
+.hscroll {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 4rem 0;
+  overflow: hidden;
 }
 
-.underwater__more-link {
-  display: inline-block;
-  margin-top: 1.5rem;
-  font-size: 0.9rem;
+.hscroll__head {
+  flex-shrink: 0;
+}
+
+.hscroll__head :global(.section-title) {
+  margin-bottom: 1.5rem;
+}
+
+.hscroll__track {
+  display: flex;
+  align-items: stretch;
+  gap: 1.25rem;
+  padding-left: max(2rem, calc((100vw - 1200px) / 2));
+  padding-right: 2rem;
+  width: max-content;
+  will-change: transform;
+}
+
+.hscroll__more {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 200px;
+  font-size: 0.95rem;
   color: var(--color-secondary);
   opacity: 0.8;
-  transition: opacity 0.2s, transform 0.2s;
+  transition: opacity 0.2s;
 }
 
-.underwater__more-link:hover {
+.hscroll__more:hover {
   opacity: 1;
-  transform: translateX(4px);
 }
 
 /* About */
