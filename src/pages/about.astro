@@ -1,0 +1,196 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../components/layout/BaseLayout.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import SectionTitle from '../components/common/SectionTitle.astro';
+import profilePicture from '../assets/images/profile_picture.jpg';
+
+const skills = [
+  { name: 'ROS2',       category: 'Robot' },
+  { name: 'Python',     category: 'Language' },
+  { name: 'C++',        category: 'Language' },
+  { name: 'TypeScript', category: 'Language' },
+  { name: 'Raspberry Pi', category: 'Hardware' },
+  { name: 'Docker',     category: 'DevOps' },
+  { name: 'YOLO',       category: 'AI/ML' },
+];
+
+const timeline = [
+  { year: '2022', event: '大学入学・ロボット研究会に入会' },
+  { year: '2023', event: 'IoTセンサーネットワーク開発' },
+  { year: '2024', event: 'RoboCup Japan Open 出場 / トライアスロン初完走' },
+];
+---
+
+<BaseLayout title="About" description="Wakky-Alcedo のプロフィール">
+  <Header />
+  <main class="page-main">
+    <div class="page-container">
+      <SectionTitle title="About" subtitle="自己紹介" />
+
+      <div class="about-profile">
+        <Image
+          src={profilePicture}
+          alt="プロフィール写真"
+          width={200}
+          height={200}
+          class="about-profile__photo"
+        />
+        <div class="about-profile__bio">
+          <h2 class="about-profile__name">Wakky-Alcedo</h2>
+          <p>ロボット・IoT・トライアスロンを愛するエンジニア。カワセミ（Alcedo）のように、素早く深く何事にも飛び込む姿勢で技術と挑戦に向き合っています。</p>
+          <p>自律ロボットの開発からIoTシステムの設計、そしてフルスタックWeb開発まで幅広く取り組んでいます。</p>
+        </div>
+      </div>
+
+      <section class="about-section">
+        <h2 class="about-section__title">Skills</h2>
+        <ul class="skills-list">
+          {skills.map(skill => (
+            <li class="skill-item">
+              <span class="skill-item__name">{skill.name}</span>
+              <span class="skill-item__cat">{skill.category}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section class="about-section">
+        <h2 class="about-section__title">Timeline</h2>
+        <ol class="timeline">
+          {timeline.map(item => (
+            <li class="timeline__item">
+              <span class="timeline__year">{item.year}</span>
+              <span class="timeline__event">{item.event}</span>
+            </li>
+          ))}
+        </ol>
+      </section>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+.page-main { padding-top: 80px; min-height: 100vh; }
+.page-container { max-width: 800px; margin: 0 auto; padding: 4rem 2rem; }
+
+.about-profile {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  margin-bottom: 3rem;
+}
+
+.about-profile__photo {
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 3px solid var(--color-secondary);
+  object-fit: cover;
+}
+
+.about-profile__name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.about-profile__bio p {
+  color: var(--color-text);
+  opacity: 0.85;
+  line-height: 1.8;
+  margin-bottom: 0.75rem;
+}
+
+.about-section {
+  margin-bottom: 3rem;
+}
+
+.about-section__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(104, 206, 214, 0.2);
+}
+
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  list-style: none;
+}
+
+.skill-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 99, 170, 0.15);
+  border: 1px solid rgba(104, 206, 214, 0.2);
+  border-radius: 10px;
+  min-width: 80px;
+}
+
+.skill-item__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.skill-item__cat {
+  font-size: 0.65rem;
+  color: var(--color-secondary);
+  opacity: 0.7;
+}
+
+.timeline {
+  list-style: none;
+  border-left: 2px solid rgba(104, 206, 214, 0.3);
+  padding-left: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.timeline__item {
+  position: relative;
+  display: flex;
+  gap: 1.5rem;
+  align-items: baseline;
+}
+
+.timeline__item::before {
+  content: '';
+  position: absolute;
+  left: -1.625rem;
+  top: 0.35rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-secondary);
+  border: 2px solid var(--color-bg);
+}
+
+.timeline__year {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  min-width: 3.5rem;
+  flex-shrink: 0;
+}
+
+.timeline__event {
+  color: var(--color-text);
+  opacity: 0.85;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 640px) {
+  .about-profile { flex-direction: column; align-items: center; text-align: center; }
+}
+</style>

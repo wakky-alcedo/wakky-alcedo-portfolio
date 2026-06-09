@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../components/layout/BaseLayout.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+import HeroSection from '../components/home/HeroSection.astro';
+import UnderwaterSection from '../components/home/UnderwaterSection.astro';
+---
+
+<BaseLayout title="Home">
+  <Header />
+  <main>
+    <HeroSection />
+    <UnderwaterSection />
+  </main>
+  <Footer />
+</BaseLayout>

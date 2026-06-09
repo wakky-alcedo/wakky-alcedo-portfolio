@@ -1,0 +1,30 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../components/layout/BaseLayout.astro';
+import Header from '../../components/layout/Header.astro';
+import Footer from '../../components/layout/Footer.astro';
+import BlogCard from '../../components/blog/BlogCard.astro';
+import SectionTitle from '../../components/common/SectionTitle.astro';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+---
+
+<BaseLayout title="Blog" description="活動記録・思考メモ一覧">
+  <Header />
+  <main class="page-main">
+    <div class="page-container">
+      <SectionTitle title="Blog" subtitle="活動記録・思考メモ" />
+      <div class="blog-list">
+        {posts.map(post => <BlogCard post={post} />)}
+      </div>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+.page-main { padding-top: 80px; min-height: 100vh; }
+.page-container { max-width: 800px; margin: 0 auto; padding: 4rem 2rem; }
+.blog-list { display: flex; flex-direction: column; gap: 0.75rem; }
+</style>

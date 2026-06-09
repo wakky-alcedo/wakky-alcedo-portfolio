@@ -1,0 +1,43 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../components/layout/BaseLayout.astro';
+import Header from '../../components/layout/Header.astro';
+import Footer from '../../components/layout/Footer.astro';
+import WorkCard from '../../components/works/WorkCard.astro';
+import SectionTitle from '../../components/common/SectionTitle.astro';
+
+const works = (await getCollection('works', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+---
+
+<BaseLayout title="Works" description="制作物・プロジェクト一覧">
+  <Header />
+  <main class="page-main">
+    <div class="page-container">
+      <SectionTitle title="Works" subtitle="制作物・プロジェクト" />
+      <div class="works-grid">
+        {works.map(work => <WorkCard work={work} />)}
+      </div>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+.page-main {
+  padding-top: 80px;
+  min-height: 100vh;
+}
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+}
+
+.works-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+</style>
