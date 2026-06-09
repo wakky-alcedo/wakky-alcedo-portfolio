@@ -1,0 +1,30 @@
+/* tokens.css — デザイントークン専用。アニメーション値には使わない */
+:root {
+  /* カラーパレット */
+  --color-primary:    #0063AA;
+  --color-secondary:  #68CED6;
+  --color-accent:     #FFA100;
+  --color-bg:         #00112C;
+  --color-text:       #F9FFFD;
+
+  /* レイアウト定数 */
+  --layout-breakpoint-sm: 640px;
+  --layout-breakpoint-md: 1024px;
+
+  /* z-indexレイヤー */
+  --z-fish-bg:     1;
+  --z-fish-mid:    2;
+  --z-fish-front:  3;
+  --z-fish-near:   4;
+  --z-ui:          10;
+  --z-kingfisher:  20;
+  --z-header:      100;
+}
+
+/* アクセシビリティ：アニメーション全停止 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
