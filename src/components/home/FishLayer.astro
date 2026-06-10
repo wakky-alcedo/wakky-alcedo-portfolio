@@ -1,0 +1,29 @@
+---
+import { getImage } from 'astro:assets';
+import fish1 from '../../assets/images/fish_1.png';
+import fish2 from '../../assets/images/fish_2.png';
+
+const fishImg1 = await getImage({ src: fish1, width: 96 });
+const fishImg2 = await getImage({ src: fish2, width: 96 });
+---
+
+<canvas
+  id="fish-layer"
+  class="fish-layer"
+  role="img"
+  aria-label="水中を泳ぐ魚のアニメーション"
+  data-fish1={fishImg1.src}
+  data-fish2={fishImg2.src}
+></canvas>
+
+<style>
+.fish-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: var(--z-fish-bg);
+  will-change: contents;
+}
+</style>

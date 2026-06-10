@@ -4,6 +4,7 @@ import { Image } from 'astro:assets';
 import WorkCard from '../works/WorkCard.astro';
 import BlogCard from '../blog/BlogCard.astro';
 import SectionTitle from '../common/SectionTitle.astro';
+import FishLayer from './FishLayer.astro';
 import profilePicture from '../../assets/images/profile_picture.jpg';
 
 const allWorks = (await getCollection('works', ({ data }) => !data.draft))
@@ -14,6 +15,8 @@ const allBlog = (await getCollection('blog', ({ data }) => !data.draft))
 ---
 
 <div class="underwater" id="underwater">
+  <FishLayer />
+
   <!-- Works -->
   <section class="underwater__section hscroll" id="works" data-hscroll>
     <div class="underwater__container hscroll__head">
@@ -111,6 +114,8 @@ const allBlog = (await getCollection('blog', ({ data }) => !data.draft))
 }
 
 .underwater__section {
+  position: relative;
+  z-index: var(--z-ui);
   padding: 5rem 0;
   border-bottom: 1px solid rgba(104, 206, 214, 0.1);
 }

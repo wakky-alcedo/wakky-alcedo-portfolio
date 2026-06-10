@@ -3,6 +3,7 @@ import { kingfisher } from './kingfisher';
 import { horizontalScroll } from './horizontalScroll';
 import { scrollKingfisher } from './scrollKingfisher';
 import { WaterRipple } from '../canvas/ripple';
+import { FishSimulation } from '../canvas/fish';
 import { setupVisibility, type Pauseable } from '../utils/visibility';
 
 let started = false;
@@ -17,9 +18,14 @@ export function initScrollScene(): void {
 
   const modules: Pauseable[] = [kingfisher, horizontalScroll, scrollKingfisher];
 
-  const canvas = document.getElementById('water-surface');
-  if (canvas instanceof HTMLCanvasElement) {
-    modules.push(new WaterRipple(canvas));
+  const rippleCanvas = document.getElementById('water-surface');
+  if (rippleCanvas instanceof HTMLCanvasElement) {
+    modules.push(new WaterRipple(rippleCanvas));
+  }
+
+  const fishCanvas = document.getElementById('fish-layer');
+  if (fishCanvas instanceof HTMLCanvasElement) {
+    modules.push(new FishSimulation(fishCanvas));
   }
 
   modules.forEach((module) => module.init());
