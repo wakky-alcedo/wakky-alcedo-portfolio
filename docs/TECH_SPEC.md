@@ -420,15 +420,21 @@ export function initScrollScene() {
 - [ ] Page Visibility APIによる停止
 
 ### Phase 3b — インタラクティブ演出（1セッション）
-- [ ] 魚の逃避行動（カーソル/クリック、Layer 3・4のみ）
-- [ ] DeviceOrientationパララックス（`requestPermission` 実装）
-- [ ] カワセミクリック → 魚をキャッチ → 水上浮上
-- [ ] WorksCard クリック時カワセミ演出
+- [x] 魚の逃避行動（カーソル/クリック、Layer 3・4のみ）
+- [x] DeviceOrientationパララックス（`requestPermission` 実装）
+- [x] カワセミクリック → 魚をキャッチ → 水上浮上
+- [x] WorksCard クリック時カワセミ演出
 
 ### Phase 4 — 品質仕上げ（1セッション）
-- [ ] Lighthouseスコア確認（Performance / Accessibility / SEO）
-- [ ] `prefers-reduced-motion` 全モジュール検証
-- [ ] Canvas `will-change: contents` ・GPU合成確認
+- [x] Lighthouseスコア確認（Performance / Accessibility / SEO）
+  - `astro build` + `astro preview` に対して計測: Performance 0.97 / Accessibility 1.0 / Best Practices 1.0 / SEO 1.0
+  - カワセミ画像に `densities={[1,2]}` ・LCP画像に `fetchpriority="high"` を追加して画像解像度・LCP発見性を改善
+- [x] `prefers-reduced-motion` 全モジュール検証
+  - `tokens.css`: `animation-iteration-count: 1` と `scroll-behavior: auto` を追加し、無限ループアニメーションのちらつき・スムーススクロールを停止
+  - `UnderwaterSection.astro`: reduced-motion時はWorks/Blogの横スクロールピンが効かないため `.hscroll`/`.hscroll__track` を折り返しレイアウトに切り替え、全カードへアクセス可能に
+  - `scrollKingfisher.ts`: reduced-motion時は `window.scrollTo` を `behavior: 'auto'` に
+- [x] Canvas `will-change: contents` ・GPU合成確認
+  - FishLayer / WaterSurface は `will-change: contents`、カワセミ系は `will-change: transform` で構成済みであることを確認
 - [ ] 各種ブラウザ（Safari / Chrome / Firefox）動作検証
 
 ---
