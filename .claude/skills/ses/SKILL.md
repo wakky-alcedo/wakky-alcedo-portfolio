@@ -27,7 +27,10 @@ ses スキル
 作成した引き継ぎ内容を、次のコマンドでクリップボードにコピーしてください。
 
 Mac の場合：pbcopy
-Windows の場合：clip
+Windows の場合：PowerShellの `Set-Clipboard` コマンドレットを使うこと。
+  - `clip` コマンドはPowerShellのパイプ経由だと日本語が文字化けするため使用しないこと。
+  - 引き継ぎ内容を一時ファイルに書き出した上で、`Get-Content -Raw -Encoding UTF8 <path> | Set-Clipboard` を実行する。
+  - 完了後、一時ファイルは削除する。
 
 
 ステップ3：セッションをリセットする
