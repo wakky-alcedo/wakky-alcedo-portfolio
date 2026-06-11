@@ -37,14 +37,17 @@ import WaterSurface from './WaterSurface.astro';
         alt="とまり木に止まるカワセミのイラスト"
         width={220}
         height={220}
+        densities={[1, 2]}
         class="hero__bird-img hero__bird-img--perch animate-float"
         loading="eager"
+        fetchpriority="high"
       />
       <Image
         src={kawasemiDive}
         alt=""
         width={220}
         height={220}
+        densities={[1, 2]}
         class="hero__bird-img hero__bird-img--dive"
         loading="eager"
       />
@@ -53,6 +56,7 @@ import WaterSurface from './WaterSurface.astro';
         alt=""
         width={220}
         height={220}
+        densities={[1, 2]}
         class="hero__bird-img hero__bird-img--fly"
         loading="eager"
       />
