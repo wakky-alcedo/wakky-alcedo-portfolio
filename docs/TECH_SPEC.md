@@ -436,6 +436,12 @@ export function initScrollScene() {
 - [x] Canvas `will-change: contents` ・GPU合成確認
   - FishLayer / WaterSurface は `will-change: contents`、カワセミ系は `will-change: transform` で構成済みであることを確認
 - [ ] 各種ブラウザ（Safari / Chrome / Firefox）動作検証
+  - Chrome（Chromium系）はpreviewツールで確認済み。Safari/Firefoxの実機検証はWindows環境では不可のため、ユーザー側での確認待ち
+  - 確認観点：
+    - GSAP ScrollTriggerによる横スクロールセクション（Works/Blog）のピン固定・スクロール連動
+    - Canvas演出（魚Boid・水面リプル・カワセミ捕食演出）の描画とフレームレート
+    - `prefers-reduced-motion` 有効時のフォールバックレイアウト（横スクロール→折り返し）
+    - DeviceOrientationパララックス（iOS Safariの権限ダイアログ含む）
 
 ---
 
