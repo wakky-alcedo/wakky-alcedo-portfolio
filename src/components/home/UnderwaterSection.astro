@@ -135,7 +135,6 @@ const allBlog = (await getCollection('blog', ({ data }) => !data.draft))
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 100vh;
   padding: 4rem 0;
   overflow: hidden;
 }
@@ -230,7 +229,6 @@ const allBlog = (await getCollection('blog', ({ data }) => !data.draft))
    折り返し表示にして全カードへアクセス可能にする */
 @media (prefers-reduced-motion: reduce) {
   .hscroll {
-    min-height: auto;
     overflow: visible;
   }
 
