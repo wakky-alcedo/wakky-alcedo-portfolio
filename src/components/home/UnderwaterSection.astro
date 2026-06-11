@@ -225,4 +225,18 @@ const allBlog = (await getCollection('blog', ({ data }) => !data.draft))
     text-align: center;
   }
 }
+
+/* prefers-reduced-motion: 横スクロールピン演出を行わないため、
+   折り返し表示にして全カードへアクセス可能にする */
+@media (prefers-reduced-motion: reduce) {
+  .hscroll {
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .hscroll__track {
+    flex-wrap: wrap;
+    width: auto;
+  }
+}
 </style>
