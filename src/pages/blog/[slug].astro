@@ -1,5 +1,6 @@
 ---
 import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
 import BaseLayout from '../../components/layout/BaseLayout.astro';
 import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
@@ -10,7 +11,7 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const { title, description, date, tags } = post.data;
+const { title, description, date, thumbnail, tags } = post.data;
 const { Content } = await render(post);
 const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
 ---
@@ -19,17 +20,30 @@ const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month:
   <Header />
   <main class="page-main">
     <article class="blog-article">
-      <header class="blog-article__header">
-        <ul class="blog-article__tags">
-          {tags.map(tag => <li class="blog-article__tag">{tag}</li>)}
-        </ul>
-        <h1 class="blog-article__title">{title}</h1>
-        <time class="blog-article__date" datetime={date.toISOString()}>{formattedDate}</time>
-      </header>
-      <div class="prose">
-        <Content />
+      {thumbnail && (
+        <div class="blog-article__hero">
+          <Image
+            src={thumbnail}
+            alt={title}
+            width={1200}
+            height={630}
+            class="blog-article__thumb"
+          />
+        </div>
+      )}
+      <div class="blog-article__body">
+        <header class="blog-article__header">
+          <ul class="blog-article__tags">
+            {tags.map(tag => <li class="blog-article__tag">{tag}</li>)}
+          </ul>
+          <h1 class="blog-article__title">{title}</h1>
+          <time class="blog-article__date" datetime={date.toISOString()}>{formattedDate}</time>
+        </header>
+        <div class="prose">
+          <Content />
+        </div>
+        <a href="/blog" class="back-link">← Blog 一覧に戻る</a>
       </div>
-      <a href="/blog" class="back-link">← Blog 一覧に戻る</a>
     </article>
   </main>
   <Footer />
@@ -38,10 +52,22 @@ const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month:
 <style>
 .page-main { padding-top: 64px; min-height: 100vh; }
 
-.blog-article {
+.blog-article__hero {
+  width: 100%;
+  max-height: 480px;
+  overflow: hidden;
+}
+
+.blog-article__thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.blog-article__body {
   max-width: 800px;
   margin: 0 auto;
-  padding: 4rem 2rem;
+  padding: 3rem 2rem;
 }
 
 .blog-article__tags {
