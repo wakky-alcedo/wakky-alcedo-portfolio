@@ -1,0 +1,9 @@
+node_modules
+dist
+.astro
+.git
+.vscode
+99_System
+docs
+tmp_image
+*.log
