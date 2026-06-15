@@ -5,22 +5,30 @@ import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
 import SectionTitle from '../components/common/SectionTitle.astro';
 import profilePicture from '../assets/images/profile_picture.jpg';
-
-const skills = [
-  { name: 'ROS2',       category: 'Robot' },
-  { name: 'Python',     category: 'Language' },
-  { name: 'C++',        category: 'Language' },
-  { name: 'TypeScript', category: 'Language' },
-  { name: 'Raspberry Pi', category: 'Hardware' },
-  { name: 'Docker',     category: 'DevOps' },
-  { name: 'YOLO',       category: 'AI/ML' },
-];
+import wakkyAlcedoIcon from '../assets/images/wakky_alcedo_icon.jpg';
 
 const timeline = [
-  { year: '2022', event: '大学入学・ロボット研究会に入会' },
-  { year: '2023', event: 'IoTセンサーネットワーク開発' },
-  { year: '2024', event: 'RoboCup Japan Open 出場 / トライアスロン初完走' },
+  { date: '2024/03', event: '群馬工業高等専門学校 機械工学科 卒業' },
+  { date: '2024/04', event: '東京工業大学（現・東京科学大学）工学院機械系 編入学' },
+  { date: '2026/03', event: '同 卒業' },
+  { date: '2026/04', event: '東京科学大学 工学院機械系 エンジニアリングデザインコース 入学' },
 ];
+
+const certifications = [
+  '普通自動車第一種運転免許',
+  '第三級アマチュア無線技士',
+];
+
+const links = [
+  { label: 'Twitter / X', value: '@wakky_alcedo', href: 'https://twitter.com/wakky_alcedo' },
+  { label: 'Instagram', value: '@taku.t_0716', href: 'https://www.instagram.com/taku.t_0716/' },
+  { label: 'GitHub', value: 'github.com/wakky-alcedo', href: 'https://github.com/wakky-alcedo' },
+  { label: 'note', value: 'note.com/wakkyalcedo', href: 'https://note.com/wakkyalcedo' },
+  { label: 'Qiita', value: 'qiita.com/wakky-alcedo', href: 'https://qiita.com/wakky-alcedo' },
+  { label: '所属研究室', value: 'Science Tokyo SDDL', href: 'http://www.sddl.mech.e.titech.ac.jp' },
+];
+
+const emailEncoded = 'd2Fra3kuYWxjZWRvQGdtYWlsLmNvbQ==';
 ---
 
 <BaseLayout title="About" description="Wakky-Alcedo のプロフィール">
@@ -30,30 +38,94 @@ const timeline = [
       <SectionTitle title="About" subtitle="自己紹介" />
 
       <div class="about-profile">
-        <Image
-          src={profilePicture}
-          alt="プロフィール写真"
-          width={200}
-          height={200}
-          class="about-profile__photo"
-        />
+        <div class="about-profile__identity">
+          <div class="about-profile__photo-wrap">
+            <Image
+              src={profilePicture}
+              alt="プロフィール写真"
+              width={200}
+              height={200}
+              class="about-profile__photo about-profile__photo--default"
+            />
+            <Image
+              src={wakkyAlcedoIcon}
+              alt="Wakky Alcedo アイコン"
+              width={200}
+              height={200}
+              class="about-profile__photo about-profile__photo--hover"
+            />
+          </div>
+          <h2 class="about-profile__name">
+            <span class="about-profile__name-text about-profile__name-text--default">立脇 拓</span>
+            <span class="about-profile__name-text about-profile__name-text--hover">Wakky Alcedo</span>
+          </h2>
+        </div>
+
         <div class="about-profile__bio">
-          <h2 class="about-profile__name">Wakky-Alcedo</h2>
-          <p>ロボット・IoT・トライアスロンを愛するエンジニア。カワセミ（Alcedo）のように、素早く深く何事にも飛び込む姿勢で技術と挑戦に向き合っています。</p>
-          <p>自律ロボットの開発からIoTシステムの設計、そしてフルスタックWeb開発まで幅広く取り組んでいます。</p>
+          <p>小中，高専，大学と，一貫してものづくりをやってきました．手を動かして何かを作ることと，イベントの企画運営が好きです。発明考案展出展，高専ロボコン，全国ロボコン交流会幹事，商品開発インターン，受託開発アルバイト，画像認識&ロボット制御インターン，文化祭の企画・製作・運営などをしてきました。</p>
+
+          <div class="about-bio__quote">
+            <p class="about-bio__quote-title">「とりあえずポチる」</p>
+            <p>あのとき挑戦しておけばよかったという後悔はしたくないと思い，フットワーク軽く生きています。九州-群馬100km自転車旅をしたり，トライアスロンに参加したり，etc.</p>
+            <ul>
+              <li><a href="https://www.instagram.com/stories/highlights/18061523467329284/" target="_blank" rel="noopener noreferrer">九州-群馬自転車旅の様子</a></li>
+              <li><a href="https://note.com/wakkyalcedo/n/n3cac58ecbdc4" target="_blank" rel="noopener noreferrer">トライアスロン参戦記</a></li>
+            </ul>
+          </div>
+
+          <div class="about-bio__quote">
+            <p class="about-bio__quote-title">「不満があるなら，自分で作ればいいじゃない」</p>
+            <p>例えば，</p>
+            <ul>
+              <li>照明やエアコンの自動化</li>
+              <li>自分用アプリ（ToDo管理，習慣管理，PC使用時間可視化）の開発</li>
+              <li>3Dプリンタによる蛇口のノブや靴棚の自作</li>
+            </ul>
+            <p>など，身の回りの自動化や便利グッズの自作をやっています。また，大学の学園祭で，子どもたち向けのリズムゲームやロボット体験企画を主催しています。子どもたちが，すごく楽しそうにいきいきと遊んでくれるのを見ると，企画してよかったなと思います。</p>
+          </div>
         </div>
       </div>
 
       <section class="about-section">
         <h2 class="about-section__title">Skills</h2>
-        <ul class="skills-list">
-          {skills.map(skill => (
-            <li class="skill-item">
-              <span class="skill-item__name">{skill.name}</span>
-              <span class="skill-item__cat">{skill.category}</span>
-            </li>
-          ))}
-        </ul>
+        <div class="skills-detail">
+          <div class="skills-detail__group">
+            <h3 class="skills-detail__heading">組み込み制御</h3>
+            <p class="skills-detail__intro">メインスキルです。</p>
+            <ul>
+              <li><strong>STM32</strong>（CubeIDE or VSCode PlatformIO）：ロボコンや高専文化祭にて，STM32のCubeIDEを用いた組み込み制御を担当</li>
+              <li><strong>ESP32</strong>（VSCode PlatformIO、Arduinoベース）：趣味のIoT機器開発、およびアルバイト先で使用</li>
+              <li><strong>Raspberry Pi</strong>：趣味のIoT機器開発などで使用</li>
+              <li><strong>ROS2</strong>：アルバイトで7か月ほど使っていました。</li>
+            </ul>
+          </div>
+
+          <div class="skills-detail__group">
+            <h3 class="skills-detail__heading">機械設計等</h3>
+            <p class="skills-detail__intro">機械専攻なのと，趣味で色々作っているので，一通りはできます。</p>
+            <ul>
+              <li>2DCAD: <strong>jw_cad</strong>（約5年）</li>
+              <li>3DCAD: <strong>SOLIDWORKS</strong>（約8年），<strong>Fusion360</strong>（約1年），<strong>Inventor</strong>（約1年）</li>
+              <li>my <strong>3Dプリンタ</strong>: Artillery Sidewinder-X1(2020購入), Bambu Lab A1 mini(2025購入)</li>
+            </ul>
+          </div>
+
+          <div class="skills-detail__group">
+            <h3 class="skills-detail__heading">プログラム言語</h3>
+            <ul>
+              <li><strong>C/C++</strong>：メイン言語，組み込みなどで8年くらいの付き合いです</li>
+              <li><strong>Python</strong>：たまに...</li>
+              <li>その他，Matlab，Excel VBA，GoogleAppScriptなど経験あり</li>
+            </ul>
+          </div>
+
+          <div class="skills-detail__group">
+            <h3 class="skills-detail__heading">その他</h3>
+            <ul>
+              <li><strong>YOLO</strong>：アルバイトで7か月ほどやっていました。</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="about-section">
@@ -61,16 +133,59 @@ const timeline = [
         <ol class="timeline">
           {timeline.map(item => (
             <li class="timeline__item">
-              <span class="timeline__year">{item.year}</span>
+              <span class="timeline__year">{item.date}</span>
               <span class="timeline__event">{item.event}</span>
             </li>
           ))}
         </ol>
+
+        <div class="about-section__sub">
+          <h3 class="about-section__sub-title">Certification</h3>
+          <ul class="certification-list">
+            {certifications.map(cert => (
+              <li>{cert}</li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section class="about-section">
+        <h2 class="about-section__title">Link</h2>
+        <ul class="link-list">
+          <li class="link-list__item">
+            <span class="link-list__label">Email</span>
+            <button
+              class="link-list__email"
+              id="about-reveal-email"
+              data-email={emailEncoded}
+              aria-label="メールアドレスを表示"
+            >クリックして表示</button>
+          </li>
+          {links.map(link => (
+            <li class="link-list__item">
+              <span class="link-list__label">{link.label}</span>
+              <a href={link.href} target="_blank" rel="noopener noreferrer">{link.value}</a>
+            </li>
+          ))}
+        </ul>
       </section>
     </div>
   </main>
   <Footer />
 </BaseLayout>
+
+<script>
+  const btn = document.getElementById('about-reveal-email') as HTMLButtonElement | null;
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const decoded = atob(btn.dataset.email ?? '');
+      const link = document.createElement('a');
+      link.href = `mailto:${decoded}`;
+      link.textContent = decoded;
+      btn.replaceWith(link);
+    });
+  }
+</script>
 
 <style>
 .page-main { padding-top: 80px; min-height: 100vh; }
@@ -83,18 +198,59 @@ const timeline = [
   margin-bottom: 3rem;
 }
 
-.about-profile__photo {
-  border-radius: 50%;
+.about-profile__identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
   flex-shrink: 0;
+}
+
+.about-profile__photo-wrap {
+  position: relative;
+  width: 200px;
+  height: 200px;
+}
+
+.about-profile__photo {
+  position: absolute;
+  inset: 0;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
   border: 3px solid var(--color-secondary);
   object-fit: cover;
+  transition: opacity 0.3s ease;
+}
+
+.about-profile__photo--hover {
+  opacity: 0;
+}
+
+.about-profile__identity:hover .about-profile__photo--default {
+  opacity: 0;
+}
+
+.about-profile__identity:hover .about-profile__photo--hover {
+  opacity: 1;
 }
 
 .about-profile__name {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-secondary);
-  margin-bottom: 0.75rem;
+}
+
+.about-profile__name-text--hover {
+  display: none;
+}
+
+.about-profile__identity:hover .about-profile__name-text--default {
+  display: none;
+}
+
+.about-profile__identity:hover .about-profile__name-text--hover {
+  display: inline;
 }
 
 .about-profile__bio p {
@@ -102,6 +258,31 @@ const timeline = [
   opacity: 0.85;
   line-height: 1.8;
   margin-bottom: 0.75rem;
+}
+
+.about-bio__quote {
+  margin: 1.25rem 0;
+  padding: 1rem 1.25rem;
+  background: rgba(0, 99, 170, 0.1);
+  border: 1px solid rgba(104, 206, 214, 0.2);
+  border-radius: 10px;
+}
+
+.about-bio__quote-title {
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.about-bio__quote ul {
+  color: var(--color-text);
+  opacity: 0.85;
+  line-height: 1.8;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.about-bio__quote a {
+  color: var(--color-secondary);
 }
 
 .about-section {
@@ -117,35 +298,26 @@ const timeline = [
   border-bottom: 1px solid rgba(104, 206, 214, 0.2);
 }
 
-.skills-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  list-style: none;
+.skills-detail__group {
+  margin-bottom: 1.5rem;
 }
 
-.skill-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.75rem 1rem;
-  background: rgba(0, 99, 170, 0.15);
-  border: 1px solid rgba(104, 206, 214, 0.2);
-  border-radius: 10px;
-  min-width: 80px;
+.skills-detail__heading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  margin-bottom: 0.5rem;
 }
 
-.skill-item__name {
-  font-size: 0.9rem;
-  font-weight: 600;
+.skills-detail__intro,
+.skills-detail__group ul {
   color: var(--color-text);
+  opacity: 0.85;
+  line-height: 1.8;
 }
 
-.skill-item__cat {
-  font-size: 0.65rem;
-  color: var(--color-secondary);
-  opacity: 0.7;
+.skills-detail__group ul {
+  padding-left: 1.5rem;
 }
 
 .timeline {
@@ -180,7 +352,7 @@ const timeline = [
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--color-accent);
-  min-width: 3.5rem;
+  min-width: 4.5rem;
   flex-shrink: 0;
 }
 
@@ -188,6 +360,58 @@ const timeline = [
   color: var(--color-text);
   opacity: 0.85;
   font-size: 0.95rem;
+}
+
+.about-section__sub {
+  margin-top: 1.5rem;
+}
+
+.about-section__sub-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  margin-bottom: 0.5rem;
+}
+
+.certification-list {
+  color: var(--color-text);
+  opacity: 0.85;
+  line-height: 1.8;
+  padding-left: 1.5rem;
+}
+
+.link-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.link-list__item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  color: var(--color-text);
+}
+
+.link-list__label {
+  font-weight: 700;
+  color: var(--color-accent);
+  min-width: 6rem;
+  flex-shrink: 0;
+}
+
+.link-list a {
+  color: var(--color-secondary);
+}
+
+.link-list__email {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--color-secondary);
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 @media (max-width: 640px) {

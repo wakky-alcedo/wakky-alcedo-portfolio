@@ -12,6 +12,21 @@ const allWorks = (await getCollection('works', ({ data }) => !data.draft))
 
 const allBlog = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const skillTags = [
+  { name: 'STM32', category: '組み込み制御' },
+  { name: 'ESP32', category: '組み込み制御' },
+  { name: 'Raspberry Pi', category: '組み込み制御' },
+  { name: 'ROS2', category: '組み込み制御' },
+  { name: 'jw_cad', category: '機械設計等' },
+  { name: 'SOLIDWORKS', category: '機械設計等' },
+  { name: 'Fusion360', category: '機械設計等' },
+  { name: 'Inventor', category: '機械設計等' },
+  { name: '3Dプリンタ', category: '機械設計等' },
+  { name: 'C/C++', category: 'プログラム言語' },
+  { name: 'Python', category: 'プログラム言語' },
+  { name: 'YOLO', category: 'その他' },
+];
 ---
 
 <div class="underwater" id="underwater">
@@ -52,7 +67,15 @@ const allBlog = (await getCollection('blog', ({ data }) => !data.draft))
           class="about-preview__photo"
         />
         <div class="about-preview__text">
-          <p>ロボット・IoT・トライアスロンが好きなエンジニア。カワセミのように素早く深く飛び込む姿勢で、技術と挑戦に向き合っています。</p>
+          <p>小中，高専，大学と，一貫してものづくりをやってきました。手を動かして何かを作ることと，イベントの企画運営が好きです。発明考案展出展，高専ロボコン，全国ロボコン交流会幹事，商品開発インターン，受託開発アルバイト，画像認識&ロボット制御インターン，文化祭の企画・製作・運営などをしてきました。</p>
+          <ul class="about-preview__skills">
+            {skillTags.map(tag => (
+              <li class="about-preview__skill">
+                <span class="about-preview__skill-name">{tag.name}</span>
+                <span class="about-preview__skill-cat">{tag.category}</span>
+              </li>
+            ))}
+          </ul>
           <a href="/about" class="underwater__more-link">もっと読む →</a>
         </div>
       </div>
@@ -191,6 +214,37 @@ const allBlog = (await getCollection('blog', ({ data }) => !data.draft))
   opacity: 0.85;
   line-height: 1.8;
   margin-bottom: 1rem;
+}
+
+.about-preview__skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  list-style: none;
+  margin-bottom: 1.25rem;
+}
+
+.about-preview__skill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.5rem 0.85rem;
+  background: rgba(0, 99, 170, 0.15);
+  border: 1px solid rgba(104, 206, 214, 0.2);
+  border-radius: 10px;
+}
+
+.about-preview__skill-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.about-preview__skill-cat {
+  font-size: 0.65rem;
+  color: var(--color-secondary);
+  opacity: 0.7;
 }
 
 /* Contact */
