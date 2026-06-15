@@ -46,7 +46,7 @@
 
 > 理由：CSS変数をJSで毎フレーム `style.setProperty()` 更新すると、スタイル再計算（Recalculate Style）がメインスレッドで走りモバイルでパフォーマンス問題が発生する。
 
-### 横スクロールセクション（Works / Blog）の実装方針
+### 横スクロールセクション（Blog）の実装方針
 
 **iOS Safariでの縦×横スクロール干渉を避けるため、`overflow-x: scroll` は使わない。**
 
@@ -54,6 +54,10 @@ GSAPの「水平スクロールセクション」パターンを採用する：
 - `ScrollTrigger` でセクションをピン固定
 - `gsap.to(container, { x: -totalWidth })` で横移動をスクロール量に連動させる
 - タッチデバイスでの動作検証はPhase 2完了時点で必須
+
+### Works セクション（トップページ）
+
+Works一覧ページ（`/works`）と同様、`grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))` によるタイル表示。横スクロールピンは使用しない（将来的に変更の可能性あり）。
 
 ### ScrollTrigger 初期化タイミング
 

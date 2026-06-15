@@ -33,13 +33,13 @@ const skillTags = [
   <FishLayer />
 
   <!-- Works -->
-  <section class="underwater__section hscroll" id="works" data-hscroll>
-    <div class="underwater__container hscroll__head">
+  <section class="underwater__section" id="works">
+    <div class="underwater__container">
       <SectionTitle title="Works" subtitle="制作物・プロジェクト" />
-    </div>
-    <div class="hscroll__track" data-hscroll-track>
-      {allWorks.map(work => <WorkCard work={work} />)}
-      <a href="/works" class="hscroll__more">すべての作品を見る →</a>
+      <div class="works-grid">
+        {allWorks.map(work => <WorkCard work={work} />)}
+      </div>
+      <a href="/works" class="underwater__more-link">すべての作品を見る →</a>
     </div>
   </section>
 
@@ -192,6 +192,27 @@ const skillTags = [
 }
 
 .hscroll__more:hover {
+  opacity: 1;
+}
+
+/* Works タイル表示 */
+.works-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.underwater__more-link {
+  display: inline-block;
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+  color: var(--color-secondary);
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.underwater__more-link:hover {
   opacity: 1;
 }
 
