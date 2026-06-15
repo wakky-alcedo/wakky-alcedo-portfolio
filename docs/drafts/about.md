@@ -21,7 +21,7 @@ name: Wakky-Alcedo
 **「とりあえずポチる」**
 あのとき挑戦しておけばよかったという後悔はしたくないと思い，フットワーク軽く生きています．
 九州-群馬100km自転車旅をしたり，トライアスロンに参加したり，etc.
-- [九州-群馬自転車旅の様子](https://www.instagram.com/stories/highlights/18061523467329284/)
+- [九州-群馬自転車旅の様子(Instagramに飛びます)](https://www.instagram.com/stories/highlights/18061523467329284/)
 - [トライアスロン参戦記](https://note.com/wakkyalcedo/n/n3cac58ecbdc4)
 
 **「不満があるなら，自分で作ればいいじゃない」**
@@ -54,9 +54,9 @@ name: Wakky-Alcedo
 ## Timeline
 - 2024/03 群馬工業高等専門学校 機械工学科 卒業
 - 2024/04 東京工業大学（現・東京科学大学）工学院機械系 編入学
-- 2026/03 同 卒業
+- 2026/03 東京科学大学 卒業
 - 2026/04 東京科学大学 工学院機械系 エンジニアリングデザインコース 入学
-### Certification
+## Certification
 - 普通自動車第一種運転免許
 - 第三級アマチュア無線技士
 ## Link
@@ -66,4 +66,4 @@ name: Wakky-Alcedo
 - **GitHub:** [github.com/wakky-alcedo](https://github.com/wakky-alcedo)
 - **note:** [note.com/wakkyalcedo](https://note.com/wakkyalcedo)
 - **Qiita:** [qiita.com/wakky-alcedo](https://qiita.com/wakky-alcedo)
-- **所属研究室**：[Science Tokyo SDDL](http://www.sddl.mech.e.titech.ac.jp)
+- **大学の所属研究室**：[Science Tokyo SDDL](http://www.sddl.mech.e.titech.ac.jp)
