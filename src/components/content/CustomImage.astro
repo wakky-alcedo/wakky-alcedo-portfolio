@@ -1,0 +1,48 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  src: ImageMetadata;
+  alt?: string;
+  width?: number | string;
+  caption?: string;
+}
+
+const { src, alt = '', width, caption } = Astro.props;
+
+const maxWidth = width === undefined
+  ? undefined
+  : typeof width === 'number'
+    ? `${width}px`
+    : width;
+---
+
+<figure class="custom-image" style={maxWidth ? `--custom-image-max-width: ${maxWidth}` : undefined}>
+  <Image src={src} alt={alt} />
+  {caption && <figcaption class="custom-image__caption">{caption}</figcaption>}
+</figure>
+
+<style>
+.custom-image {
+  width: 100%;
+  max-width: var(--custom-image-max-width, 100%);
+  margin: 1.5rem auto;
+}
+
+.custom-image :global(img) {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.custom-image__caption {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  opacity: 0.7;
+  text-align: center;
+  line-height: 1.5;
+}
+</style>

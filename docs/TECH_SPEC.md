@@ -9,6 +9,7 @@
 | スクロールアニメーション | **GSAP + ScrollTrigger** | 業界標準。カワセミ飛び込み演出のような精密なスクロール連動アニメーションに最適。※GSAPは個人ポートフォリオ用途では無料ライセンス可 |
 | Canvas演出 | **Canvas API（ネイティブ）** | 魚シミュレーション・水面リプル。外部ライブラリ不要で軽量 |
 | スタイリング | **CSS Custom Properties** | デザイントークン（カラーパレット）を変数管理。Phase 2の時間帯変化にも対応しやすい |
+| コンテンツ拡張 | **@astrojs/mdx** | Works/Blog記事内でAstroコンポーネント（画像レイアウト等）を使用可能にする |
 | ビルドツール | **Vite**（Astro内蔵） | 高速 HMR、アセット最適化 |
 | パッケージマネージャ | **npm** | `package-lock.json` を必ずコミットして依存を固定する |
 
@@ -141,6 +142,9 @@ wakky-alcedo-portfolio/
 │   │   │   └── WorkCard.astro       # サムネイル・ホバー演出
 │   │   ├── blog/
 │   │   │   └── BlogCard.astro       # タイトル＋冒頭文
+│   │   ├── content/
+│   │   │   ├── CustomImage.astro    # 記事内画像（幅指定・キャプション・代替テキスト）
+│   │   │   └── FlexRow.astro        # 記事内画像の横並びレイアウト
 │   │   └── common/
 │   │       └── SectionTitle.astro
 │   ├── content/
@@ -330,7 +334,7 @@ export async function requestOrientationPermission(): Promise<boolean> {
 import { defineCollection, z } from 'astro:content';
 
 const works = defineCollection({
-  type: 'content',
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/works' }), // .mdxはコンポーネント埋め込み記事用
   schema: ({ image }) => z.object({
     title:       z.string(),
     description: z.string(),
@@ -342,7 +346,7 @@ const works = defineCollection({
 });
 
 const blog = defineCollection({
-  type: 'content',
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
   schema: ({ image }) => z.object({
     title:       z.string(),
     description: z.string(),
