@@ -136,3 +136,4 @@ Untitled*.html.md
 .obsidian/plugins/remember-cursor-position/cursor-positions.json
 # Autosyncシリーズ（開発：MetaCtrl）の管理ファイル
 .ttxfolder
+.obsidian/
