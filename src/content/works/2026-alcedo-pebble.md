@@ -4,8 +4,7 @@ description: 高専の文化祭「工華祭」に出展した，対戦型の戦�
 date: 2023-11-07
 thumbnail: ../../assets/images/thumbnail_work1.webp
 tags:
-  - ロボット
-  - 文化祭
+  - esp32
 draft: false
 ---
 # 自己紹介用自作たまごっち「Alcedo Pebble」

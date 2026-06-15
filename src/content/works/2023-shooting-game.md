@@ -6,6 +6,7 @@ thumbnail: ../../assets/images/thumbnail_work1.webp
 tags:
   - ロボット
   - 文化祭
+  - ハード
 draft: false
 ---
 # 対戦型列車戦（工華祭）
