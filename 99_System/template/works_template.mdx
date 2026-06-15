@@ -1,0 +1,52 @@
+<%*
+// ガード句：テンプレートフォルダ内のファイル、または Untitled 以外のファイルなら実行しない 
+if (!tp.file.title.includes("Untitled")) {
+		return;
+}
+// 1. 入力ダイアログを表示  
+let filename = await tp.system.prompt("ファイル名を入力してください");  
+// 2. 入力がなければデフォルト名（Untitledのまま）   
+if (filename == null || filename == "") { filename = tp.file.title; }  
+// 3. ファイルをリネーム   
+await tp.file.rename(filename);   
+// ファイルの場所を変更  
+const targetFolder = "src/content/works";   
+await tp.file.move(`${targetFolder}/${filename}`);
+
+// タイトル
+// 1. 入力ダイアログを表示  
+let title = await tp.system.prompt("タイトルを入力してください");  
+if (title == null || title == "") { title = tp.file.title; }  
+%>---
+title: 対戦型列車戦（工華祭）
+description: 高専の文化祭「工華祭」に出展した，対戦型の戦車ロボットで打ち合うゲーム企画です．
+date: <% tp.file.creation_date() %>
+thumbnail: ../../assets/images/thumbnail_work1.webp
+tags:
+  - 
+draft: false
+---
+
+## 概要
+
+概要を書く
+- 制作期間：
+- 担当範囲：
+
+## 開発の思いor背景・課題
+
+## 製作
+
+### 使用ツール・環境
+
+### こだわり
+
+## 成果・実績
+
+## 今後の課題or今後の展望
+
+## 関連リンク
+- 公式Twitter：
+- 公式Instagram：
+- 当時の報告記事：
+- GitHubリポジトリ：
