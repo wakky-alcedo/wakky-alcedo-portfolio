@@ -16,3 +16,123 @@ Thumbs.db
 dist/
 node_modules/
 .astro
+
+
+# ==========================================
+# OS / System Files
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini
+*.lnk
+
+# ==========================================
+# Obsidian Workspace (端末依存の設定)
+# ==========================================
+# 開いているタブ、画面分割、スクロール位置などの情報。
+# PCとスマホ(iPad)では画面サイズが異なるため、同期すると使い勝手が悪化します。
+.obsidian/workspace
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+# デバイスごとのワークスペース設定（ワイルドカードで一括除外）
+.obsidian/workspace-*.json
+# UI状態（フォーラム推奨：頻繁に変更されマージ競合の原因となる）
+.obsidian/app.json
+
+# ==========================================
+# Obsidian Cache (キャッシュ)
+# ==========================================
+.obsidian/cache
+.obsidian/cache.json
+# Copilotプラグイン：インデックスファイルは大きくデバイスごとに再生成される
+.obsidian/copilot-index-*.json
+
+# ==========================================
+# Plugin Data & Caches (プラグインの一時ファイル)
+# ==========================================
+
+# --- Omnisearch ---
+# 検索インデックスはサイズが大きいため除外（各端末で再生成されます）
+.obsidian/plugins/omnisearch/cache/
+.obsidian/plugins/omnisearch/index/
+
+# --- Text Extractor ---
+# 抽出テキストのキャッシュ（PDF等から生成、再生成可能）
+.obsidian/plugins/text-extractor/cache/
+
+# --- 汎用：全プラグインのcacheディレクトリ ---
+.obsidian/plugins/*/cache/
+
+# --- Remotely Save / Sync ---
+# Git移行前の同期プラグインのメタデータ
+remotely-save-metadata-on-remote.json
+.obsidian/plugins/remotely-save/data.json
+.obsidian/plugins/remotely-sync/data.json
+
+# --- Smart Connections ---
+# ベクトルデータ等はAPIコスト節約のため同期推奨ですが、
+# ログファイルなどは除外します。
+# .smart-env にはAPIキーが含まれるため、絶対に同期してはいけません。
+.obsidian/plugins/smart-connections/logs/
+.smart-env
+
+# --- Smart Composer AI database ---
+# 大きなデータベースファイルは除外
+.smtcmp_json_db/
+# 多分APIキーも含まれる↓
+.smtcmp_vector_db.tar.gz
+
+# --- Obsidian Bases (Dataview/Bases機能) ---
+# .baseファイル：各端末で自動生成される場合は有効化。
+# ユーザー作成のBaseを同期したい場合はこの行をコメントアウトのままに。
+# *.base
+
+# ==========================================
+# Backup & Conflict Files
+# ==========================================
+# OneDrive等が生成した競合ファイルやバックアップ
+*.bak
+*.tmp
+*~
+*conflict*
+*-safeBackup*
+# PC名を含む競合ファイル例（必要に応じて追加）
+# *-HPENVYx360.md
+# *-DELL-XPS8940.md
+# *-Copernicus.md
+# *[PC名]-safeBackup*
+
+# ==========================================
+# Temporary / Unsaved Files
+# ==========================================
+# 編集中の未保存ファイル等
+Untitled*.md
+Untitled*.html.md
+無題のファイル*.md
+無題のファイル*.html.md
+
+# ==========================================
+# Other Ignored Files and Folders
+# ==========================================
+# Obsidianの動作に不要な一時ファイルやフォルダ
+.trash/
+# Android用のFolderSyncという同期用アプリの管理用データ
+.ttxfolder/
+# ログファイル
+*.log
+
+# --- 開発・編集環境（Vault外で作業する場合） ---
+# .vscode/
+# .idea/
+# .cursor/
+# node_modules/
+
+# ==========================================
+# Exceptions（上記ルールの例外）
+# ==========================================
+# Obsidianのログファイル削除ツールは許可
+!ConflictFileRemover.py
+# Remember Cursor Positionプラグインのカーソル位置情報ファイル
+.obsidian/plugins/remember-cursor-position/cursor-positions.json
+# Autosyncシリーズ（開発：MetaCtrl）の管理ファイル
+.ttxfolder
