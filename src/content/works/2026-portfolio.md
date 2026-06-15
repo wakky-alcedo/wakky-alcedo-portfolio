@@ -1,10 +1,13 @@
 ---
-title: wakky-alcedo ホームページ
+title: wakky-alcedo ポートフォリオサイト
+description: ポートフォリオサイトの制作記録（執筆中）
 category: Web系
+thumbnail: ../../assets/images/thumbnail_work1.webp
 date: 2026-06-06
+draft: true
 ---
 
-# wakky-alcedo ホームページ
+# wakky-alcedo ポートフォリオサイト
 
 **カテゴリ:** Web系  
 **制作時期:** 2026/06/06
