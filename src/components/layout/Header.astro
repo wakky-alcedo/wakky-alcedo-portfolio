@@ -12,7 +12,7 @@ const currentPath = Astro.url.pathname;
 <header class="header">
   <div class="header__inner">
     <a href="/" class="header__logo">Wakky-Alcedo</a>
-    <nav class="header__nav" aria-label="メインナビゲーション">
+    <nav class="header__nav" aria-label="メインナビゲーション" id="header-nav">
       <ul class="header__nav-list">
         {navItems.map(item => (
           <li>
@@ -26,11 +26,30 @@ const currentPath = Astro.url.pathname;
         ))}
       </ul>
     </nav>
-    <button class="header__menu-btn" aria-label="メニューを開く" aria-expanded="false">
+    <button class="header__menu-btn" aria-label="メニューを開く" aria-expanded="false" aria-controls="header-nav" id="header-menu-btn">
       <span></span><span></span><span></span>
     </button>
   </div>
 </header>
+
+<script>
+const menuBtn = document.getElementById('header-menu-btn');
+const nav = document.getElementById('header-nav');
+
+menuBtn?.addEventListener('click', () => {
+  const isOpen = nav?.classList.toggle('is-open');
+  menuBtn.classList.toggle('is-open', isOpen);
+  menuBtn.setAttribute('aria-expanded', String(!!isOpen));
+});
+
+nav?.addEventListener('click', (event) => {
+  if ((event.target as HTMLElement).tagName === 'A') {
+    nav.classList.remove('is-open');
+    menuBtn?.classList.remove('is-open');
+    menuBtn?.setAttribute('aria-expanded', 'false');
+  }
+});
+</script>
 
 <style>
 .header {
@@ -96,12 +115,52 @@ const currentPath = Astro.url.pathname;
   height: 2px;
   background: var(--color-text);
   border-radius: 2px;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.header__menu-btn.is-open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.header__menu-btn.is-open span:nth-child(2) {
+  opacity: 0;
+}
+
+.header__menu-btn.is-open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
 }
 
 @media (max-width: 640px) {
   .header__nav {
     display: none;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background: rgba(0, 17, 44, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(104, 206, 214, 0.15);
   }
+
+  .header__nav.is-open {
+    display: block;
+  }
+
+  .header__nav-list {
+    flex-direction: column;
+    gap: 0;
+    padding: 0.5rem 1.5rem 1rem;
+  }
+
+  .header__nav-list li {
+    width: 100%;
+  }
+
+  .header__nav-link {
+    display: block;
+    padding: 0.75rem 0;
+  }
+
   .header__menu-btn {
     display: flex;
   }
