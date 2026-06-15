@@ -1,0 +1,105 @@
+---
+---
+
+<button
+  id="print-mode-toggle"
+  class="print-mode-toggle"
+  type="button"
+  aria-label="印刷時の配色を切り替え"
+  title="印刷時の配色: インク節約（白基調）"
+>
+  <svg class="print-mode-toggle__icon print-mode-toggle__icon--economy" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 2C12 2 5 10.5 5 15a7 7 0 0014 0c0-4.5-7-13-7-13z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  </svg>
+  <svg class="print-mode-toggle__icon print-mode-toggle__icon--vivid" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <circle cx="8.5" cy="10" r="1.6" fill="currentColor"/>
+    <circle cx="12" cy="7" r="1.6" fill="currentColor"/>
+    <circle cx="15.5" cy="10" r="1.6" fill="currentColor"/>
+    <circle cx="9.5" cy="14.5" r="1.6" fill="currentColor"/>
+    <circle cx="14.5" cy="14.5" r="1.6" fill="currentColor"/>
+  </svg>
+  <span class="print-mode-toggle__label">印刷:節約</span>
+</button>
+
+<style>
+.print-mode-toggle {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 76px);
+  right: 1.5rem;
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  background: rgba(0, 17, 44, 0.85);
+  border: 1px solid rgba(104, 206, 214, 0.25);
+  border-radius: 999px;
+  color: var(--color-text);
+  font-size: 0.75rem;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.print-mode-toggle:hover {
+  color: var(--color-secondary);
+  border-color: var(--color-secondary);
+}
+
+.print-mode-toggle__icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.print-mode-toggle__icon--vivid {
+  display: none;
+}
+
+html[data-print-mode="vivid"] .print-mode-toggle__icon--economy {
+  display: none;
+}
+
+html[data-print-mode="vivid"] .print-mode-toggle__icon--vivid {
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .print-mode-toggle__label {
+    display: none;
+  }
+}
+
+@media print {
+  .print-mode-toggle {
+    display: none !important;
+  }
+}
+</style>
+
+<script>
+  const STORAGE_KEY = 'print-mode';
+  const button = document.getElementById('print-mode-toggle');
+  const label = button?.querySelector('.print-mode-toggle__label');
+
+  function apply(mode: string) {
+    document.documentElement.dataset.printMode = mode;
+    if (button) {
+      button.title = mode === 'vivid'
+        ? '印刷時の配色: そのまま（フルカラー）'
+        : '印刷時の配色: インク節約（白基調）';
+    }
+    if (label) {
+      label.textContent = mode === 'vivid' ? '印刷:そのまま' : '印刷:節約';
+    }
+  }
+
+  apply(localStorage.getItem(STORAGE_KEY) ?? 'economy');
+
+  button?.addEventListener('click', () => {
+    const next = document.documentElement.dataset.printMode === 'vivid' ? 'economy' : 'vivid';
+    localStorage.setItem(STORAGE_KEY, next);
+    apply(next);
+  });
+</script>

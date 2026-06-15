@@ -146,7 +146,8 @@ wakky-alcedo-portfolio/
 │   │   │   ├── CustomImage.astro    # 記事内画像（幅指定・キャプション・代替テキスト）
 │   │   │   └── FlexRow.astro        # 記事内画像の横並びレイアウト
 │   │   └── common/
-│   │       └── SectionTitle.astro
+│   │       ├── SectionTitle.astro
+│   │       └── PrintModeToggle.astro # 印刷配色モード切替トグル
 │   ├── content/
 │   │   ├── config.ts                # zodスキーマ定義（title, date, thumbnail, tags, description 必須）
 │   │   ├── works/
@@ -170,7 +171,8 @@ wakky-alcedo-portfolio/
 │   ├── styles/
 │   │   ├── tokens.css               # CSS Custom Properties（デザイントークン専用）
 │   │   ├── global.css               # リセット・ベーススタイル・safe-area-inset
-│   │   └── animations.css           # CSS-only アニメーション定義
+│   │   ├── animations.css           # CSS-only アニメーション定義
+│   │   └── print.css                # 印刷配色モード（節約／そのまま）
 │   └── assets/
 │       ├── images/
 │       │   ├── kawasemi_perch.png
