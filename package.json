@@ -9,7 +9,13 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "export-pdf": "node scripts/export-pdf.mjs",
+    "export-pdf:no-build": "node scripts/export-pdf.mjs --no-build"
+  },
+  "devDependencies": {
+    "pdf-lib": "^1.17.1",
+    "playwright": "^1.61.0"
   },
   "dependencies": {
     "@astrojs/mdx": "^6.0.3",
