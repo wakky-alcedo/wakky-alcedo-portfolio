@@ -94,6 +94,8 @@ async function main() {
     const browser = await chromium.launch();
     const context = await browser.newContext();
     const page = await context.newPage();
+    // print CSS（インク節約・白背景）を無効化してスクリーンの色をそのまま出力する
+    await page.emulateMedia({ media: 'screen' });
     const pdfBuffers = [];
 
     for (const route of routes) {
