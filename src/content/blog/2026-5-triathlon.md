@@ -6,7 +6,8 @@ thumbnail: ../../assets/images/1781055111038.jpg
 tags:
   - トライアスロン
   - スポーツ
-draft: false
+wip: false
+unpublished: false
 ---
 
 # トライアスロン初挑戦記
