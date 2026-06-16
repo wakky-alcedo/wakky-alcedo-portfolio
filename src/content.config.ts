@@ -11,6 +11,7 @@ const works = defineCollection({
     tags:        z.array(z.string()).default([]),
     wip:         z.boolean().default(false),
     unpublished: z.boolean().default(false),
+    featured:    z.number().default(0),
   }),
 });
 

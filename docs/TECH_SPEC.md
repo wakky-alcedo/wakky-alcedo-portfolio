@@ -349,6 +349,7 @@ const works = defineCollection({
     tags:        z.array(z.string()).default([]),
     wip:         z.boolean().default(false), // trueならカード右上にWIPバッジを表示して公開
     unpublished: z.boolean().default(false), // trueなら一覧・詳細ページから除外
+    featured:    z.number().default(0),      // 数値が高いほどFeatured順で上位表示（同値なら新しい順）
   }),
 });
 
