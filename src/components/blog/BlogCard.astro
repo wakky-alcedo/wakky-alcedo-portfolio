@@ -6,12 +6,13 @@ interface Props {
 }
 
 const { post } = Astro.props;
-const { title, description, date, tags } = post.data;
+const { title, description, date, tags, wip } = post.data;
 const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
 ---
 
 <a href={`/blog/${post.id}`} class="blog-card">
   <div class="blog-card__inner">
+    {wip && <span class="blog-card__wip">WIP</span>}
     <div class="blog-card__meta">
       <time class="blog-card__date" datetime={date.toISOString()}>{formattedDate}</time>
       <ul class="blog-card__tags">
@@ -29,6 +30,7 @@ const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month:
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
   gap: 1rem;
   padding: 1.25rem 1.5rem;
   border-radius: 10px;
@@ -96,6 +98,19 @@ const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month:
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.blog-card__wip {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.5rem;
+  background: rgba(255, 161, 0, 0.85);
+  color: #00112C;
+  border-radius: 100px;
 }
 
 .blog-card__arrow {

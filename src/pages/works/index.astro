@@ -6,7 +6,7 @@ import Footer from '../../components/layout/Footer.astro';
 import WorkCard from '../../components/works/WorkCard.astro';
 import SectionTitle from '../../components/common/SectionTitle.astro';
 
-const works = (await getCollection('works', ({ data }) => !data.draft))
+const works = (await getCollection('works', ({ data }) => !data.unpublished))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 ---
 

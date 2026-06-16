@@ -7,10 +7,10 @@ import SectionTitle from '../common/SectionTitle.astro';
 import FishLayer from './FishLayer.astro';
 import profilePicture from '../../assets/images/profile_picture.jpg';
 
-const allWorks = (await getCollection('works', ({ data }) => !data.draft))
+const allWorks = (await getCollection('works', ({ data }) => !data.unpublished))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 
-const allBlog = (await getCollection('blog', ({ data }) => !data.draft))
+const allBlog = (await getCollection('blog', ({ data }) => !data.unpublished))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 
 const skillTags = [

@@ -6,7 +6,7 @@ import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
 
 export async function getStaticPaths() {
-  const works = await getCollection('works', ({ data }) => !data.draft);
+  const works = await getCollection('works', ({ data }) => !data.unpublished);
   return works.map(work => ({ params: { slug: work.id }, props: { work } }));
 }
 

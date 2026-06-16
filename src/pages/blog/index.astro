@@ -6,7 +6,7 @@ import Footer from '../../components/layout/Footer.astro';
 import BlogCard from '../../components/blog/BlogCard.astro';
 import SectionTitle from '../../components/common/SectionTitle.astro';
 
-const posts = (await getCollection('blog', ({ data }) => !data.draft))
+const posts = (await getCollection('blog', ({ data }) => !data.unpublished))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 ---
 

@@ -347,7 +347,8 @@ const works = defineCollection({
     date:        z.coerce.date(),
     thumbnail:   image(),          // Astro画像最適化対応
     tags:        z.array(z.string()).default([]),
-    draft:       z.boolean().default(false),
+    wip:         z.boolean().default(false), // trueならカード右上にWIPバッジを表示して公開
+    unpublished: z.boolean().default(false), // trueなら一覧・詳細ページから除外
   }),
 });
 
@@ -359,7 +360,8 @@ const blog = defineCollection({
     date:        z.coerce.date(),
     thumbnail:   image().optional(),
     tags:        z.array(z.string()).default([]),
-    draft:       z.boolean().default(false),
+    wip:         z.boolean().default(false),
+    unpublished: z.boolean().default(false),
   }),
 });
 
