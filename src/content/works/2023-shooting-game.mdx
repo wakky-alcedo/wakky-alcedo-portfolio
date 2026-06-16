@@ -12,6 +12,9 @@ draft: false
 ---
 import CustomImage from '../../components/content/CustomImage.astro';
 import FlexRow from '../../components/content/FlexRow.astro';
+import img_20260616_091543 from '../../assets/images/20260616_091543.jpg';
+import img_20260616_091318 from '../../assets/images/20260616_091318.jpg';
+import img_20260616_091258 from '../../assets/images/20260616_091258.jpg';
 
 # 対戦型列車戦（工華祭）
 
@@ -37,9 +40,17 @@ import FlexRow from '../../components/content/FlexRow.astro';
 	- 発射トリガー
 	- 発射加速ローラ
 こだわりポイント：1モーターで装填とトリガーを両方できる機構を作ってくれました
-外装：ミリオタに頼んで実在する戦車ベース
+外装：ミリオタに頼んで実在する戦車を参考に製作してもらった
+
+<CustomImage src={img_20260616_091543} alt="出番を待つ機体（左が外装つき，右が外装なし）" caption="出番を待つ機体（左が外装つき，右が外装なし）" />
+
 ### コントローラ
 左右移動用のグリップと，砲塔旋回用のノブから成る
+
+<FlexRow gap="15px">
+	<CustomImage src={img_20260616_091318} alt="砲塔旋回用のノブ" caption="砲塔旋回用のノブ" />
+	<CustomImage src={img_20260616_091258} alt="左右移動用のグリップ" caption="左右移動用のグリップ" />
+</FlexRow>
 
 ### 回路面
 同期がプリント基板を設計，製作してくれました．基本機能は，
@@ -60,7 +71,7 @@ import FlexRow from '../../components/content/FlexRow.astro';
 - 横移動
 	- エンコーダによる自己位置推定
 	- マイコンリセット時に最も左まで自動で動き，リミットスイッチを押すことで原点を取る
-	- 
+	- グリップを左右に倒すことで，そくどｓ
 - 砲塔旋回
 - 発射トリガー
 - 発射加速ローラ
@@ -69,7 +80,7 @@ import FlexRow from '../../components/content/FlexRow.astro';
 初日の午前中は動かせませんでしたが，初日午後から2日目終日の1.5日を動かし続けることができました．
 
 ## 感想
-お互いの技術レベルや，期待した成果が返ってくるタスクの依頼方法を知っているので，すごくやりやすかったです．例えば，このくらいの無茶振りをしても彼ならなんとかやってくれるだろう，どうせ遅刻してくるからそれを見越した作業工程でやろうなど...
+高専ロボコンをともに乗り越えた仲間は，お互いの技術レベルや，期待した成果が返ってくるタスクの依頼方法を知っているので，すごくやりやすかったです．例えば，このくらいの無茶振りをしても彼ならなんとかやってくれるだろう，どうせ遅刻してくるからそれを見越した作業工程でやろうなど...
 
 ## 関連リンク
 - 公式Twitter：[工華祭5M 対戦型列車戦@5mclasskikaku](https://twitter.com/5mclasskikaku)
