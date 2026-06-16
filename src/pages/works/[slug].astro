@@ -5,6 +5,7 @@ import BaseLayout from '../../components/layout/BaseLayout.astro';
 import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
 import BackButton from '../../components/common/BackButton.astro';
+import ExternalLink from '../../components/content/ExternalLink.astro';
 
 export async function getStaticPaths() {
   const works = await getCollection('works', ({ data }) => !data.unpublished);
@@ -40,7 +41,7 @@ const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month:
           <time class="work-article__date" datetime={date.toISOString()}>{formattedDate}</time>
         </header>
         <div class="prose">
-          <Content />
+          <Content components={{ a: ExternalLink }} />
         </div>
         <a href="/works" class="back-link">← Works 一覧に戻る</a>
       </div>
