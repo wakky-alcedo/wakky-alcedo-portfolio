@@ -4,6 +4,7 @@ import { Image } from 'astro:assets';
 import BaseLayout from '../../components/layout/BaseLayout.astro';
 import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
+import BackButton from '../../components/common/BackButton.astro';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ data }) => !data.unpublished);
@@ -32,6 +33,7 @@ const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month:
         </div>
       )}
       <div class="blog-article__body">
+        <BackButton href="/blog" label="Blog 一覧へ戻る" />
         <header class="blog-article__header">
           <ul class="blog-article__tags">
             {tags.map(tag => <li class="blog-article__tag">{tag}</li>)}

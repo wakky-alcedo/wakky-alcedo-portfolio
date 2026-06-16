@@ -3,12 +3,14 @@ import BaseLayout from '../components/layout/BaseLayout.astro';
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
 import SectionTitle from '../components/common/SectionTitle.astro';
+import BackButton from '../components/common/BackButton.astro';
 ---
 
 <BaseLayout title="Contact" description="お問い合わせ・連絡先">
   <Header />
   <main class="page-main">
     <div class="page-container">
+      <BackButton href="/" label="トップへ戻る" />
       <SectionTitle title="Contact" subtitle="お問い合わせ" />
 
       <p class="contact-intro">お気軽にお声がけください。SNSのDMもお気軽に。</p>

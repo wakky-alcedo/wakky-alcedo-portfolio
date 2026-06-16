@@ -5,6 +5,7 @@ import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
 import WorkCard from '../../components/works/WorkCard.astro';
 import SectionTitle from '../../components/common/SectionTitle.astro';
+import BackButton from '../../components/common/BackButton.astro';
 
 const allWorks = (await getCollection('works', ({ data }) => !data.unpublished));
 
@@ -26,6 +27,7 @@ const worksFeatured = sortByFeatured(allWorks);
   <Header />
   <main class="page-main">
     <div class="page-container">
+      <BackButton href="/" label="トップへ戻る" />
       <SectionTitle title="Works" subtitle="制作物・プロジェクト" />
       <div class="sort-toggle">
         <button class="sort-btn active" data-sort="featured">Featured</button>

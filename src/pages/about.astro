@@ -4,6 +4,7 @@ import BaseLayout from '../components/layout/BaseLayout.astro';
 import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
 import SectionTitle from '../components/common/SectionTitle.astro';
+import BackButton from '../components/common/BackButton.astro';
 import profilePicture from '../assets/images/profile_picture.jpg';
 import wakkyAlcedoIcon from '../assets/images/wakky_alcedo_icon.jpg';
 
@@ -35,6 +36,7 @@ const emailEncoded = 'd2Fra3kuYWxjZWRvQGdtYWlsLmNvbQ==';
   <Header />
   <main class="page-main">
     <div class="page-container">
+      <BackButton href="/" label="トップへ戻る" />
       <SectionTitle title="About" subtitle="自己紹介" />
 
       <div class="about-profile">
