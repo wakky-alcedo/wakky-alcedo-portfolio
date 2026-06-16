@@ -6,8 +6,20 @@ import Footer from '../../components/layout/Footer.astro';
 import WorkCard from '../../components/works/WorkCard.astro';
 import SectionTitle from '../../components/common/SectionTitle.astro';
 
-const works = (await getCollection('works', ({ data }) => !data.unpublished))
-  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const allWorks = (await getCollection('works', ({ data }) => !data.unpublished));
+
+const sortByFeatured = (works: typeof allWorks) =>
+  [...works].sort((a, b) => {
+    const featuredDiff = b.data.featured - a.data.featured;
+    if (featuredDiff !== 0) return featuredDiff;
+    return b.data.date.getTime() - a.data.date.getTime();
+  });
+
+const sortByNewest = (works: typeof allWorks) =>
+  [...works].sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const worksNewest = sortByNewest(allWorks);
+const worksFeatured = sortByFeatured(allWorks);
 ---
 
 <BaseLayout title="Works" description="制作物・プロジェクト一覧">
@@ -15,8 +27,15 @@ const works = (await getCollection('works', ({ data }) => !data.unpublished))
   <main class="page-main">
     <div class="page-container">
       <SectionTitle title="Works" subtitle="制作物・プロジェクト" />
-      <div class="works-grid">
-        {works.map(work => <WorkCard work={work} />)}
+      <div class="sort-toggle">
+        <button class="sort-btn active" data-sort="featured">Featured</button>
+        <button class="sort-btn" data-sort="newest">Newest</button>
+      </div>
+      <div class="works-grid" id="works-featured">
+        {worksFeatured.map(work => <WorkCard work={work} />)}
+      </div>
+      <div class="works-grid hidden" id="works-newest">
+        {worksNewest.map(work => <WorkCard work={work} />)}
       </div>
     </div>
   </main>
@@ -35,9 +54,56 @@ const works = (await getCollection('works', ({ data }) => !data.unpublished))
   padding: 4rem 2rem;
 }
 
+.sort-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.sort-btn {
+  padding: 0.4rem 1.2rem;
+  border: 1px solid var(--color-border, rgba(104, 206, 214, 0.3));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text, inherit);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.sort-btn.active {
+  background: var(--color-secondary);
+  color: var(--color-bg);
+  border-color: var(--color-secondary);
+}
+
 .works-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
 }
+
+.hidden {
+  display: none;
+}
 </style>
+
+<script>
+const buttons = document.querySelectorAll<HTMLButtonElement>('.sort-btn');
+const featured = document.getElementById('works-featured')!;
+const newest = document.getElementById('works-newest')!;
+
+buttons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    buttons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (btn.dataset.sort === 'featured') {
+      featured.classList.remove('hidden');
+      newest.classList.add('hidden');
+    } else {
+      newest.classList.remove('hidden');
+      featured.classList.add('hidden');
+    }
+  });
+});
+</script>
