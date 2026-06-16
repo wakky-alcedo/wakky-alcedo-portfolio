@@ -1,5 +1,6 @@
 import type { Pauseable } from '../utils/visibility';
 import { prefersReducedMotion } from '../utils/motionPreference';
+import { canvasDpr, isMobile } from '../utils/device';
 
 interface Ripple {
   x: number;
@@ -75,7 +76,7 @@ export class WaterRipple implements Pauseable {
   }
 
   private handleResize(): void {
-    this.dpr = window.devicePixelRatio || 1;
+    this.dpr = canvasDpr();
     this.width = this.canvas.clientWidth;
     this.height = this.canvas.clientHeight;
     this.canvas.width = this.width * this.dpr;
@@ -132,11 +133,35 @@ export class WaterRipple implements Pauseable {
   }
 
   private draw(): void {
-    const { ctx, offscreen, offCtx } = this;
-    if (!ctx || !offscreen || !offCtx) return;
+    const { ctx } = this;
+    if (!ctx) return;
 
     const w = this.canvas.width;
     const h = this.canvas.height;
+
+    // スマホではOffscreenCanvas+blurをスキップし直接描画する
+    if (isMobile()) {
+      ctx.clearRect(0, 0, w, h);
+      for (const ripple of this.ripples) {
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(104, 206, 214, ${ripple.alpha})`;
+        ctx.lineWidth = ripple.lineWidth * this.dpr;
+        ctx.ellipse(
+          ripple.x * this.dpr,
+          ripple.y * this.dpr,
+          ripple.radius * this.dpr,
+          ripple.radius * 0.35 * this.dpr,
+          0,
+          0,
+          Math.PI * 2,
+        );
+        ctx.stroke();
+      }
+      return;
+    }
+
+    const { offscreen, offCtx } = this;
+    if (!offscreen || !offCtx) return;
 
     offCtx.clearRect(0, 0, w, h);
     offCtx.filter = `blur(${BLUR_PX * this.dpr}px)`;

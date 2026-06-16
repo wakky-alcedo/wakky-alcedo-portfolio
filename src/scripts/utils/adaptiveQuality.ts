@@ -1,13 +1,15 @@
+import { isMobile } from './device';
+
 const FRAME_BUDGET_MS = 16;
 const BAD_STREAK_LIMIT = 30; // 約0.5秒分の連続コマ落ちでliteMode発動
 
 /**
  * フレームレートを監視し、コマ落ちが連続したら liteMode に切り替える。
- * 一度 liteMode になったら自動復帰はしない（再読み込みでリセット）。
+ * スマホは起動直後から liteMode。一度 liteMode になったら自動復帰はしない。
  */
 export class AdaptiveQuality {
   private badStreak = 0;
-  private lite = false;
+  private lite = isMobile();
   private listeners = new Set<(lite: boolean) => void>();
 
   recordFrame(durationMs: number): void {

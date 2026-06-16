@@ -279,8 +279,10 @@ mainCtx.drawImage(offscreen, 0, 0);
 **アルゴリズム：** Boid軽量版（分離・整列・結合）。O(n²) で合計21匹は問題ないが、空間グリッド分割を用意しておく。
 
 **モバイル最適化：**
-- `adaptiveQuality.ts` でフレームレート監視（16ms超が連続すると `liteMode` 発動）
-- `liteMode` 時はレイヤー数を4→2に削減、個体数を半減
+- `utils/device.ts` の `isMobile()` でスマホを判定（`max-width: 768px`）
+- スマホでは起動直後から `liteMode`（レイヤー2枚・個体数半減）。PC はフレーム落ち連続30回で発動
+- DPR を最大 1.5（スマホ）/ 2（PC）にキャップ（`canvasDpr()`）
+- スマホでは `ctx.filter` + OffscreenCanvas blur をスキップし直接描画（最重要最適化）
 
 **カーソル逃避：** Layer 3・4 のみ適用。
 
@@ -324,8 +326,8 @@ export async function requestOrientationPermission(): Promise<boolean> {
 | ScrollTrigger位置ズレ防止 | `window.load` 後に `ScrollTrigger.refresh()` を呼ぶ |
 | バックグラウンド停止 | Page Visibility API → `cancelAnimationFrame` |
 | アダプティブ品質 | `adaptiveQuality.ts` でフレームレート監視 → `liteMode` 切り替え |
-| Canvas blur 効率化 | CSS filterでなく `ctx.filter` + OffscreenCanvas合成 |
-| Retina対応 | `canvas.width = el.clientWidth * devicePixelRatio` |
+| Canvas blur 効率化 | PC: `ctx.filter` + OffscreenCanvas合成。スマホ: blur スキップし直接描画 |
+| Retina対応 | DPR を `canvasDpr()` でキャップ（スマホ 1.5 / PC 2） |
 | 画像最適化 | Astro `<Image>` コンポーネント（`width`/`height` 必須指定）|
 | CLS防止 | 全`<Image>`に`width`/`height`明示 |
 | SEO / OGP | BaseLayout.astroでコレクションのfrontmatterからdynamic meta生成 |

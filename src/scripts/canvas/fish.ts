@@ -2,6 +2,7 @@ import type { Pauseable } from '../utils/visibility';
 import { prefersReducedMotion } from '../utils/motionPreference';
 import { AdaptiveQuality } from '../utils/adaptiveQuality';
 import { onOrientationChange } from '../utils/deviceOrientation';
+import { canvasDpr, isMobile } from '../utils/device';
 
 interface LayerConfig {
   scale: number;
@@ -233,7 +234,7 @@ export class FishSimulation implements Pauseable {
   }
 
   private handleResize(): void {
-    this.dpr = window.devicePixelRatio || 1;
+    this.dpr = canvasDpr();
     this.width = this.canvas.clientWidth;
     this.height = this.canvas.clientHeight;
     this.canvas.width = this.width * this.dpr;
@@ -389,9 +390,10 @@ export class FishSimulation implements Pauseable {
 
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+    const skipBlur = isMobile();
     this.layers.forEach((fishList, layerIndex) => {
       const config = LAYER_CONFIGS[layerIndex];
-      if (config.blurPx > 0) {
+      if (config.blurPx > 0 && !skipBlur) {
         this.drawBlurredLayer(fishList, config, layerIndex);
       } else {
         this.drawFishList(ctx, fishList, config, layerIndex);
