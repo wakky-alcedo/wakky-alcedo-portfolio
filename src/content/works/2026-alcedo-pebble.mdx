@@ -1,12 +1,13 @@
 
 ---
-title: 自己紹介用自作たまごっち「Alcedo Pebble」
-description: 高専の文化祭「工華祭」に出展した，対戦型の戦車ロボットで打ち合うゲーム企画です．
+title: 名刺交換用自作たまごっち「Alcedo Pebble」
+description: ものづくり系交流会などでの名刺交換で，自己主張できるデバイスです．
 date: 2023-11-07
 thumbnail: ../../assets/images/20260616_050950.jpg
 tags:
   - esp32
   - ハード
+  - 個人開発
 draft: false
 ---
 import CustomImage from '../../components/content/CustomImage.astro';
@@ -17,10 +18,28 @@ import img_20260616_061328 from '../../assets/images/20260616_061328.jpg';
 
 ## 概要
 1.28インチの円形タッチディスプレイを搭載した、キーホルダーとして日常的に持ち運べる小型デバイス「Alcedo Pebble (アルセド ぺブル)
-
+- 開発期間：3週間
+- 主要技術スタック：ESP32，SquareLine Studio（UI製作ソフト），Solidworks，Blender，3Dプリンタ
 ## 開発の思い
+私はよくものづくり系の交流会や，高専生交流会に行くことがあります．
+その場で，Twitterや名刺を交換する際，「私はこれの人です！」と言えるような物を持っていたら，印象に残りやすいだろうと思い，製作しました．
 
+## 製作
+### ハード
+デバイスの内部構造を，以下の写真に示す．
 
+使用電子部品は以下の通り
+- マイコンとディスプレイのセット：[ESP32-S3-Touch-LCD-1.28 User Guide](https://spotpear.com/wiki/ESP32-S3-1.28inch-Round-LCD-Display-TouchScreen.html)
+- バッテリ：リチウムポリマーバッテリー 500mAh
+- リニアバイブレーションモータ
+- バイブレーションモータドライバ：[DRV2605L Haptic Driver Datasheet (PDF)](https://www.ti.com/lit/ds/symlink/drv2605l.pdf)
+- NFCタグ
+
+これらを限られた空間に収めるため，立体パズルを
+
+磁石によって内部に固定しており，激しく振ることで，分解し内部にアクセスできるようになる．これによってメンテナンス性が向上している．
+
+また，
 
 <FlexRow gap="15px">
 	<CustomImage src={imgA} alt="構成A" caption="構成A" />
@@ -28,6 +47,16 @@ import img_20260616_061328 from '../../assets/images/20260616_061328.jpg';
 </FlexRow>
 
 <CustomImage src={img_20260616_061328} alt="外装の内側" width={350} caption="外装の内側" />
+
+### こだわり
+- 外装を小石のようにした．Blenderで形状を製作した．小石の形状は手に馴染みやすく，握っていて落ち着くと感じたから．
+- SNSのリンクを，QRコードとNFCタグに仕込み搭載した．SNS交換がスムーズになり，かつ自然とデバイスを話題にできると考えたから
+- 石蹴りのミニゲームを搭載した，遊んでもらえたら印象に残ると思ったから
+- 磁石で
+
+
+### ソフト
+
 
 ## 使用技術
 
@@ -37,4 +66,4 @@ import img_20260616_061328 from '../../assets/images/20260616_061328.jpg';
 
 
 ## 関連リンク
-- GitHubリポジトリ：[wakky-alcedo/alcedo-pebble](https://github.com/wakky-alcedo/alcedo-pebble)
+- GitHubリポジトリ（技術的な詳細解説もこちらのREADMEに）：[wakky-alcedo/alcedo-pebble](https://github.com/wakky-alcedo/alcedo-pebble)
