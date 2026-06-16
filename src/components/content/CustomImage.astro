@@ -19,9 +19,140 @@ const maxWidth = width === undefined
 ---
 
 <figure class="custom-image" style={maxWidth ? `--custom-image-max-width: ${maxWidth}` : undefined}>
-  <Image src={src} alt={alt} />
+  <button class="custom-image__trigger" aria-label={`画像を拡大: ${alt}`} type="button">
+    <Image src={src} alt={alt} />
+  </button>
   {caption && <figcaption class="custom-image__caption">{caption}</figcaption>}
 </figure>
+
+<div class="lightbox" role="dialog" aria-modal="true" aria-label={alt} hidden>
+  <button class="lightbox__backdrop" aria-label="閉じる" type="button"></button>
+  <div class="lightbox__content">
+    <button class="lightbox__close" aria-label="閉じる" type="button">✕</button>
+    <img class="lightbox__img" src={src.src} alt={alt} />
+    {caption && <p class="lightbox__caption">{caption}</p>}
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.custom-image__trigger').forEach((trigger) => {
+    const figure = trigger.closest('figure');
+    const lightbox = figure?.nextElementSibling as HTMLElement | null;
+    if (!lightbox) return;
+
+    const img = lightbox.querySelector<HTMLElement>('.lightbox__img');
+    const ZOOM_LEVELS = [1, 2, 4];
+    let zoomIndex = 0;
+
+    const resetZoom = () => {
+      zoomIndex = 0;
+      if (img) {
+        img.style.transform = '';
+        img.style.cursor = 'zoom-in';
+        img.style.maxHeight = '85vh';
+      }
+    };
+
+    const close = () => {
+      resetZoom();
+      lightbox.hidden = true;
+      document.body.style.overflow = '';
+    };
+
+    trigger.addEventListener('click', () => {
+      lightbox.hidden = false;
+      document.body.style.overflow = 'hidden';
+      lightbox.querySelector<HTMLElement>('.lightbox__close')?.focus();
+    });
+
+    lightbox.querySelector('.lightbox__backdrop')?.addEventListener('click', close);
+    lightbox.querySelector('.lightbox__close')?.addEventListener('click', close);
+
+    let panX = 0;
+    let panY = 0;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let isDragging = false;
+    let hasDragged = false;
+
+    const applyTransform = (scale: number) => {
+      if (img) img.style.transform = scale === 1
+        ? ''
+        : `scale(${scale}) translate(${panX / scale}px, ${panY / scale}px)`;
+    };
+
+    const updateCursor = () => {
+      if (!img) return;
+      const scale = ZOOM_LEVELS[zoomIndex];
+      if (scale === 1) img.style.cursor = 'zoom-in';
+      else if (isDragging) img.style.cursor = 'grabbing';
+      else img.style.cursor = 'grab';
+    };
+
+    img?.addEventListener('mousedown', (e) => {
+      if (ZOOM_LEVELS[zoomIndex] === 1) return;
+      isDragging = true;
+      hasDragged = false;
+      dragStartX = e.clientX - panX;
+      dragStartY = e.clientY - panY;
+      updateCursor();
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      if (Math.abs(dx - panX) > 2 || Math.abs(dy - panY) > 2) hasDragged = true;
+      panX = dx;
+      panY = dy;
+      applyTransform(ZOOM_LEVELS[zoomIndex]);
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        updateCursor();
+      }
+    });
+
+    // タッチ対応
+    let touchStartX = 0;
+    let touchStartY = 0;
+    img?.addEventListener('touchstart', (e) => {
+      if (ZOOM_LEVELS[zoomIndex] === 1) return;
+      hasDragged = false;
+      touchStartX = e.touches[0].clientX - panX;
+      touchStartY = e.touches[0].clientY - panY;
+    }, { passive: true });
+
+    img?.addEventListener('touchmove', (e) => {
+      if (ZOOM_LEVELS[zoomIndex] === 1) return;
+      const dx = e.touches[0].clientX - touchStartX;
+      const dy = e.touches[0].clientY - touchStartY;
+      if (Math.abs(dx - panX) > 2 || Math.abs(dy - panY) > 2) hasDragged = true;
+      panX = dx;
+      panY = dy;
+      applyTransform(ZOOM_LEVELS[zoomIndex]);
+      e.preventDefault();
+    }, { passive: false });
+
+    img?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (hasDragged) { hasDragged = false; return; }
+      zoomIndex = (zoomIndex + 1) % ZOOM_LEVELS.length;
+      const scale = ZOOM_LEVELS[zoomIndex];
+      if (scale === 1) { panX = 0; panY = 0; }
+      img.style.maxHeight = scale === 1 ? '85vh' : 'none';
+      applyTransform(scale);
+      updateCursor();
+    });
+
+    lightbox.addEventListener('keydown', (e) => {
+      if ((e as KeyboardEvent).key === 'Escape') close();
+    });
+  });
+</script>
 
 <style>
 .custom-image {
@@ -30,11 +161,27 @@ const maxWidth = width === undefined
   margin: 1.5rem auto;
 }
 
-.custom-image :global(img) {
+.custom-image__trigger {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: zoom-in;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.custom-image__trigger :global(img) {
   display: block;
   width: 100%;
   height: auto;
   border-radius: 8px;
+  transition: opacity 0.2s;
+}
+
+.custom-image__trigger:hover :global(img) {
+  opacity: 0.9;
 }
 
 .custom-image__caption {
@@ -44,5 +191,73 @@ const maxWidth = width === undefined
   opacity: 0.7;
   text-align: center;
   line-height: 1.5;
+}
+
+/* Lightbox */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox[hidden] {
+  display: none;
+}
+
+.lightbox__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  border: none;
+  cursor: zoom-out;
+}
+
+.lightbox__content {
+  position: relative;
+  max-width: min(90vw, 1200px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.lightbox__close {
+  position: absolute;
+  top: -2.5rem;
+  right: 0;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.25rem 0.5rem;
+  opacity: 0.8;
+  transition: opacity 0.15s;
+}
+
+.lightbox__close:hover {
+  opacity: 1;
+}
+
+.lightbox__img {
+  display: block;
+  max-width: 100%;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 6px;
+  transition: transform 0.25s ease;
+  cursor: zoom-in;
+}
+
+.lightbox__caption {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.75);
+  text-align: center;
 }
 </style>
