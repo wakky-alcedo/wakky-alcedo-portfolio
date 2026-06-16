@@ -29,6 +29,21 @@ const year = new Date().getFullYear();
       </a>
     </div>
 
+    <div class="footer__print-toggle print-mode-toggle">
+      <label class="footer__toggle-label">
+        <input
+          type="checkbox"
+          id="print-economy-toggle"
+          class="footer__toggle-input"
+          checked
+        />
+        <span class="footer__toggle-track">
+          <span class="footer__toggle-thumb"></span>
+        </span>
+        <span class="footer__toggle-text" id="print-mode-text">インク節約（白背景）</span>
+      </label>
+    </div>
+
     <div class="footer__orientation">
       <label class="footer__toggle-label">
         <input
@@ -56,6 +71,25 @@ const year = new Date().getFullYear();
 
   const toggle = document.getElementById('orientation-toggle') as HTMLInputElement | null;
   const hint   = document.getElementById('orientation-hint') as HTMLParagraphElement | null;
+
+  const STORAGE_KEY = 'print-mode';
+  const printToggle = document.getElementById('print-economy-toggle') as HTMLInputElement | null;
+  const printModeText = document.getElementById('print-mode-text');
+
+  function applyPrintMode(mode: string) {
+    document.documentElement.dataset.printMode = mode;
+    localStorage.setItem(STORAGE_KEY, mode);
+    if (printToggle) printToggle.checked = mode !== 'vivid';
+    if (printModeText) printModeText.textContent = mode === 'vivid' ? '印刷設定：ダーク（画面そのまま）' : '印刷設定：ライト（インク節約）';
+  }
+
+  applyPrintMode(localStorage.getItem(STORAGE_KEY) ?? 'economy');
+
+  if (printToggle) {
+    printToggle.addEventListener('change', () => {
+      applyPrintMode(printToggle.checked ? 'economy' : 'vivid');
+    });
+  }
 
   if (toggle) {
     toggle.disabled = false;
@@ -166,6 +200,12 @@ const year = new Date().getFullYear();
   font-size: 0.75rem;
   color: var(--color-accent);
   margin-left: 0.5rem;
+}
+
+.footer__print-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .footer__copy {

@@ -2,7 +2,6 @@
 import '../../styles/global.css';
 import '../../styles/animations.css';
 import '../../styles/print.css';
-import PrintModeToggle from '../common/PrintModeToggle.astro';
 
 interface Props {
   title: string;
@@ -43,7 +42,6 @@ const siteTitle = title === 'Home' ? "Wakky-Alcedo's Portfolio" : `${title} | Wa
     </script>
   </head>
   <body>
-    <PrintModeToggle />
     <slot />
   </body>
 </html>
