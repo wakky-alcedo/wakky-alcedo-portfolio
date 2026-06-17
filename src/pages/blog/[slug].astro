@@ -5,6 +5,9 @@ import BaseLayout from '../../components/layout/BaseLayout.astro';
 import Header from '../../components/layout/Header.astro';
 import Footer from '../../components/layout/Footer.astro';
 import BackButton from '../../components/common/BackButton.astro';
+import ExternalLink from '../../components/content/ExternalLink.astro';
+import TwitterEmbed from '../../components/content/TwitterEmbed.astro';
+import NoteEmbed from '../../components/content/NoteEmbed.astro';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ data }) => !data.unpublished);
@@ -42,7 +45,7 @@ const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month:
           <time class="blog-article__date" datetime={date.toISOString()}>{formattedDate}</time>
         </header>
         <div class="prose">
-          <Content />
+          <Content components={{ a: ExternalLink, TwitterEmbed, NoteEmbed }} />
         </div>
         <a href="/blog" class="back-link">← Blog 一覧に戻る</a>
       </div>
