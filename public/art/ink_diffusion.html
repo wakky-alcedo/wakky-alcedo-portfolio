@@ -449,11 +449,15 @@ document.getElementById('clear-btn').addEventListener('click', () => {
 });
 
 // --- Auto-drop mode ---
-let autoMode = false;
+let autoMode = true;
 let autoAccum = 0;
 
 const autoBtn   = document.getElementById('auto-btn');
 const autoCtrls = document.getElementById('auto-ctrls');
+
+// 初期状態をONに反映
+autoBtn.classList.add('active');
+autoCtrls.classList.remove('hidden');
 
 autoBtn.addEventListener('click', () => {
   autoMode = !autoMode;
