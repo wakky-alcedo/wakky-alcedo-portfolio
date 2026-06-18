@@ -2,567 +2,425 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>雨と水たまり — 窓ガラスを伝う雨粒</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>窓の雨</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #040810;
-    color: #c8e6f0;
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    user-select: none;
-  }
-  canvas#c { display: block; flex: 1; min-height: 0; cursor: crosshair; }
-
-  #ui {
-    background: rgba(4, 10, 20, 0.92);
-    border-top: 1px solid rgba(104, 206, 214, 0.15);
-    padding: 8px 16px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px 24px;
-    align-items: center;
-    flex-shrink: 0;
-  }
-  .ctrl { display: flex; align-items: center; gap: 6px; }
-  label { font-size: 0.72rem; color: rgba(200, 230, 240, 0.65); white-space: nowrap; }
-  input[type=range] {
-    width: 80px; height: 3px;
-    -webkit-appearance: none; appearance: none;
-    background: rgba(104, 206, 214, 0.25); border-radius: 2px; cursor: pointer;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 11px; height: 11px;
-    border-radius: 50%; background: #68ced6; cursor: pointer;
-  }
-  .val { font-size: 0.7rem; color: #68ced6; min-width: 28px; }
-  #hint { font-size: 0.68rem; color: rgba(200,230,240,0.4); margin-left: auto; white-space: nowrap; }
-  #clear-btn {
-    font-size: 0.7rem; padding: 3px 10px;
-    background: rgba(104,206,214,0.12); border: 1px solid rgba(104,206,214,0.3);
-    color: #68ced6; border-radius: 5px; cursor: pointer; transition: background 0.15s; white-space: nowrap;
-  }
-  #clear-btn:hover { background: rgba(104,206,214,0.25); }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#000;overflow:hidden;}
+canvas{display:block;position:fixed;top:0;left:0;width:100%;height:100%;}
+.ui{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;gap:8px;align-items:center;
+  width:min(480px,92vw);z-index:10;
+}
+.panel{
+  background:rgba(4,8,16,0.85);backdrop-filter:blur(14px);
+  border:0.5px solid rgba(100,160,255,0.12);border-radius:14px;
+  padding:12px 16px;width:100%;
+}
+.sliders{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;}
+.sl{display:flex;flex-direction:column;gap:3px;}
+.sl label{font-size:11px;color:rgba(120,160,220,0.5);display:flex;justify-content:space-between;font-family:sans-serif;}
+.sl label span{color:rgba(160,200,255,0.85);}
+input[type=range]{width:100%;accent-color:#4a90d9;cursor:pointer;}
+.btns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
+button{padding:8px 16px;border-radius:8px;border:0.5px solid rgba(100,160,255,0.15);background:rgba(40,80,160,0.08);color:rgba(160,200,255,0.75);font-size:12px;cursor:pointer;font-family:sans-serif;transition:background 0.15s;}
+button:hover{background:rgba(40,80,160,0.16);}
+button.on{background:rgba(40,80,160,0.22);border-color:rgba(100,160,255,0.35);color:#90c0ff;}
+.hint{font-size:11px;color:rgba(100,150,220,0.25);text-align:center;font-family:sans-serif;}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-
-<div id="ui">
-  <div class="ctrl">
-    <label>雨量</label>
-    <input type="range" id="s-rain"    min="0" max="100" value="45">
-    <span class="val" id="v-rain">45</span>
+<div class="ui">
+  <div class="panel">
+    <div class="sliders">
+      <div class="sl"><label>雨の量 <span id="vRain">1.0</span></label>
+        <input type="range" id="sRain" min="0.1" max="4.0" step="0.1" value="1.0"></div>
+      <div class="sl"><label>風（左右） <span id="vWind">0.0</span></label>
+        <input type="range" id="sWind" min="-2.0" max="2.0" step="0.1" value="0.0"></div>
+      <div class="sl"><label>雫の大きさ <span id="vSize">1.0</span></label>
+        <input type="range" id="sSize" min="0.3" max="2.5" step="0.1" value="1.0"></div>
+      <div class="sl"><label>窓の外 <span id="vScene">夜の街</span></label>
+        <input type="range" id="sScene" min="0" max="2" step="1" value="0"></div>
+    </div>
   </div>
-  <div class="ctrl">
-    <label>風</label>
-    <input type="range" id="s-wind"    min="0" max="100" value="50">
-    <span class="val" id="v-wind">50</span>
+  <div class="panel">
+    <div class="btns">
+      <button id="btnFog" class="on" onclick="toggle('fog')">🌫 曇り</button>
+      <button id="btnPuddle" class="on" onclick="toggle('puddle')">💧 水たまり</button>
+      <button onclick="clearDrops()">✕ 雨やむ</button>
+    </div>
   </div>
-  <div class="ctrl">
-    <label>表面張力</label>
-    <input type="range" id="s-tension" min="1" max="100" value="40">
-    <span class="val" id="v-tension">40</span>
-  </div>
-  <div class="ctrl">
-    <label>結露</label>
-    <input type="range" id="s-fog"     min="0" max="100" value="55">
-    <span class="val" id="v-fog">55</span>
-  </div>
-  <button id="clear-btn">クリア</button>
-  <span id="hint">ドラッグでガラスを拭く</span>
+  <div class="hint">クリックで雫を置く</div>
 </div>
 
 <script>
-// ================================================================
-// Rain on Window — layers:
-//   1. Bokeh background (bgCanvas, drawn once)
-//   2. Trails left by sliding drops
-//   3. Water drops (clipped refraction + highlight)
-//   4. Condensation fog (fogMap → fogCanvas, drag to wipe)
-//   5. Rain streaks in air
-// ================================================================
-
-// --- Helpers ---
-function getParam(id) {
-  return parseFloat(document.getElementById('s-' + id).value) / 100;
-}
-
-// --- Canvas ---
 const canvas = document.getElementById('c');
 const ctx    = canvas.getContext('2d');
-
-// Background (bokeh night scene)
-const bgCanvas = document.createElement('canvas');
-const bgCtx    = bgCanvas.getContext('2d');
-
-// Fog canvas (low-res, scaled up)
-const FOG_W = 120, FOG_H = 90;
-const fogCanvas  = document.createElement('canvas');
-fogCanvas.width  = FOG_W;
-fogCanvas.height = FOG_H;
-const fogCtx     = fogCanvas.getContext('2d');
-const fogImgData = fogCtx.createImageData(FOG_W, FOG_H);
-let fogMap       = new Float32Array(FOG_W * FOG_H); // 0.0–1.0
-
-// Trail canvas (persistent, dimmed each frame)
-const trailCanvas = document.createElement('canvas');
-const trailCtx    = trailCanvas.getContext('2d');
-
-// Bokeh lights (generated once per resize)
-let bokehLights = [];
-function buildBokeh(W, H) {
-  bokehLights = [];
-  const COLORS = ['#ff9944','#ffcc44','#55aaff','#ff5599','#88ffcc','#ffffff','#ff7755','#aaddff'];
-  for (let i = 0; i < 70; i++) {
-    bokehLights.push({
-      x: Math.random() * W,
-      y: Math.random() * H,
-      r: 15 + Math.random() * 70,
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      a: 0.15 + Math.random() * 0.45,
-    });
-  }
-}
-
-function drawBokeh(ctx, W, H) {
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, '#060814');
-  grad.addColorStop(0.6, '#0c1828');
-  grad.addColorStop(1, '#080c18');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
-
-  for (const b of bokehLights) {
-    const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
-    const a = Math.floor(b.a * 255).toString(16).padStart(2, '0');
-    g.addColorStop(0,   b.color + a);
-    g.addColorStop(0.5, b.color + Math.floor(b.a * 100).toString(16).padStart(2, '0'));
-    g.addColorStop(1,   b.color + '00');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-function resize() {
-  const W = canvas.clientWidth, H = canvas.clientHeight;
-  canvas.width  = W; canvas.height = H;
-  bgCanvas.width = W; bgCanvas.height = H;
-  trailCanvas.width = W; trailCanvas.height = H;
-  buildBokeh(W, H);
-  drawBokeh(bgCtx, W, H);
-  fogMap.fill(getParam('fog'));
-  drops.length = 0;
-  streaks.length = 0;
-}
+let W, H;
+function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+resize();
 window.addEventListener('resize', resize);
 
-// ================================================================
-// Fog system
-// ================================================================
-function updateFog(dt) {
-  const target   = getParam('fog');
-  const recovery = 0.12 * dt;
-  for (let i = 0; i < fogMap.length; i++) {
-    fogMap[i] = Math.min(target, fogMap[i] + recovery);
-  }
-}
+let RAIN=1.0, WIND=0.0, SIZE=1.0, SCENE=0;
+let showFog=true, showPuddle=true;
+let windTime=0, windCurrent=0, windTarget=0;
 
-function wipeFog(px, py, radius) {
-  const W = canvas.width, H = canvas.height;
-  const fx = px / W * FOG_W;
-  const fy = py / H * FOG_H;
-  const fr = radius / W * FOG_W;
-  const fr2 = fr * fr;
-  for (let j = 0; j < FOG_H; j++) {
-    for (let i = 0; i < FOG_W; i++) {
-      const dx = i - fx, dy = j - fy;
-      const d2 = dx*dx + dy*dy;
-      if (d2 < fr2) {
-        const strength = 1 - Math.sqrt(d2) / fr;
-        fogMap[j * FOG_W + i] = Math.max(0, fogMap[j * FOG_W + i] - strength * 0.9);
-      }
-    }
-  }
-}
-
-function renderFog() {
-  const d = fogImgData.data;
-  for (let i = 0; i < FOG_W * FOG_H; i++) {
-    const a = fogMap[i] * 210 | 0;
-    d[i*4]   = 175;
-    d[i*4+1] = 208;
-    d[i*4+2] = 228;
-    d[i*4+3] = a;
-  }
-  fogCtx.putImageData(fogImgData, 0, 0);
-}
-
-// ================================================================
-// Drop physics
-// ================================================================
-const drops = [];
-const MAX_DROPS = 180;
-
-function massToR(mass) { return Math.pow(mass * 2.5, 0.5); }
-
-class Drop {
-  constructor(x, y, mass) {
-    this.x = x;
-    this.y = y;
-    this.mass = mass ?? (0.5 + Math.random() * 1.5);
-    this.r    = massToR(this.mass);
-    this.vy   = 0;
-    this.vx   = 0;
-    this.sliding = false;
-    this.trail   = []; // [{x,y}]
-    this.alive   = true;
-    this.wobble  = 0;
-  }
-
-  get tension() {
-    // radius threshold before sliding: tension param 0→1 maps to r 2→16
-    return 2 + getParam('tension') * 14;
-  }
-
-  update(dt) {
-    const wind = (getParam('wind') - 0.5) * 0.8; // -0.4 to 0.4
-
-    if (!this.sliding) {
-      if (this.r >= this.tension) {
-        this.sliding = true;
-        this.vy = 0.5;
-      }
-    }
-
-    if (this.sliding) {
-      // Gravity + drag
-      this.vy += 120 * dt;
-      this.vy *= (1 - 2 * dt);
-      this.vx += wind * 30 * dt;
-      this.vx *= (1 - 3 * dt);
-
-      // Wobble: slight oscillation left-right
-      this.wobble += dt * 8;
-      this.x += this.vx * dt + Math.sin(this.wobble) * this.r * 0.015;
-      this.y += this.vy * dt;
-
-      // Record trail
-      if (this.trail.length === 0 ||
-          Math.hypot(this.x - this.trail[this.trail.length-1].x,
-                     this.y - this.trail[this.trail.length-1].y) > 2) {
-        this.trail.push({ x: this.x, y: this.y });
-        if (this.trail.length > 80) this.trail.shift();
-      }
-
-      // Lose mass into trail
-      this.mass -= (0.8 + this.vy * 0.005) * dt;
-      this.r = massToR(this.mass);
-      if (this.mass < 0.3) this.alive = false;
-    } else {
-      // Accumulate rain
-      const rainRate = getParam('rain');
-      this.mass += rainRate * 0.4 * dt;
-      this.r = massToR(this.mass);
-      // Cap mass
-      if (this.mass > 60) this.mass = 60;
-    }
-
-    const W = canvas.width, H = canvas.height;
-    if (this.y > H + 20 || this.x < -20 || this.x > W + 20) this.alive = false;
-  }
-}
-
-function spawnDrop(W, H) {
-  if (drops.length >= MAX_DROPS) return;
-  const wind = (getParam('wind') - 0.5);
-  const x = Math.random() * W + wind * 100;
-  drops.push(new Drop(
-    Math.max(5, Math.min(W - 5, x)),
-    Math.random() * H * 0.15,
-  ));
-}
-
-function mergeDrops() {
-  for (let i = 0; i < drops.length; i++) {
-    const a = drops[i];
-    if (!a.alive) continue;
-    for (let j = i + 1; j < drops.length; j++) {
-      const b = drops[j];
-      if (!b.alive) continue;
-      const dist = Math.hypot(a.x - b.x, a.y - b.y);
-      if (dist < (a.r + b.r) * 0.85) {
-        if (a.mass >= b.mass) {
-          a.mass += b.mass * 0.75;
-          a.r = massToR(a.mass);
-          if (b.sliding && !a.sliding) { a.sliding = true; a.vy = b.vy; }
-          b.alive = false;
-        } else {
-          b.mass += a.mass * 0.75;
-          b.r = massToR(b.mass);
-          if (a.sliding && !b.sliding) { b.sliding = true; b.vy = a.vy; }
-          a.alive = false;
+const SCENES = [
+  { name:'夜の街',
+    bg: (ctx,W,H)=>{
+      // 空
+      const sky=ctx.createLinearGradient(0,0,0,H*0.75);
+      sky.addColorStop(0,'#04080f'); sky.addColorStop(1,'#08142a');
+      ctx.fillStyle=sky; ctx.fillRect(0,0,W,H*0.75);
+      // 地面
+      const grd=ctx.createLinearGradient(0,H*0.75,0,H);
+      grd.addColorStop(0,'#0a0c10'); grd.addColorStop(1,'#060809');
+      ctx.fillStyle=grd; ctx.fillRect(0,H*0.75,W,H*0.25);
+      // ビルのシルエット
+      for(let i=0;i<18;i++){
+        const bx=(i/18)*W+(Math.sin(i*1.3)*20);
+        const bw=30+Math.sin(i*2.1)*20;
+        const bh=H*(0.2+Math.sin(i*1.7)*0.15);
+        ctx.fillStyle=`rgba(8,12,22,0.95)`;
+        ctx.fillRect(bx,H*0.75-bh,bw,bh);
+        // 窓
+        for(let wy=H*0.75-bh+8;wy<H*0.75-4;wy+=12){
+          for(let wx=bx+4;wx<bx+bw-4;wx+=10){
+            if(Math.random()>0.5){
+              ctx.fillStyle=`rgba(${220+Math.random()*35|0},${180+Math.random()*40|0},${80+Math.random()*60|0},${0.5+Math.random()*0.4})`;
+              ctx.fillRect(wx,wy,5,6);
+            }
+          }
         }
       }
+      // 街灯の光
+      for(let i=0;i<6;i++){
+        const lx=(i+0.5)/6*W;
+        const grad=ctx.createRadialGradient(lx,H*0.74,0,lx,H*0.74,80);
+        grad.addColorStop(0,'rgba(255,200,80,0.18)');
+        grad.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(lx,H*0.74,80,0,Math.PI*2); ctx.fill();
+      }
     }
+  },
+  { name:'森',
+    bg: (ctx,W,H)=>{
+      const sky=ctx.createLinearGradient(0,0,0,H);
+      sky.addColorStop(0,'#040a0c'); sky.addColorStop(0.5,'#081418'); sky.addColorStop(1,'#0c1c14');
+      ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+      // 木
+      for(let i=0;i<20;i++){
+        const tx=(i/20)*W+Math.sin(i*2.3)*15;
+        const th=H*(0.4+Math.sin(i*1.8)*0.2);
+        ctx.fillStyle=`rgba(6,14,8,0.9)`;
+        ctx.beginPath();
+        ctx.moveTo(tx,H); ctx.lineTo(tx-25,H-th*0.4);
+        ctx.lineTo(tx-15,H-th*0.4); ctx.lineTo(tx-20,H-th*0.7);
+        ctx.lineTo(tx-8, H-th*0.7); ctx.lineTo(tx-12,H-th);
+        ctx.lineTo(tx+12,H-th);     ctx.lineTo(tx+8, H-th*0.7);
+        ctx.lineTo(tx+20,H-th*0.7); ctx.lineTo(tx+15,H-th*0.4);
+        ctx.lineTo(tx+25,H-th*0.4); ctx.closePath();
+        ctx.fill();
+      }
+    }
+  },
+  { name:'駅のホーム',
+    bg: (ctx,W,H)=>{
+      const sky=ctx.createLinearGradient(0,0,0,H);
+      sky.addColorStop(0,'#050810'); sky.addColorStop(1,'#0a1020');
+      ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+      // 線路
+      ctx.fillStyle='rgba(20,22,28,0.95)';
+      ctx.fillRect(0,H*0.65,W,H*0.35);
+      // レール
+      ctx.strokeStyle='rgba(80,90,110,0.6)'; ctx.lineWidth=3;
+      [0.35,0.65].forEach(f=>{
+        ctx.beginPath(); ctx.moveTo(0,H*f+H*0.65); ctx.lineTo(W,H*f+H*0.65); ctx.stroke();
+      });
+      // 枕木
+      ctx.strokeStyle='rgba(40,35,30,0.7)'; ctx.lineWidth=6;
+      for(let x=0;x<W;x+=30){
+        ctx.beginPath(); ctx.moveTo(x,H*0.65); ctx.lineTo(x,H); ctx.stroke();
+      }
+      // ホームの照明
+      for(let i=0;i<5;i++){
+        const lx=(i+0.5)/5*W;
+        const grad=ctx.createRadialGradient(lx,H*0.5,0,lx,H*0.5,120);
+        grad.addColorStop(0,'rgba(200,220,255,0.12)');
+        grad.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(lx,H*0.5,120,0,Math.PI*2); ctx.fill();
+      }
+    }
+  },
+];
+
+// ============================================================
+// 水たまりのリング
+// ============================================================
+let puddles=[];
+class Puddle {
+  constructor(x,y){
+    this.x=x; this.y=y;
+    this.r=0; this.maxR=20+Math.random()*25;
+    this.alpha=0.6; this.life=1;
   }
-}
-
-// ================================================================
-// Rain streaks (visual only)
-// ================================================================
-const streaks = [];
-const MAX_STREAKS = 200;
-
-function updateStreaks(dt) {
-  const rain = getParam('rain');
-  const wind = (getParam('wind') - 0.5) * 2; // -1 to 1
-
-  // Spawn
-  const spawnRate = rain * 4;
-  if (streaks.length < MAX_STREAKS && Math.random() < spawnRate * dt * 60) {
-    const W = canvas.width, H = canvas.height;
-    streaks.push({
-      x:  Math.random() * (W + 200) - 100,
-      y:  -30,
-      vy: 600 + Math.random() * 400,
-      vx: wind * 200,
-      len: 12 + Math.random() * 20,
-      alpha: 0.15 + Math.random() * 0.25,
-    });
+  update(){
+    this.r   += 0.8;
+    this.life -= 0.012;
+    this.alpha = this.life*0.5;
   }
-
-  // Update
-  for (let i = streaks.length - 1; i >= 0; i--) {
-    const s = streaks[i];
-    s.x += s.vx * dt;
-    s.y += s.vy * dt;
-    if (s.y > canvas.height + 40) streaks.splice(i, 1);
-  }
-}
-
-function drawStreaks(ctx) {
-  const wind = (getParam('wind') - 0.5) * 2;
-  const angle = Math.atan2(1, wind * 0.25);
-  ctx.save();
-  ctx.strokeStyle = 'rgba(180, 220, 255, 0.6)';
-  ctx.lineWidth = 0.8;
-  ctx.lineCap = 'round';
-  for (const s of streaks) {
-    ctx.globalAlpha = s.alpha;
-    const dx = -Math.sin(angle) * s.len;
-    const dy = -Math.cos(angle) * s.len;
+  draw(){
+    if(this.life<=0) return;
+    ctx.save();
+    ctx.globalAlpha=this.alpha;
     ctx.beginPath();
-    ctx.moveTo(s.x, s.y);
-    ctx.lineTo(s.x + dx, s.y + dy);
+    ctx.ellipse(this.x,this.y,this.r,this.r*0.35,0,0,Math.PI*2);
+    ctx.strokeStyle='rgba(150,200,255,0.8)';
+    ctx.lineWidth=0.8;
     ctx.stroke();
+    ctx.restore();
   }
-  ctx.restore();
 }
 
-// ================================================================
-// Trail rendering (onto persistent trailCanvas)
-// ================================================================
-function paintTrails() {
-  trailCtx.globalAlpha = 0.007;
-  trailCtx.fillStyle = '#040810';
-  trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
-  trailCtx.globalAlpha = 1;
+// ============================================================
+// 雫
+// ============================================================
+let drops=[];
+const MAX_DROPS=300;
 
-  for (const drop of drops) {
-    if (drop.trail.length < 2) continue;
-    const grad = trailCtx.createLinearGradient(
-      drop.trail[0].x, drop.trail[0].y,
-      drop.trail[drop.trail.length-1].x, drop.trail[drop.trail.length-1].y
-    );
-    grad.addColorStop(0, 'rgba(160,210,240,0)');
-    grad.addColorStop(1, `rgba(160,210,240,${0.12 + drop.r * 0.01})`);
-    trailCtx.beginPath();
-    trailCtx.moveTo(drop.trail[0].x, drop.trail[0].y);
-    for (let i = 1; i < drop.trail.length; i++) {
-      trailCtx.lineTo(drop.trail[i].x, drop.trail[i].y);
+class Drop {
+  constructor(x,y,r){
+    this.x = x ?? Math.random()*W;
+    this.y = y ?? -10;
+    this.r = r ?? (2+Math.random()*4)*SIZE;
+    this.vx= (Math.random()-0.5)*0.3 + windCurrent*0.4;
+    this.vy= 0;
+    this.trail=[]; // 軌跡
+    this.mergeTimer=0;
+    this.waiting=false; // 表面張力で一時停止中
+    this.waitTime=0;
+    this.maxWait=20+Math.random()*60;
+  }
+
+  update(){
+    if(this.waiting){
+      this.waitTime++;
+      // 表面張力で溜まる（少し揺れる）
+      this.x += Math.sin(this.waitTime*0.3)*0.15;
+      if(this.waitTime>this.maxWait){
+        this.waiting=false;
+        this.vy=1+Math.random()*1.5;
+      }
+      return;
     }
-    trailCtx.strokeStyle = grad;
-    trailCtx.lineWidth   = Math.max(0.5, drop.r * 0.55);
-    trailCtx.lineCap     = 'round';
-    trailCtx.lineJoin    = 'round';
-    trailCtx.stroke();
+
+    // 重力 + 風
+    this.vy += 0.08 + this.r*0.015;
+    this.vx += (windCurrent+WIND)*0.018;
+    this.vx *= 0.98;
+
+    // 軌跡を記録
+    this.trail.push({x:this.x, y:this.y});
+    if(this.trail.length>12) this.trail.shift();
+
+    this.x += this.vx;
+    this.y += this.vy;
+
+    // ランダムに一時停止（表面張力）
+    if(this.vy>1.5 && Math.random()<0.004){
+      this.waiting=true;
+      this.waitTime=0;
+      this.vy=0; this.vx=0;
+    }
+
+    // 画面下に到達→水たまりの波紋
+    if(this.y>H-20 && showPuddle){
+      puddles.push(new Puddle(this.x, H-8));
+    }
   }
-}
 
-// ================================================================
-// Drop rendering (refraction + highlight)
-// ================================================================
-function drawDrop(drop) {
-  const { x, y, r } = drop;
-  ctx.save();
+  draw(){
+    const r=this.r;
 
-  // Clip to drop shape
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.clip();
+    // 軌跡（細い線）
+    if(this.trail.length>2){
+      ctx.beginPath();
+      ctx.moveTo(this.trail[0].x, this.trail[0].y);
+      for(let i=1;i<this.trail.length;i++){
+        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+      }
+      ctx.strokeStyle=`rgba(160,210,255,0.18)`;
+      ctx.lineWidth=r*0.5;
+      ctx.stroke();
+    }
 
-  // Refraction: show background with slight magnification
-  const scale = 1.1;
-  const ox = x - x * scale;
-  const oy = y - y * scale;
-  ctx.drawImage(bgCanvas, ox, oy, bgCanvas.width * scale, bgCanvas.height * scale);
+    // 雫の本体（涙形）
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    // 速度方向に回転
+    const angle=Math.atan2(this.vy, this.vx)-Math.PI/2;
+    ctx.rotate(this.waiting?0:angle);
 
-  // Slight brightening inside
-  ctx.fillStyle = 'rgba(255,255,255,0.12)';
-  ctx.fillRect(x - r, y - r, r*2, r*2);
-
-  ctx.restore();
-
-  // Dark rim (glass bead effect)
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  const rim = ctx.createRadialGradient(x - r*0.2, y - r*0.25, r * 0.1, x, y, r);
-  rim.addColorStop(0.65, 'rgba(0,0,0,0)');
-  rim.addColorStop(1,    'rgba(0,10,20,0.55)');
-  ctx.fillStyle = rim;
-  ctx.fill();
-
-  // Primary highlight (top-left)
-  ctx.beginPath();
-  ctx.arc(x - r*0.28, y - r*0.30, r * 0.28, 0, Math.PI * 2);
-  const hl = ctx.createRadialGradient(x - r*0.32, y - r*0.35, 0, x - r*0.28, y - r*0.30, r*0.28);
-  hl.addColorStop(0,   'rgba(255,255,255,0.75)');
-  hl.addColorStop(0.5, 'rgba(255,255,255,0.3)');
-  hl.addColorStop(1,   'rgba(255,255,255,0)');
-  ctx.fillStyle = hl;
-  ctx.fill();
-
-  // Secondary small highlight (bottom-right)
-  if (r > 5) {
+    // 涙形パス
+    const stretch = this.waiting ? 1 : 1+Math.min(this.vy*0.08,0.6);
     ctx.beginPath();
-    ctx.arc(x + r*0.3, y + r*0.3, r * 0.12, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(200,230,255,0.4)';
-    ctx.fill();
+    ctx.moveTo(0,-r*stretch);
+    ctx.bezierCurveTo( r*0.8,-r*stretch*0.3,  r,r*0.3,  0,r);
+    ctx.bezierCurveTo(-r,r*0.3, -r*0.8,-r*stretch*0.3, 0,-r*stretch);
+
+    // 内部グラデーション
+    const grad=ctx.createRadialGradient(-r*0.25,-r*0.3,0,0,0,r*1.2);
+    grad.addColorStop(0,'rgba(220,240,255,0.92)');
+    grad.addColorStop(0.4,'rgba(120,180,240,0.6)');
+    grad.addColorStop(1,'rgba(60,120,200,0.2)');
+    ctx.fillStyle=grad; ctx.fill();
+
+    // ハイライト
+    ctx.beginPath();
+    ctx.ellipse(-r*0.25,-r*0.35,r*0.22,r*0.15,-0.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.fill();
+
+    ctx.restore();
+  }
+
+  get dead(){ return this.y>H+20 || this.x<-20 || this.x>W+20; }
+}
+
+function clearDrops(){ drops=[]; puddles=[]; }
+
+// ============================================================
+// 霧（曇りガラス）
+// ============================================================
+let fogCanvas, fogCtx;
+function initFog(){
+  fogCanvas=document.createElement('canvas');
+  fogCanvas.width=W; fogCanvas.height=H;
+  fogCtx=fogCanvas.getContext('2d');
+  // ランダムな霧のパターン
+  fogCtx.fillStyle='rgba(160,180,210,0.12)';
+  fogCtx.fillRect(0,0,W,H);
+  for(let i=0;i<40;i++){
+    const fx=Math.random()*W, fy=Math.random()*H;
+    const fr=50+Math.random()*150;
+    const fg=fogCtx.createRadialGradient(fx,fy,0,fx,fy,fr);
+    fg.addColorStop(0,'rgba(180,200,230,0.08)');
+    fg.addColorStop(1,'rgba(0,0,0,0)');
+    fogCtx.fillStyle=fg; fogCtx.beginPath(); fogCtx.arc(fx,fy,fr,0,Math.PI*2); fogCtx.fill();
   }
 }
+initFog();
+window.addEventListener('resize',()=>{ initFog(); });
 
-// ================================================================
-// Input: drag to wipe glass
-// ================================================================
-let wiping = false, prevWx = 0, prevWy = 0;
-
-function getPos(e, touch) {
-  const r = canvas.getBoundingClientRect();
-  const src = touch ?? e;
-  return { x: src.clientX - r.left, y: src.clientY - r.top };
+// 雫が通過した場所の霧を拭く
+function wipeTrail(drop){
+  if(!showFog||!fogCtx) return;
+  fogCtx.save();
+  fogCtx.globalCompositeOperation='destination-out';
+  const r=drop.r*2.5;
+  const grad=fogCtx.createRadialGradient(drop.x,drop.y,0,drop.x,drop.y,r);
+  grad.addColorStop(0,'rgba(0,0,0,0.3)');
+  grad.addColorStop(1,'rgba(0,0,0,0)');
+  fogCtx.fillStyle=grad;
+  fogCtx.beginPath(); fogCtx.arc(drop.x,drop.y,r,0,Math.PI*2); fogCtx.fill();
+  fogCtx.restore();
 }
 
-canvas.addEventListener('mousedown', e => {
-  wiping = true;
-  const p = getPos(e);
-  prevWx = p.x; prevWy = p.y;
-  wipeFog(p.x, p.y, 45);
-});
-canvas.addEventListener('mousemove', e => {
-  if (!wiping) return;
-  const p = getPos(e);
-  wipeFog(p.x, p.y, 45);
-  prevWx = p.x; prevWy = p.y;
-});
-canvas.addEventListener('mouseup',    () => { wiping = false; });
-canvas.addEventListener('mouseleave', () => { wiping = false; });
+// ============================================================
+// メインループ
+// ============================================================
+let t=0, rainAcc=0;
 
-canvas.addEventListener('touchstart', e => {
-  e.preventDefault(); wiping = true;
-  const p = getPos(e, e.touches[0]);
-  prevWx = p.x; prevWy = p.y;
-  wipeFog(p.x, p.y, 55);
-}, { passive: false });
-canvas.addEventListener('touchmove', e => {
+// シーン背景をオフスクリーンに描画
+let sceneCanvas, sceneCtx, lastScene=-1;
+function drawScene(){
+  if(SCENE===lastScene) return;
+  lastScene=SCENE;
+  if(!sceneCanvas){
+    sceneCanvas=document.createElement('canvas');
+    sceneCanvas.width=W; sceneCanvas.height=H;
+    sceneCtx=sceneCanvas.getContext('2d');
+  }
+  sceneCtx.clearRect(0,0,W,H);
+  SCENES[SCENE].bg(sceneCtx,W,H);
+}
+
+function toggle(id){
+  if(id==='fog'){    showFog=!showFog;    document.getElementById('btnFog').classList.toggle('on',showFog);    initFog(); }
+  if(id==='puddle'){ showPuddle=!showPuddle; document.getElementById('btnPuddle').classList.toggle('on',showPuddle); }
+}
+
+canvas.addEventListener('click',e=>{
+  for(let i=0;i<5;i++) drops.push(new Drop(e.clientX+Math.random()*20-10, e.clientY));
+});
+canvas.addEventListener('touchstart',e=>{
   e.preventDefault();
-  if (!wiping) return;
-  const p = getPos(e, e.touches[0]);
-  wipeFog(p.x, p.y, 55);
-}, { passive: false });
-canvas.addEventListener('touchend', () => { wiping = false; });
+  for(let i=0;i<3;i++) drops.push(new Drop(e.touches[0].clientX+(Math.random()-0.5)*20, e.touches[0].clientY));
+},{passive:false});
 
-// sliders
-['rain','wind','tension','fog'].forEach(id => {
-  const s = document.getElementById('s-' + id);
-  const v = document.getElementById('v-' + id);
-  s.addEventListener('input', () => { v.textContent = s.value; });
-});
+document.getElementById('sRain').oninput  =e=>{ RAIN=parseFloat(e.target.value);  document.getElementById('vRain').textContent=RAIN.toFixed(1); };
+document.getElementById('sWind').oninput  =e=>{ WIND=parseFloat(e.target.value);  document.getElementById('vWind').textContent=WIND.toFixed(1); };
+document.getElementById('sSize').oninput  =e=>{ SIZE=parseFloat(e.target.value);  document.getElementById('vSize').textContent=SIZE.toFixed(1); };
+document.getElementById('sScene').oninput =e=>{
+  SCENE=parseInt(e.target.value);
+  document.getElementById('vScene').textContent=SCENES[SCENE].name;
+  lastScene=-1; // 再描画フラグ
+};
 
-// clear
-document.getElementById('clear-btn').addEventListener('click', () => {
-  drops.length = 0;
-  streaks.length = 0;
-  trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
-  fogMap.fill(getParam('fog'));
-});
-
-// ================================================================
-// Main loop
-// ================================================================
-let last = 0;
-let dropAccum = 0;
-
-resize(); // initial setup
-
-function loop(ts) {
-  const dt = Math.min((ts - last) / 1000, 0.05);
-  last = ts;
-
-  const W = canvas.width, H = canvas.height;
-  const rain = getParam('rain');
-
-  // Spawn drops
-  dropAccum += rain * 1.5 * dt;
-  while (dropAccum >= 1) {
-    dropAccum -= 1;
-    spawnDrop(W, H);
-  }
-
-  // Update drops
-  for (const d of drops) d.update(dt);
-  mergeDrops();
-  for (let i = drops.length - 1; i >= 0; i--) {
-    if (!drops[i].alive) drops.splice(i, 1);
-  }
-
-  // Update streaks
-  updateStreaks(dt);
-
-  // Update fog
-  updateFog(dt);
-
-  // --- Draw ---
-  // 1. Background
-  ctx.drawImage(bgCanvas, 0, 0);
-
-  // 2. Trails
-  paintTrails();
-  ctx.drawImage(trailCanvas, 0, 0);
-
-  // 3. Drops
-  for (const d of drops) drawDrop(d);
-
-  // 4. Fog (draw scaled from fogCanvas)
-  renderFog();
-  ctx.save();
-  ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(fogCanvas, 0, 0, W, H);
-  ctx.restore();
-
-  // 5. Rain streaks (on top of everything)
-  drawStreaks(ctx);
-
+function loop(){
   requestAnimationFrame(loop);
-}
+  t++;
 
-requestAnimationFrame(ts => { last = ts; resize(); requestAnimationFrame(loop); });
+  // 風をゆっくりランダム変化
+  windTime++;
+  if(windTime%90===0) windTarget=(Math.random()-0.5)*2.0;
+  windCurrent+=(windTarget-windCurrent)*0.012;
+
+  // 雨粒を生成
+  rainAcc+=RAIN*0.4;
+  while(rainAcc>1 && drops.length<MAX_DROPS){
+    drops.push(new Drop());
+    rainAcc--;
+  }
+
+  // 背景（窓の外の景色）
+  drawScene();
+  if(sceneCanvas) ctx.drawImage(sceneCanvas,0,0);
+  else{ ctx.fillStyle='#04080f'; ctx.fillRect(0,0,W,H); }
+
+  // 霧（曇りガラス）
+  if(showFog && fogCanvas) ctx.drawImage(fogCanvas,0,0);
+
+  // 水たまり
+  if(showPuddle){
+    for(let i=puddles.length-1;i>=0;i--){
+      puddles[i].update();
+      puddles[i].draw();
+      if(puddles[i].life<=0) puddles.splice(i,1);
+    }
+  }
+
+  // 雫の更新・描画
+  for(let i=drops.length-1;i>=0;i--){
+    const d=drops[i];
+    d.update();
+    wipeTrail(d);
+    d.draw();
+    if(d.dead) drops.splice(i,1);
+  }
+
+  // ガラスの光沢（上端のハイライト）
+  const gloss=ctx.createLinearGradient(0,0,0,H*0.04);
+  gloss.addColorStop(0,'rgba(255,255,255,0.06)');
+  gloss.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=gloss; ctx.fillRect(0,0,W,H*0.04);
+
+  // 窓枠
+  ctx.strokeStyle='rgba(60,60,80,0.5)'; ctx.lineWidth=12;
+  ctx.strokeRect(0,0,W,H);
+}
+loop();
 </script>
 </body>
 </html>
