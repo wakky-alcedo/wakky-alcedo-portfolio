@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>炎 — ずっと見ていられる火</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #000; overflow: hidden; }
+canvas { display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
+
+#ui {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 10px 20px; flex-wrap: wrap; align-items: center; justify-content: center;
+  width: min(520px, 94vw); z-index: 10;
+  background: rgba(8, 4, 2, 0.82); backdrop-filter: blur(12px);
+  border: 0.5px solid rgba(255, 120, 30, 0.15); border-radius: 14px;
+  padding: 10px 16px;
+}
+.ctrl { display: flex; align-items: center; gap: 6px; }
+label { font-size: 11px; color: rgba(255, 160, 60, 0.55); white-space: nowrap; font-family: sans-serif; }
+input[type=range] {
+  width: 76px; height: 3px; -webkit-appearance: none; appearance: none;
+  background: rgba(255, 120, 30, 0.2); border-radius: 2px; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 11px; height: 11px;
+  border-radius: 50%; background: #ff7820; cursor: pointer;
+}
+.val { font-size: 10px; color: rgba(255, 180, 80, 0.8); min-width: 26px; font-family: sans-serif; }
+#hint { font-size: 10px; color: rgba(255, 120, 30, 0.3); font-family: sans-serif; white-space: nowrap; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="ui">
+  <div class="ctrl">
+    <label>強さ</label>
+    <input type="range" id="sIntensity" min="0" max="100" value="60">
+    <span class="val" id="vIntensity">60</span>
+  </div>
+  <div class="ctrl">
+    <label>火の粉</label>
+    <input type="range" id="sEmber" min="0" max="100" value="30">
+    <span class="val" id="vEmber">30</span>
+  </div>
+  <div class="ctrl">
+    <label>高さ</label>
+    <input type="range" id="sHeight" min="10" max="100" value="50">
+    <span class="val" id="vHeight">50</span>
+  </div>
+  <span id="hint">ドラッグで燃料を足す</span>
+</div>
+
+<script>
+// ================================================================
+// Fire simulation — Doom-style cellular automata + bloom + embers
+// ================================================================
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+
+// Fire grid resolution (upscaled to canvas)
+const FW = 200, FH = 150;
+const grid = new Uint8Array(FW * FH);
+
+// Pre-compute fire color palette (256 entries, RGBA)
+const PALETTE = new Uint8ClampedArray(256 * 4);
+(function buildPalette() {
+  for (let i = 0; i < 256; i++) {
+    const t = i / 255;
+    let r, g, b;
+    if (t < 0.25) {
+      // black → dark ember red
+      const s = t / 0.25;
+      r = s * 120; g = s * 10; b = 0;
+    } else if (t < 0.55) {
+      // dark red → warm red-orange
+      const s = (t - 0.25) / 0.30;
+      r = 120 + s * 120; g = 10 + s * 55; b = 0;
+    } else if (t < 0.80) {
+      // red-orange → amber orange (焚き火の主役)
+      const s = (t - 0.55) / 0.25;
+      r = 240 + s * 15; g = 65 + s * 80; b = s * 8;
+    } else {
+      // amber → pale gold core (ほんのり明るい芯)
+      const s = (t - 0.80) / 0.20;
+      r = 255; g = 145 + s * 60; b = 8 + s * 30;
+    }
+    PALETTE[i*4]   = r | 0;
+    PALETTE[i*4+1] = g | 0;
+    PALETTE[i*4+2] = b | 0;
+    PALETTE[i*4+3] = i < 8 ? 0 : 255; // transparent at near-zero
+  }
+})();
+
+// Fire ImageData (FW×FH, scaled to canvas)
+const fireCanvas  = document.createElement('canvas');
+fireCanvas.width  = FW;
+fireCanvas.height = FH;
+const fireCtx     = fireCanvas.getContext('2d');
+const fireImg     = fireCtx.createImageData(FW, FH);
+const firePixels  = fireImg.data;
+
+// ================================================================
+// Ember particles
+// ================================================================
+const embers = [];
+const MAX_EMBERS = 200;
+
+class Ember {
+  constructor(baseX) {
+    const W = canvas.width, H = canvas.height;
+    this.x   = baseX ?? (W * 0.5 + (Math.random() - 0.5) * W * 0.35);
+    this.y   = H * (1 - getParam('height') * 0.6) + Math.random() * 20;
+    this.vx  = (Math.random() - 0.5) * 2.5;
+    this.vy  = -(0.8 + Math.random() * 2.5);
+    this.r   = 0.8 + Math.random() * 2;
+    this.life = 0.7 + Math.random() * 0.5;
+    this.spin = (Math.random() - 0.5) * 0.3;
+  }
+  update(dt, wind) {
+    this.vx  += wind * 0.04 + (Math.random() - 0.5) * 0.15;
+    this.vy  += 0.04;
+    this.vx  *= 0.98;
+    this.x   += this.vx;
+    this.y   += this.vy;
+    this.life -= (0.004 + Math.random() * 0.006) * 60 * dt;
+    this.r   *= 0.998;
+  }
+  draw() {
+    const a = Math.max(0, Math.min(1, this.life));
+    const r = this.r * a;
+    if (r < 0.1) return;
+    // Glow
+    const grd = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, r * 4);
+    grd.addColorStop(0, `rgba(255,200,80,${a * 0.7})`);
+    grd.addColorStop(1, 'rgba(255,80,0,0)');
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r * 4, 0, Math.PI * 2);
+    ctx.fillStyle = grd;
+    ctx.fill();
+    // Core
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,240,180,${a})`;
+    ctx.fill();
+  }
+  get dead() {
+    const W = canvas.width, H = canvas.height;
+    return this.life <= 0 || this.y < -20 || this.x < -20 || this.x > W + 20;
+  }
+}
+
+// ================================================================
+// Parameters
+// ================================================================
+function getParam(id) {
+  const el = document.getElementById('s' + id[0].toUpperCase() + id.slice(1));
+  return el ? parseFloat(el.value) / 100 : 0;
+}
+function getRawParam(id) {
+  const el = document.getElementById('s' + id[0].toUpperCase() + id.slice(1));
+  return el ? parseFloat(el.value) : 0;
+}
+
+['Intensity','Wind','Ember','Height'].forEach(id => {
+  const s = document.getElementById('s' + id);
+  const v = document.getElementById('v' + id);
+  if (s && v) s.addEventListener('input', () => { v.textContent = s.value; });
+});
+
+// ================================================================
+// 1/f pink noise wind (Paul Kellet's IIR approximation)
+// ================================================================
+let _b0=0,_b1=0,_b2=0,_b3=0,_b4=0,_b5=0,_b6=0;
+function pinkNoise() {
+  const w = Math.random()*2 - 1;
+  _b0 = 0.99886*_b0 + w*0.0555179;
+  _b1 = 0.99332*_b1 + w*0.0750759;
+  _b2 = 0.96900*_b2 + w*0.1538520;
+  _b3 = 0.86650*_b3 + w*0.3104856;
+  _b4 = 0.55000*_b4 + w*0.5329522;
+  _b5 = -0.7616 *_b5 - w*0.0168980;
+  const pink = (_b0+_b1+_b2+_b3+_b4+_b5+_b6+w*0.5362) / 7;
+  _b6 = w*0.115926;
+  return pink;
+}
+let autoWindAmt    = 0;
+let autoWindSmooth = 0;
+
+// ================================================================
+// Mouse interaction: drag to add fuel
+// ================================================================
+let dragging = false, mx = 0;
+
+canvas.addEventListener('mousedown', e => { dragging = true; mx = e.clientX; });
+canvas.addEventListener('mousemove', e => { if (dragging) mx = e.clientX; });
+canvas.addEventListener('mouseup',   () => { dragging = false; });
+canvas.addEventListener('mouseleave',() => { dragging = false; });
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault(); dragging = true; mx = e.touches[0].clientX;
+}, { passive: false });
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault(); if (dragging) mx = e.touches[0].clientX;
+}, { passive: false });
+canvas.addEventListener('touchend', () => { dragging = false; });
+
+// ================================================================
+// Fire step (cellular automata)
+// ================================================================
+function fireSeed() {
+  const intensity = getParam('intensity');
+  const heightParam = getParam('height');
+  // How many rows from the bottom to seed
+  const seedRows = Math.max(2, Math.floor(heightParam * 0.08 * FH + 2));
+
+  for (let row = FH - seedRows; row < FH; row++) {
+    const fade = (FH - row) / seedRows; // 1 at bottom, 0 at top of seed zone
+    const base = intensity * 255 * (0.7 + 0.3 * fade);
+    for (let x = 0; x < FW; x++) {
+      // Narrow Gaussian (campfire — concentrated at center)
+      const cx = x / FW - 0.5; // -0.5 to 0.5
+      const gauss = Math.exp(-cx * cx * 16);
+      const val = base * (0.3 + 0.7 * gauss) + (Math.random() - 0.5) * 30;
+      grid[x + row * FW] = Math.min(255, Math.max(0, val | 0));
+    }
+  }
+
+  // If dragging, add extra fuel under cursor
+  if (dragging) {
+    const gx = Math.floor(mx / canvas.width * FW);
+    const R = 6;
+    for (let dx = -R; dx <= R; dx++) {
+      const nx = gx + dx;
+      if (nx < 0 || nx >= FW) continue;
+      const t = 1 - Math.abs(dx) / R;
+      grid[nx + (FH-1) * FW] = 255;
+      grid[nx + (FH-2) * FW] = Math.min(255, grid[nx + (FH-2) * FW] + (t * 80 | 0));
+    }
+  }
+}
+
+function fireStep() {
+  const wind = autoWindAmt;
+  // cooling: lower intensity → higher cooling → shorter flame
+  const intensity = getParam('intensity');
+  const height    = getParam('height');
+  const cooling   = 4.2 - intensity * 2.8 - height * 0.9;
+
+  for (let y = 0; y < FH - 1; y++) {
+    for (let x = 0; x < FW; x++) {
+      // Wind shifts source pixel
+      const wx = x + wind * 0.8;
+      const x0 = Math.max(0, Math.min(FW-1, Math.floor(wx - 0.5)));
+      const x1 = Math.max(0, Math.min(FW-1, Math.floor(wx)));
+      const x2 = Math.max(0, Math.min(FW-1, Math.floor(wx + 0.5)));
+
+      const src = (grid[x0 + (y+1)*FW] + grid[x1 + (y+1)*FW] + grid[x2 + (y+1)*FW]) / 3;
+      const cool = cooling + Math.random() * 1.2;
+      grid[x + y * FW] = Math.max(0, src - cool) | 0;
+    }
+  }
+}
+
+// ================================================================
+// Render fire to fireCanvas
+// ================================================================
+function renderFire() {
+  const heightParam = getParam('height');
+  // Offset fire within grid so it rises from the correct screen position
+  const gridOffset = Math.floor((1 - heightParam) * FH * 0.4);
+
+  for (let y = 0; y < FH; y++) {
+    const gy = y + gridOffset;
+    for (let x = 0; x < FW; x++) {
+      const val = (gy < FH) ? grid[x + gy * FW] : 255;
+      const p   = (y * FW + x) * 4;
+      firePixels[p]   = PALETTE[val*4];
+      firePixels[p+1] = PALETTE[val*4+1];
+      firePixels[p+2] = PALETTE[val*4+2];
+      firePixels[p+3] = PALETTE[val*4+3];
+    }
+  }
+  fireCtx.putImageData(fireImg, 0, 0);
+}
+
+// ================================================================
+// Main loop
+// ================================================================
+let last = 0;
+let emberAccum = 0;
+
+function loop(ts) {
+  requestAnimationFrame(loop);
+  const dt = Math.min((ts - last) / 1000, 0.05);
+  last = ts;
+
+  const W = canvas.width, H = canvas.height;
+
+  // Auto wind — slow sinusoidal variation
+  // 1/f wind: raw pink noise → slow EMA smoothing
+  const rawWind = pinkNoise() * 0.55;
+  autoWindSmooth += (rawWind - autoWindSmooth) * Math.min(1, 0.018 + dt * 0.4);
+  autoWindAmt = autoWindSmooth;
+
+  // Fire simulation
+  fireSeed();
+  fireStep();
+  renderFire();
+
+  // --- Draw ---
+  // Background
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+
+  // Fire base — narrow (campfire width: ~35% of screen)
+  const fireH = H * getParam('height') * 1.0 + 60;
+  const fireW = Math.min(W * 0.38, 380);
+  const fireX = (W - fireW) / 2;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(fireCanvas, fireX, H - fireH, fireW, fireH);
+
+  // Subtle bloom glow
+  ctx.save();
+  ctx.filter = 'blur(14px)';
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha = 0.30;
+  ctx.drawImage(fireCanvas, fireX, H - fireH, fireW, fireH);
+  ctx.filter = 'blur(32px)';
+  ctx.globalAlpha = 0.12;
+  ctx.drawImage(fireCanvas, fireX, H - fireH, fireW, fireH);
+  ctx.restore();
+
+  // Embers
+  const emberRate = getParam('ember');
+  emberAccum += emberRate * 2 * dt;
+  while (emberAccum >= 1 && embers.length < MAX_EMBERS) {
+    embers.push(new Ember());
+    emberAccum -= 1;
+  }
+
+  const windTotal = autoWindAmt;
+  for (let i = embers.length - 1; i >= 0; i--) {
+    embers[i].update(dt, windTotal);
+    embers[i].draw();
+    if (embers[i].dead) embers.splice(i, 1);
+  }
+
+  // Ground glow
+  const glow = ctx.createLinearGradient(0, H * 0.85, 0, H);
+  glow.addColorStop(0, 'rgba(0,0,0,0)');
+  glow.addColorStop(1, `rgba(50,12,0,${0.18 * getParam('intensity')})`);
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, H * 0.85, W, H * 0.15);
+
+  // Subtle vignette
+  const vig = ctx.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, H*0.9);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.45)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+}
+
+// Resize
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+requestAnimationFrame(ts => { last = ts; requestAnimationFrame(loop); });
+</script>
+</body>
+</html>
