@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雨と水たまり — 窓ガラスを伝う雨粒</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #040810;
+    color: #c8e6f0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+  }
+  canvas#c { display: block; flex: 1; min-height: 0; cursor: crosshair; }
+
+  #ui {
+    background: rgba(4, 10, 20, 0.92);
+    border-top: 1px solid rgba(104, 206, 214, 0.15);
+    padding: 8px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .ctrl { display: flex; align-items: center; gap: 6px; }
+  label { font-size: 0.72rem; color: rgba(200, 230, 240, 0.65); white-space: nowrap; }
+  input[type=range] {
+    width: 80px; height: 3px;
+    -webkit-appearance: none; appearance: none;
+    background: rgba(104, 206, 214, 0.25); border-radius: 2px; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 11px; height: 11px;
+    border-radius: 50%; background: #68ced6; cursor: pointer;
+  }
+  .val { font-size: 0.7rem; color: #68ced6; min-width: 28px; }
+  #hint { font-size: 0.68rem; color: rgba(200,230,240,0.4); margin-left: auto; white-space: nowrap; }
+  #clear-btn {
+    font-size: 0.7rem; padding: 3px 10px;
+    background: rgba(104,206,214,0.12); border: 1px solid rgba(104,206,214,0.3);
+    color: #68ced6; border-radius: 5px; cursor: pointer; transition: background 0.15s; white-space: nowrap;
+  }
+  #clear-btn:hover { background: rgba(104,206,214,0.25); }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="ui">
+  <div class="ctrl">
+    <label>雨量</label>
+    <input type="range" id="s-rain"    min="0" max="100" value="45">
+    <span class="val" id="v-rain">45</span>
+  </div>
+  <div class="ctrl">
+    <label>風</label>
+    <input type="range" id="s-wind"    min="0" max="100" value="50">
+    <span class="val" id="v-wind">50</span>
+  </div>
+  <div class="ctrl">
+    <label>表面張力</label>
+    <input type="range" id="s-tension" min="1" max="100" value="40">
+    <span class="val" id="v-tension">40</span>
+  </div>
+  <div class="ctrl">
+    <label>結露</label>
+    <input type="range" id="s-fog"     min="0" max="100" value="55">
+    <span class="val" id="v-fog">55</span>
+  </div>
+  <button id="clear-btn">クリア</button>
+  <span id="hint">ドラッグでガラスを拭く</span>
+</div>
+
+<script>
+// ================================================================
+// Rain on Window — layers:
+//   1. Bokeh background (bgCanvas, drawn once)
+//   2. Trails left by sliding drops
+//   3. Water drops (clipped refraction + highlight)
+//   4. Condensation fog (fogMap → fogCanvas, drag to wipe)
+//   5. Rain streaks in air
+// ================================================================
+
+// --- Helpers ---
+function getParam(id) {
+  return parseFloat(document.getElementById('s-' + id).value) / 100;
+}
+
+// --- Canvas ---
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+
+// Background (bokeh night scene)
+const bgCanvas = document.createElement('canvas');
+const bgCtx    = bgCanvas.getContext('2d');
+
+// Fog canvas (low-res, scaled up)
+const FOG_W = 120, FOG_H = 90;
+const fogCanvas  = document.createElement('canvas');
+fogCanvas.width  = FOG_W;
+fogCanvas.height = FOG_H;
+const fogCtx     = fogCanvas.getContext('2d');
+const fogImgData = fogCtx.createImageData(FOG_W, FOG_H);
+let fogMap       = new Float32Array(FOG_W * FOG_H); // 0.0–1.0
+
+// Trail canvas (persistent, dimmed each frame)
+const trailCanvas = document.createElement('canvas');
+const trailCtx    = trailCanvas.getContext('2d');
+
+// Bokeh lights (generated once per resize)
+let bokehLights = [];
+function buildBokeh(W, H) {
+  bokehLights = [];
+  const COLORS = ['#ff9944','#ffcc44','#55aaff','#ff5599','#88ffcc','#ffffff','#ff7755','#aaddff'];
+  for (let i = 0; i < 70; i++) {
+    bokehLights.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 15 + Math.random() * 70,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      a: 0.15 + Math.random() * 0.45,
+    });
+  }
+}
+
+function drawBokeh(ctx, W, H) {
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#060814');
+  grad.addColorStop(0.6, '#0c1828');
+  grad.addColorStop(1, '#080c18');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  for (const b of bokehLights) {
+    const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+    const a = Math.floor(b.a * 255).toString(16).padStart(2, '0');
+    g.addColorStop(0,   b.color + a);
+    g.addColorStop(0.5, b.color + Math.floor(b.a * 100).toString(16).padStart(2, '0'));
+    g.addColorStop(1,   b.color + '00');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function resize() {
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  canvas.width  = W; canvas.height = H;
+  bgCanvas.width = W; bgCanvas.height = H;
+  trailCanvas.width = W; trailCanvas.height = H;
+  buildBokeh(W, H);
+  drawBokeh(bgCtx, W, H);
+  fogMap.fill(getParam('fog'));
+  drops.length = 0;
+  streaks.length = 0;
+}
+window.addEventListener('resize', resize);
+
+// ================================================================
+// Fog system
+// ================================================================
+function updateFog(dt) {
+  const target   = getParam('fog');
+  const recovery = 0.12 * dt;
+  for (let i = 0; i < fogMap.length; i++) {
+    fogMap[i] = Math.min(target, fogMap[i] + recovery);
+  }
+}
+
+function wipeFog(px, py, radius) {
+  const W = canvas.width, H = canvas.height;
+  const fx = px / W * FOG_W;
+  const fy = py / H * FOG_H;
+  const fr = radius / W * FOG_W;
+  const fr2 = fr * fr;
+  for (let j = 0; j < FOG_H; j++) {
+    for (let i = 0; i < FOG_W; i++) {
+      const dx = i - fx, dy = j - fy;
+      const d2 = dx*dx + dy*dy;
+      if (d2 < fr2) {
+        const strength = 1 - Math.sqrt(d2) / fr;
+        fogMap[j * FOG_W + i] = Math.max(0, fogMap[j * FOG_W + i] - strength * 0.9);
+      }
+    }
+  }
+}
+
+function renderFog() {
+  const d = fogImgData.data;
+  for (let i = 0; i < FOG_W * FOG_H; i++) {
+    const a = fogMap[i] * 210 | 0;
+    d[i*4]   = 175;
+    d[i*4+1] = 208;
+    d[i*4+2] = 228;
+    d[i*4+3] = a;
+  }
+  fogCtx.putImageData(fogImgData, 0, 0);
+}
+
+// ================================================================
+// Drop physics
+// ================================================================
+const drops = [];
+const MAX_DROPS = 180;
+
+function massToR(mass) { return Math.pow(mass * 2.5, 0.5); }
+
+class Drop {
+  constructor(x, y, mass) {
+    this.x = x;
+    this.y = y;
+    this.mass = mass ?? (0.5 + Math.random() * 1.5);
+    this.r    = massToR(this.mass);
+    this.vy   = 0;
+    this.vx   = 0;
+    this.sliding = false;
+    this.trail   = []; // [{x,y}]
+    this.alive   = true;
+    this.wobble  = 0;
+  }
+
+  get tension() {
+    // radius threshold before sliding: tension param 0→1 maps to r 2→16
+    return 2 + getParam('tension') * 14;
+  }
+
+  update(dt) {
+    const wind = (getParam('wind') - 0.5) * 0.8; // -0.4 to 0.4
+
+    if (!this.sliding) {
+      if (this.r >= this.tension) {
+        this.sliding = true;
+        this.vy = 0.5;
+      }
+    }
+
+    if (this.sliding) {
+      // Gravity + drag
+      this.vy += 120 * dt;
+      this.vy *= (1 - 2 * dt);
+      this.vx += wind * 30 * dt;
+      this.vx *= (1 - 3 * dt);
+
+      // Wobble: slight oscillation left-right
+      this.wobble += dt * 8;
+      this.x += this.vx * dt + Math.sin(this.wobble) * this.r * 0.015;
+      this.y += this.vy * dt;
+
+      // Record trail
+      if (this.trail.length === 0 ||
+          Math.hypot(this.x - this.trail[this.trail.length-1].x,
+                     this.y - this.trail[this.trail.length-1].y) > 2) {
+        this.trail.push({ x: this.x, y: this.y });
+        if (this.trail.length > 80) this.trail.shift();
+      }
+
+      // Lose mass into trail
+      this.mass -= (0.8 + this.vy * 0.005) * dt;
+      this.r = massToR(this.mass);
+      if (this.mass < 0.3) this.alive = false;
+    } else {
+      // Accumulate rain
+      const rainRate = getParam('rain');
+      this.mass += rainRate * 0.4 * dt;
+      this.r = massToR(this.mass);
+      // Cap mass
+      if (this.mass > 60) this.mass = 60;
+    }
+
+    const W = canvas.width, H = canvas.height;
+    if (this.y > H + 20 || this.x < -20 || this.x > W + 20) this.alive = false;
+  }
+}
+
+function spawnDrop(W, H) {
+  if (drops.length >= MAX_DROPS) return;
+  const wind = (getParam('wind') - 0.5);
+  const x = Math.random() * W + wind * 100;
+  drops.push(new Drop(
+    Math.max(5, Math.min(W - 5, x)),
+    Math.random() * H * 0.15,
+  ));
+}
+
+function mergeDrops() {
+  for (let i = 0; i < drops.length; i++) {
+    const a = drops[i];
+    if (!a.alive) continue;
+    for (let j = i + 1; j < drops.length; j++) {
+      const b = drops[j];
+      if (!b.alive) continue;
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      if (dist < (a.r + b.r) * 0.85) {
+        if (a.mass >= b.mass) {
+          a.mass += b.mass * 0.75;
+          a.r = massToR(a.mass);
+          if (b.sliding && !a.sliding) { a.sliding = true; a.vy = b.vy; }
+          b.alive = false;
+        } else {
+          b.mass += a.mass * 0.75;
+          b.r = massToR(b.mass);
+          if (a.sliding && !b.sliding) { b.sliding = true; b.vy = a.vy; }
+          a.alive = false;
+        }
+      }
+    }
+  }
+}
+
+// ================================================================
+// Rain streaks (visual only)
+// ================================================================
+const streaks = [];
+const MAX_STREAKS = 200;
+
+function updateStreaks(dt) {
+  const rain = getParam('rain');
+  const wind = (getParam('wind') - 0.5) * 2; // -1 to 1
+
+  // Spawn
+  const spawnRate = rain * 4;
+  if (streaks.length < MAX_STREAKS && Math.random() < spawnRate * dt * 60) {
+    const W = canvas.width, H = canvas.height;
+    streaks.push({
+      x:  Math.random() * (W + 200) - 100,
+      y:  -30,
+      vy: 600 + Math.random() * 400,
+      vx: wind * 200,
+      len: 12 + Math.random() * 20,
+      alpha: 0.15 + Math.random() * 0.25,
+    });
+  }
+
+  // Update
+  for (let i = streaks.length - 1; i >= 0; i--) {
+    const s = streaks[i];
+    s.x += s.vx * dt;
+    s.y += s.vy * dt;
+    if (s.y > canvas.height + 40) streaks.splice(i, 1);
+  }
+}
+
+function drawStreaks(ctx) {
+  const wind = (getParam('wind') - 0.5) * 2;
+  const angle = Math.atan2(1, wind * 0.25);
+  ctx.save();
+  ctx.strokeStyle = 'rgba(180, 220, 255, 0.6)';
+  ctx.lineWidth = 0.8;
+  ctx.lineCap = 'round';
+  for (const s of streaks) {
+    ctx.globalAlpha = s.alpha;
+    const dx = -Math.sin(angle) * s.len;
+    const dy = -Math.cos(angle) * s.len;
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y);
+    ctx.lineTo(s.x + dx, s.y + dy);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ================================================================
+// Trail rendering (onto persistent trailCanvas)
+// ================================================================
+function paintTrails() {
+  trailCtx.globalAlpha = 0.007;
+  trailCtx.fillStyle = '#040810';
+  trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
+  trailCtx.globalAlpha = 1;
+
+  for (const drop of drops) {
+    if (drop.trail.length < 2) continue;
+    const grad = trailCtx.createLinearGradient(
+      drop.trail[0].x, drop.trail[0].y,
+      drop.trail[drop.trail.length-1].x, drop.trail[drop.trail.length-1].y
+    );
+    grad.addColorStop(0, 'rgba(160,210,240,0)');
+    grad.addColorStop(1, `rgba(160,210,240,${0.12 + drop.r * 0.01})`);
+    trailCtx.beginPath();
+    trailCtx.moveTo(drop.trail[0].x, drop.trail[0].y);
+    for (let i = 1; i < drop.trail.length; i++) {
+      trailCtx.lineTo(drop.trail[i].x, drop.trail[i].y);
+    }
+    trailCtx.strokeStyle = grad;
+    trailCtx.lineWidth   = Math.max(0.5, drop.r * 0.55);
+    trailCtx.lineCap     = 'round';
+    trailCtx.lineJoin    = 'round';
+    trailCtx.stroke();
+  }
+}
+
+// ================================================================
+// Drop rendering (refraction + highlight)
+// ================================================================
+function drawDrop(drop) {
+  const { x, y, r } = drop;
+  ctx.save();
+
+  // Clip to drop shape
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.clip();
+
+  // Refraction: show background with slight magnification
+  const scale = 1.1;
+  const ox = x - x * scale;
+  const oy = y - y * scale;
+  ctx.drawImage(bgCanvas, ox, oy, bgCanvas.width * scale, bgCanvas.height * scale);
+
+  // Slight brightening inside
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.fillRect(x - r, y - r, r*2, r*2);
+
+  ctx.restore();
+
+  // Dark rim (glass bead effect)
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  const rim = ctx.createRadialGradient(x - r*0.2, y - r*0.25, r * 0.1, x, y, r);
+  rim.addColorStop(0.65, 'rgba(0,0,0,0)');
+  rim.addColorStop(1,    'rgba(0,10,20,0.55)');
+  ctx.fillStyle = rim;
+  ctx.fill();
+
+  // Primary highlight (top-left)
+  ctx.beginPath();
+  ctx.arc(x - r*0.28, y - r*0.30, r * 0.28, 0, Math.PI * 2);
+  const hl = ctx.createRadialGradient(x - r*0.32, y - r*0.35, 0, x - r*0.28, y - r*0.30, r*0.28);
+  hl.addColorStop(0,   'rgba(255,255,255,0.75)');
+  hl.addColorStop(0.5, 'rgba(255,255,255,0.3)');
+  hl.addColorStop(1,   'rgba(255,255,255,0)');
+  ctx.fillStyle = hl;
+  ctx.fill();
+
+  // Secondary small highlight (bottom-right)
+  if (r > 5) {
+    ctx.beginPath();
+    ctx.arc(x + r*0.3, y + r*0.3, r * 0.12, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(200,230,255,0.4)';
+    ctx.fill();
+  }
+}
+
+// ================================================================
+// Input: drag to wipe glass
+// ================================================================
+let wiping = false, prevWx = 0, prevWy = 0;
+
+function getPos(e, touch) {
+  const r = canvas.getBoundingClientRect();
+  const src = touch ?? e;
+  return { x: src.clientX - r.left, y: src.clientY - r.top };
+}
+
+canvas.addEventListener('mousedown', e => {
+  wiping = true;
+  const p = getPos(e);
+  prevWx = p.x; prevWy = p.y;
+  wipeFog(p.x, p.y, 45);
+});
+canvas.addEventListener('mousemove', e => {
+  if (!wiping) return;
+  const p = getPos(e);
+  wipeFog(p.x, p.y, 45);
+  prevWx = p.x; prevWy = p.y;
+});
+canvas.addEventListener('mouseup',    () => { wiping = false; });
+canvas.addEventListener('mouseleave', () => { wiping = false; });
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault(); wiping = true;
+  const p = getPos(e, e.touches[0]);
+  prevWx = p.x; prevWy = p.y;
+  wipeFog(p.x, p.y, 55);
+}, { passive: false });
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (!wiping) return;
+  const p = getPos(e, e.touches[0]);
+  wipeFog(p.x, p.y, 55);
+}, { passive: false });
+canvas.addEventListener('touchend', () => { wiping = false; });
+
+// sliders
+['rain','wind','tension','fog'].forEach(id => {
+  const s = document.getElementById('s-' + id);
+  const v = document.getElementById('v-' + id);
+  s.addEventListener('input', () => { v.textContent = s.value; });
+});
+
+// clear
+document.getElementById('clear-btn').addEventListener('click', () => {
+  drops.length = 0;
+  streaks.length = 0;
+  trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+  fogMap.fill(getParam('fog'));
+});
+
+// ================================================================
+// Main loop
+// ================================================================
+let last = 0;
+let dropAccum = 0;
+
+resize(); // initial setup
+
+function loop(ts) {
+  const dt = Math.min((ts - last) / 1000, 0.05);
+  last = ts;
+
+  const W = canvas.width, H = canvas.height;
+  const rain = getParam('rain');
+
+  // Spawn drops
+  dropAccum += rain * 1.5 * dt;
+  while (dropAccum >= 1) {
+    dropAccum -= 1;
+    spawnDrop(W, H);
+  }
+
+  // Update drops
+  for (const d of drops) d.update(dt);
+  mergeDrops();
+  for (let i = drops.length - 1; i >= 0; i--) {
+    if (!drops[i].alive) drops.splice(i, 1);
+  }
+
+  // Update streaks
+  updateStreaks(dt);
+
+  // Update fog
+  updateFog(dt);
+
+  // --- Draw ---
+  // 1. Background
+  ctx.drawImage(bgCanvas, 0, 0);
+
+  // 2. Trails
+  paintTrails();
+  ctx.drawImage(trailCanvas, 0, 0);
+
+  // 3. Drops
+  for (const d of drops) drawDrop(d);
+
+  // 4. Fog (draw scaled from fogCanvas)
+  renderFog();
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(fogCanvas, 0, 0, W, H);
+  ctx.restore();
+
+  // 5. Rain streaks (on top of everything)
+  drawStreaks(ctx);
+
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(ts => { last = ts; resize(); requestAnimationFrame(loop); });
+</script>
+</body>
+</html>
