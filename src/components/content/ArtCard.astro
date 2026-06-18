@@ -1,0 +1,188 @@
+---
+interface Props {
+  file: string;
+  title: string;
+}
+const { file, title } = Astro.props;
+---
+
+<div class="art-card">
+  <button
+    class="art-card__preview-btn"
+    data-art-file={file}
+    data-art-title={title}
+    aria-label={`${title}をプレイ`}
+  >
+    <div class="art-card__iframe-wrap">
+      <iframe
+        src={file}
+        title={title}
+        class="art-card__iframe"
+        tabindex="-1"
+        aria-hidden="true"
+        loading="lazy"
+      ></iframe>
+      <div class="art-card__overlay">
+        <span class="art-card__play-icon">▶</span>
+      </div>
+    </div>
+  </button>
+  <div class="art-card__footer">
+    <a href={file} target="_blank" rel="noopener noreferrer" class="art-card__external">
+      別タブで開く ↗
+    </a>
+  </div>
+</div>
+
+<style>
+.art-card {
+  border: 1px solid rgba(104, 206, 214, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(0, 30, 60, 0.3);
+  transition: border-color 0.2s, transform 0.2s;
+  margin: 1.5rem 0;
+}
+
+.art-card:hover {
+  border-color: rgba(104, 206, 214, 0.5);
+  transform: translateY(-2px);
+}
+
+.art-card__preview-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.art-card__iframe-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #06080f;
+}
+
+.art-card__iframe {
+  width: 200%;
+  height: 200%;
+  transform: scale(0.5);
+  transform-origin: top left;
+  pointer-events: none;
+  border: none;
+}
+
+.art-card__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.art-card__preview-btn:hover .art-card__overlay {
+  opacity: 1;
+}
+
+.art-card__play-icon {
+  font-size: 2.5rem;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(104, 206, 214, 0.8);
+}
+
+.art-card__footer {
+  padding: 0.6rem 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: right;
+}
+
+.art-card__external {
+  font-size: 0.82rem;
+  color: var(--color-accent);
+  text-decoration: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.art-card__external:hover { opacity: 1; }
+</style>
+
+<script>
+// モーダルをシングルトンで初期化
+function ensureModal() {
+  if (document.getElementById('art-modal')) return;
+
+  const modal = document.createElement('div');
+  modal.id = 'art-modal';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-label', 'インタラクティブアート');
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="art-modal__backdrop" id="art-modal-backdrop"></div>
+    <div class="art-modal__container">
+      <div class="art-modal__header">
+        <span class="art-modal__title" id="art-modal-title"></span>
+        <button class="art-modal__close" id="art-modal-close" aria-label="閉じる">✕</button>
+      </div>
+      <div class="art-modal__iframe-wrap">
+        <iframe id="art-modal-iframe" title="インタラクティブアート" class="art-modal__iframe" src="" allow="microphone"></iframe>
+      </div>
+      <div class="art-modal__footer">
+        <a id="art-modal-external" href="#" target="_blank" rel="noopener noreferrer" class="art-modal__external">別タブで開く ↗</a>
+      </div>
+    </div>
+  `;
+
+  const style = document.createElement('style');
+  style.textContent = `
+    #art-modal { position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center; }
+    #art-modal[hidden] { display:none; }
+    .art-modal__backdrop { position:absolute;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px); }
+    .art-modal__container { position:relative;width:min(900px,95vw);max-height:95vh;background:#06080f;border:1px solid rgba(104,206,214,0.3);border-radius:16px;overflow:hidden;display:flex;flex-direction:column; }
+    .art-modal__header { display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1.25rem;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0; }
+    .art-modal__title { font-size:0.9rem;color:var(--color-secondary);font-weight:600; }
+    .art-modal__close { background:none;border:none;color:rgba(255,255,255,0.6);font-size:1.1rem;cursor:pointer;padding:0.25rem 0.5rem;border-radius:6px;transition:background 0.15s,color 0.15s; }
+    .art-modal__close:hover { background:rgba(255,255,255,0.1);color:#fff; }
+    .art-modal__iframe-wrap { flex:1;min-height:0;aspect-ratio:16/9; }
+    .art-modal__iframe { width:100%;height:100%;border:none;display:block; }
+    .art-modal__footer { padding:0.6rem 1.25rem;border-top:1px solid rgba(255,255,255,0.08);text-align:right;flex-shrink:0; }
+    .art-modal__external { font-size:0.82rem;color:var(--color-accent);text-decoration:none;opacity:0.7;transition:opacity 0.2s; }
+    .art-modal__external:hover { opacity:1; }
+  `;
+  document.head.appendChild(style);
+  document.body.appendChild(modal);
+
+  function closeModal() {
+    modal.hidden = true;
+    (document.getElementById('art-modal-iframe') as HTMLIFrameElement).src = '';
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('art-modal-close')!.addEventListener('click', closeModal);
+  document.getElementById('art-modal-backdrop')!.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
+}
+
+function openModal(file: string, title: string) {
+  ensureModal();
+  const modal = document.getElementById('art-modal')!;
+  (document.getElementById('art-modal-iframe') as HTMLIFrameElement).src = file;
+  document.getElementById('art-modal-title')!.textContent = title;
+  (document.getElementById('art-modal-external') as HTMLAnchorElement).href = file;
+  modal.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+document.querySelectorAll<HTMLButtonElement>('.art-card__preview-btn').forEach((btn) => {
+  if (btn.dataset.artBound) return;
+  btn.dataset.artBound = '1';
+  btn.addEventListener('click', () => openModal(btn.dataset.artFile!, btn.dataset.artTitle!));
+});
+</script>

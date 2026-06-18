@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>フラクタル植物 — 成長シミュレーション</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#06100a;color:#fff;font-family:sans-serif;overflow:hidden;}
+canvas{display:block;position:fixed;top:0;left:0;width:100%;height:100%;}
+.ui{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;width:min(560px,92vw);}
+.panel{background:rgba(4,12,6,0.82);backdrop-filter:blur(14px);border:0.5px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px 18px;width:100%;}
+.sliders{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;}
+.sl{display:flex;flex-direction:column;gap:3px;}
+.sl label{font-size:11px;color:rgba(255,255,255,0.4);display:flex;justify-content:space-between;}
+.sl label span{color:rgba(255,255,255,0.85);}
+input[type=range]{width:100%;accent-color:#5DCAA5;cursor:pointer;}
+.btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+button{padding:8px 16px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.8);font-size:12px;cursor:pointer;transition:background 0.15s;}
+button:hover{background:rgba(255,255,255,0.13);}
+button.active{background:rgba(93,202,165,0.18);border-color:rgba(93,202,165,0.5);color:#5DCAA5;}
+.hint{font-size:11px;color:rgba(255,255,255,0.2);text-align:center;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui">
+  <div class="panel">
+    <div class="sliders">
+      <div class="sl"><label>枝分かれ角度 <span id="vAngle">25°</span></label><input type="range" id="sAngle" min="5" max="60" step="1" value="25"></div>
+      <div class="sl"><label>枝の分岐比率 <span id="vDecay">0.618</span></label><input type="range" id="sDecay" min="0.50" max="0.92" step="0.001" value="0.618"></div>
+      <div class="sl"><label>左右の非対称 <span id="vAsym">0.05</span></label><input type="range" id="sAsym" min="0" max="0.4" step="0.01" value="0.05"></div>
+      <div class="sl"><label>風のゆらぎ <span id="vWind">0.3</span></label><input type="range" id="sWind" min="0" max="1.5" step="0.05" value="0.3"></div>
+      <div class="sl"><label>成長速度 <span id="vSpeed">3</span></label><input type="range" id="sSpeed" min="1" max="8" step="1" value="3"></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="btns">
+      <button id="btnTree" class="active" onclick="setMode('tree')">🌳 木</button>
+      <button id="btnBush" onclick="setMode('bush')">🌿 茂み</button>
+      <button id="btnPalm" onclick="setMode('palm')">🌴 ヤシ</button>
+      <button id="btnFern" onclick="setMode('fern')">🍃 シダ</button>
+      <button onclick="regrow()">↺ 再成長</button>
+      <button onclick="addTree()">＋ 追加</button>
+    </div>
+  </div>
+  <div class="hint">クリックで好きな場所に植える</div>
+</div>
+
+<script>
+const PHI = (1 + Math.sqrt(5)) / 2;
+const INV_PHI = 1 / PHI; // ≈ 0.618
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+resize(); window.addEventListener('resize', resize);
+
+let ANGLE=25, DECAY=INV_PHI, ASYM=0.05, WIND_STR=0.3, GROW_SPEED=3;
+const MIN_BRANCH_PX = 2; // これ以下の長さ(px)は視認不可なので成長しない
+let MODE='tree';
+let plants=[], time=0;
+
+// 枯れイベントの間隔（秒）
+// 枯れ・再成長タイミングはすべて GROW_SPEED とサブツリー長から導出する（マジックナンバーなし）
+
+const PRESETS = {
+  tree: { angle:25, decay:INV_PHI, depth:11, asym:0.05, wind:0.3, trunkLen:()=>H*0.22 },
+  bush: { angle:38, decay:0.65,    depth:9,  asym:0.12, wind:0.5, trunkLen:()=>H*0.10 },
+  palm: { angle:15, decay:0.75,    depth:8,  asym:0.02, wind:0.8, trunkLen:()=>H*0.32 },
+  fern: { angle:40, decay:0.60,    depth:10, asym:0.25, wind:0.2, trunkLen:()=>H*0.18 },
+};
+
+function setMode(m){
+  MODE=m;
+  const p=PRESETS[m];
+  ANGLE=p.angle; DECAY=p.decay; ASYM=p.asym; WIND_STR=p.wind;
+  document.getElementById('sAngle').value=ANGLE; document.getElementById('vAngle').textContent=ANGLE+'°';
+  document.getElementById('sDecay').value=DECAY; document.getElementById('vDecay').textContent=DECAY.toFixed(3);
+  document.getElementById('sAsym').value=ASYM; document.getElementById('vAsym').textContent=ASYM.toFixed(2);
+  document.getElementById('sWind').value=WIND_STR; document.getElementById('vWind').textContent=WIND_STR.toFixed(1);
+  ['tree','bush','palm','fern'].forEach(id=>{
+    document.getElementById('btn'+id.charAt(0).toUpperCase()+id.slice(1)).classList.toggle('active',id===m);
+  });
+  regrow();
+}
+
+class Plant {
+  constructor(x, groundY){
+    this.x = x;
+    this.groundY = groundY;
+    this.state = 'growing';
+    this.branches = [];
+    this.sprouts  = [];   // 新芽（個別に成長）
+    this.regrowQueue = []; // {timer, delay, x1,y1,angle,len,depth,parentId}
+    this.activeIdx = 0;
+    this.nextId = 0;
+    this.witherTimer = 0;
+    this.witherInterval = Infinity; // _populate完了時に GROW_SPEED から再計算
+    this._buildParams();
+    this._populate();
+  }
+
+  _buildParams(){
+    this._aRad  = (ANGLE  + (Math.random()-0.5)*4) * (Math.PI/180);
+    this._decay = Math.max(0.5, Math.min(0.92, DECAY  + (Math.random()-0.5)*0.04));
+    this._asym  = Math.max(0, ASYM + (Math.random()-0.5)*0.03);
+  }
+
+  _populate(){
+    this.branches = [];
+    this.nextId = 0;
+    this._childrenMap = new Map(); // id → [childId, ...]
+    const trunkLen = PRESETS[MODE].trunkLen();
+    // 幾何学的に最大深さを推定（色・太さのスケーリング用）
+    this._maxD = Math.ceil(Math.log(MIN_BRANCH_PX / trunkLen) / Math.log(this._decay)) + 1;
+    this._addBranch(this.x, this.groundY, -Math.PI/2, trunkLen, 0, -1);
+    // 実際の最大深さで再スケール
+    const actualMax = this.branches.reduce((m,b)=>Math.max(m,b.depth),0) + 1;
+    if(actualMax !== this._maxD){
+      this._maxD = actualMax;
+      this.branches.forEach(b=>{
+        b.maxDepth = actualMax;
+        const t = b.depth / actualMax;
+        b.r = Math.round(120-t*60); b.g = Math.round(70+t*120); b.b = Math.round(30+t*20);
+        b.thick = Math.max(0.5,(1-t)*(MODE==='palm'?6:8)+0.5);
+      });
+    }
+    this.branches.sort((a,b)=>a.depth-b.depth);
+    this.branches.forEach(b=>{ b.progress=0; b.lw=0; b.fallDy=0; });
+    this.activeIdx = 0;
+    this.state = 'growing';
+    this.witherTimer = 0;
+    this.witherInterval = Infinity; // _populate完了時に GROW_SPEED から再計算
+  }
+
+  _addBranch(x1,y1,angle,len,depth,parentId){
+    if(len < MIN_BRANCH_PX || this.branches.length > 4000) return -1;
+    const id = this.nextId++;
+    const x2=x1+Math.cos(angle)*len, y2=y1+Math.sin(angle)*len;
+    const t=Math.min(1, depth/this._maxD);
+    const r=Math.round(120-t*60), g=Math.round(70+t*120), b=Math.round(30+t*20);
+    const thick=Math.max(0.5,(1-t)*(MODE==='palm'?6:8)+0.5);
+    this.branches.push({id,parentId,x1,y1,x2,y2,depth,maxDepth:this._maxD,
+      progress:0,lw:0,fallDy:0,len,angle,thick,r,g,b,
+      phase:Math.random()*Math.PI*2,isLeaf:false});
+    if(!this._childrenMap.has(parentId)) this._childrenMap.set(parentId,[]);
+    this._childrenMap.get(parentId).push(id);
+    this._childrenMap.set(id,[]);
+
+    const noise=()=>(Math.random()-0.5)*this._asym*2;
+    const isTerminal = len * this._decay < MIN_BRANCH_PX;
+    if(MODE==='fern'){
+      this._addBranch(x2,y2,angle-this._aRad*(1+noise()),len*this._decay,depth+1,id);
+      this._addBranch(x2,y2,angle+this._aRad*0.3*(1+noise()),len*this._decay*0.7,depth+1,id);
+      this._addBranch(x2,y2,angle-this._aRad*0.6*(1+noise()),len*this._decay*0.55,depth+1,id);
+    } else if(MODE==='palm'){
+      if(depth<2){
+        // 幹：まっすぐ上へ
+        this._addBranch(x2,y2,angle,len*this._decay,depth+1,id);
+      } else if(depth===2){
+        // 頂点で1回だけ葉を扇形展開（以降は再帰しない）
+        for(let i=0;i<7;i++){
+          const a=angle-this._aRad*2.5+(this._aRad*5/6)*i+noise()*0.2;
+          this._addBranch(x2,y2,a,len*this._decay*(0.8+Math.random()*0.4),depth+1,id);
+        }
+      }
+      // depth > 2: 再帰なし（葉枝はそのまま末端になる）
+    } else {
+      this._addBranch(x2,y2,angle-this._aRad*(1+noise()),len*this._decay*(1+noise()*0.1),depth+1,id);
+      this._addBranch(x2,y2,angle+this._aRad*(1-this._asym+noise()),len*this._decay*(1+noise()*0.1),depth+1,id);
+      if(MODE==='tree' && !isTerminal && Math.random()<0.25)
+        this._addBranch(x2,y2,angle+(Math.random()-0.5)*this._aRad*0.8,len*this._decay*0.6,depth+1,id);
+    }
+
+    // 次の枝が視認閾値を下回るとき = 末端 → 葉を追加
+    if(isTerminal){
+      for(let i=0;i<(MODE==='fern'?2:3);i++){
+        const la=angle+(Math.random()-0.5)*Math.PI*0.8;
+        const ll=len*(0.3+Math.random()*0.4);
+        const lid=this.nextId++;
+        const lx2=x2+Math.cos(la)*ll, ly2=y2+Math.sin(la)*ll;
+        this.branches.push({id:lid,parentId:id,x1:x2,y1:y2,x2:lx2,y2:ly2,
+          depth:depth+1,maxDepth:this._maxD,progress:0,lw:0,fallDy:0,len:ll,angle:la,thick:0.5,
+          r:30+Math.floor(Math.random()*40),g:120+Math.floor(Math.random()*80),b:30,
+          phase:Math.random()*Math.PI*2,isLeaf:true});
+        this._childrenMap.get(id).push(lid);
+        this._childrenMap.set(lid,[]);
+      }
+    }
+    return id;
+  }
+
+  // BFS で子孫 id セットを O(n) で返す
+  _descendants(rootId){
+    const set=new Set([rootId]);
+    const queue=[rootId];
+    while(queue.length){
+      const pid=queue.shift();
+      for(const cid of (this._childrenMap.get(pid)||[])){
+        if(!set.has(cid)){ set.add(cid); queue.push(cid); }
+      }
+    }
+    return set;
+  }
+
+  _triggerWither(){
+    // ヤシは葉枝のみ（幹より上は枯れさせない）、他は中間の枝を対象に
+    const minDepth = MODE==='palm' ? this._maxD-1 : Math.max(2, Math.floor(this._maxD * 0.3));
+    const maxDepth = MODE==='palm' ? this._maxD-1 : Math.floor(this._maxD * 0.65);
+    const candidates = this.branches.filter(b=>
+      !b.isLeaf && b.lw===0 && b.progress===1 &&
+      b.depth>=minDepth && b.depth<=maxDepth
+    );
+    if(candidates.length===0) return;
+    // 浅い枝ほど選ばれやすくする（指数的重み付け）
+    const weights = candidates.map(b => Math.pow(1.5, maxDepth - b.depth));
+    const total = weights.reduce((a,b)=>a+b,0);
+    let r = Math.random()*total;
+    let target = candidates[0];
+    for(let i=0;i<candidates.length;i++){ r-=weights[i]; if(r<=0){ target=candidates[i]; break; } }
+    const desc = this._descendants(target.id);
+    const groupId = Date.now() + Math.random(); // 枯れグループID
+
+    // サブツリーの実効長 → 再成長にかかる時間を計算
+    const subEffLen = this.branches.reduce((s,b)=>desc.has(b.id)?s+b.len*(b.isLeaf?0.5:1):s, 0);
+    const subGrowTime = Math.max(1, subEffLen / (GROW_SPEED * 3 * 60));
+
+    // 枯れアニメ: サブツリーを subGrowTime*0.5 かけてゆっくり枯らす
+    const witherRate = 0.25; // 枯れアニメは約4秒/枝（GROW_SPEEDと無関係な演出速度）
+    const maxStagger = this._maxD - target.depth;
+    const delayStep = (subGrowTime * 0.3) / Math.max(1, maxStagger);
+
+    for(const b of this.branches){
+      if(desc.has(b.id)){
+        b.lw = 0.001;
+        b.witherDelay = (b.depth - target.depth) * delayStep;
+        b.witherTimer2 = 0;
+        b.witherGroup = groupId;
+        b.witherRate = witherRate;
+      }
+    }
+
+    // 次の枯れ間隔 = サブツリー再成長時間 × 1.2（再成長が追いつける余裕を持たせる）
+    this.witherInterval = subGrowTime * 1.2 + Math.random() * subGrowTime * 0.3;
+
+    // 70%の確率で、枯れ完了後にランダムな遅延で新芽を予約
+    if(Math.random() < 0.7){
+      this.regrowQueue.push({
+        groupId,
+        timer: 0,
+        delay: subGrowTime * 0.2,  // 枯れアニメが落ち着いたころに再成長開始
+        x1: target.x1, y1: target.y1,
+        angle: target.angle + (Math.random()-0.5) * this._aRad * 0.8,
+        len:   target.len   * (0.7 + Math.random() * 0.5),
+        depth: target.depth,
+        parentId: target.parentId,
+        ready: false,
+      });
+    }
+  }
+
+  update(dt){
+    const sec = dt/60;
+
+    if(this.state==='growing'){
+      let budget = GROW_SPEED*3*dt;
+      while(this.activeIdx<this.branches.length && budget>0){
+        const br=this.branches[this.activeIdx];
+        const eff=br.len*(br.isLeaf?0.5:1);
+        const rem=(1-br.progress)*eff;
+        if(budget>=rem){ br.progress=1; budget-=rem; this.activeIdx++; }
+        else { br.progress+=budget/eff; budget=0; }
+      }
+      if(this.activeIdx>=this.branches.length){
+        // 木全体の実効長から成長時間を逆算し、最初の枯れ間隔を決める
+        const totalEffLen = this.branches.reduce((s,b)=>s+b.len*(b.isLeaf?0.5:1),0);
+        this._T_grow = totalEffLen / (GROW_SPEED * 3 * 60);
+        this.witherInterval = this._T_grow * 0.6; // 成長時間の60%後に最初の枯れ
+        this.state='alive';
+      }
+
+    } else if(this.state==='alive'){
+      this.witherTimer += sec;
+      if(this.witherTimer >= this.witherInterval){
+        this.witherTimer = 0;
+        this._triggerWither();
+      }
+
+      // 枯れアニメーション（各枝の witherRate は _triggerWither で個別設定）
+      for(const b of this.branches){
+        if(b.lw<=0 || b.lw>=1) continue;
+        b.witherTimer2 = (b.witherTimer2||0) + sec;
+        if(b.witherTimer2 < b.witherDelay) continue;
+        b.lw = Math.min(1, b.lw + (b.witherRate||0.2)*sec);
+        b.fallDy = Math.pow(b.lw, 1.5) * 60 * (0.4 + b.depth/b.maxDepth);
+      }
+
+      // 再成長キュー：グループの枯れが全完了したら遅延カウント開始
+      for(const task of this.regrowQueue){
+        if(task.ready) continue;
+        const groupDone = !this.branches.some(b=>b.witherGroup===task.groupId && b.lw<1);
+        if(!groupDone) continue;
+        task.timer += sec;
+        if(task.timer < task.delay) continue;
+        task.ready = true;
+        this._spawnSprout(task.x1, task.y1, task.angle, task.len, task.depth, task.parentId);
+      }
+      this.regrowQueue = this.regrowQueue.filter(t=>!t.ready);
+
+      // 新芽の成長（長さ/秒一定）
+      const newChildren = [];
+      for(const sp of this.sprouts){
+        if(sp.progress >= 1) continue;
+        const eff = sp.len * (sp.isLeaf ? 0.5 : 1);
+        sp.progress = Math.min(1, sp.progress + GROW_SPEED * 3 * dt / eff);
+        // 完成したら子枝を生やす
+        if(sp.progress >= 1 && !sp.spawned && sp.childAngles){
+          sp.spawned = true;
+          for(const c of sp.childAngles)
+            newChildren.push({x1:sp.x2,y1:sp.y2,angle:c.a,len:c.l,depth:sp.depth+1,parentId:sp.id});
+          // 末端なら葉も
+          if(sp.depth === this._maxD-1){
+            for(let i=0;i<3;i++){
+              const la=sp.angle+(Math.random()-0.5)*Math.PI*0.8;
+              const ll=sp.len*(0.3+Math.random()*0.4);
+              const lid=this.nextId++;
+              this.sprouts.push({id:lid,parentId:sp.id,
+                x1:sp.x2,y1:sp.y2,x2:sp.x2+Math.cos(la)*ll,y2:sp.y2+Math.sin(la)*ll,
+                depth:this._maxD,maxDepth:this._maxD,progress:0,lw:0,fallDy:0,
+                len:ll,angle:la,thick:0.5,r:30+Math.floor(Math.random()*40),
+                g:120+Math.floor(Math.random()*80),b:30,
+                phase:Math.random()*Math.PI*2,isLeaf:true,isSprout:true,spawned:true});
+              this._childrenMap.get(sp.id)?.push(lid);
+              this._childrenMap.set(lid,[]);
+            }
+          }
+        }
+      }
+      for(const c of newChildren) this._spawnSprout(c.x1,c.y1,c.angle,c.len,c.depth,c.parentId);
+      const graduated = this.sprouts.filter(sp=>sp.progress>=1 && sp.spawned!==false);
+      this.branches.push(...graduated);
+      this.sprouts = this.sprouts.filter(sp=>sp.progress<1);
+
+      // 枯れ完了した枝を除去
+      this.branches = this.branches.filter(b=>b.lw<1);
+    }
+  }
+
+  // 新芽を1本だけ追加（子は親が完成してから生やす）
+  _spawnSprout(x1,y1,angle,len,depth,parentId){
+    if(depth>=this._maxD || len<1.5) return;
+    const id=this.nextId++;
+    const x2=x1+Math.cos(angle)*len, y2=y1+Math.sin(angle)*len;
+    const t=depth/this._maxD;
+    const r=Math.round(120-t*60), g=Math.round(70+t*120), b=Math.round(30+t*20);
+    const thick=Math.max(0.5,(1-t)*(MODE==='palm'?6:8)+0.5);
+    const noise=()=>(Math.random()-0.5)*this._asym*2;
+    // childAngles: この枝が完成したら生やす子の情報
+    const childAngles = [
+      { a: angle-this._aRad*(1+noise()), l: len*this._decay },
+      { a: angle+this._aRad*(1-this._asym+noise()), l: len*this._decay },
+    ];
+    const sp={id,parentId,x1,y1,x2,y2,depth,maxDepth:this._maxD,
+      progress:0,lw:0,fallDy:0,len,angle,thick,r,g,b,
+      phase:Math.random()*Math.PI*2,isLeaf:false,
+      isSprout:true, childAngles, spawned:false};
+    this.sprouts.push(sp);
+    if(!this._childrenMap.has(parentId)) this._childrenMap.set(parentId,[]);
+    this._childrenMap.get(parentId).push(id);
+    this._childrenMap.set(id,[]);
+  }
+
+  draw(t){
+    const all=[...this.branches,...this.sprouts];
+    for(const br of all){
+      if(br.progress<=0) continue;
+
+      // 枯れ色
+      let r=br.r, g=br.g, b=br.b;
+      const w=br.lw||0;
+      if(w>0){
+        if(w<0.4){ const s=w/0.4; r=Math.round(r+(180-r)*s);g=Math.round(g+(160-g)*s);b=Math.round(b+(10-b)*s); }
+        else if(w<0.7){ const s=(w-0.4)/0.3; r=Math.round(180+(160-180)*s);g=Math.round(160+(90-160)*s);b=10; }
+        else { const s=(w-0.7)/0.3; r=Math.round(160+(80-160)*s);g=Math.round(90+(50-90)*s);b=10; }
+      }
+
+      const fallDy = br.fallDy||0;
+      // 高さ基準の統一スウェイ: 根元(groundY)=0, 上に行くほど大きく横に揺れる
+      const globalSway = (Math.sin(t*0.65)*WIND_STR*0.14 + Math.sin(t*1.1)*WIND_STR*0.05)
+                       + Math.sin(t*2.8+br.phase)*0.01*WIND_STR;
+      const rootY = this.groundY;
+      const swayX1 = globalSway * Math.max(0, rootY - br.y1) / rootY;
+      const swayX2 = globalSway * Math.max(0, rootY - br.y2) / rootY;
+      const wx = br.x2 + swayX2;
+      const wy = br.y2 + fallDy;
+      const x1f = br.x1 + swayX1, y1f = br.y1 + fallDy*0.3;
+
+      const showProg = br.progress*(1-w*0.85); // 枯れると先端から縮む（完全には消えない→落ちながらフェード）
+      const alpha = 0.9*(1 - w*0.9);
+      if(alpha<=0||showProg<=0) continue;
+
+      const ex=x1f+(wx-x1f)*showProg, ey=y1f+(wy-y1f)*showProg;
+
+      ctx.globalAlpha=alpha;
+      if(br.isLeaf){
+        ctx.beginPath();
+        ctx.ellipse((x1f+ex)/2,(y1f+ey)/2,br.len*0.18*showProg,br.len*0.08*showProg,br.angle,0,Math.PI*2);
+        ctx.fillStyle=`rgb(${r},${g},${b})`;
+        ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.moveTo(x1f,y1f); ctx.lineTo(ex,ey);
+        ctx.strokeStyle=`rgb(${r},${g},${b})`;
+        ctx.lineWidth=br.thick*(1-br.depth/br.maxDepth*0.5);
+        ctx.lineCap='round'; ctx.stroke();
+      }
+      ctx.globalAlpha=1;
+    }
+  }
+}
+
+function regrow(){
+  plants=[ new Plant(W/2, H-20) ];
+}
+function addTree(){
+  if(plants.length<6) plants.push(new Plant(W*0.1+Math.random()*(W*0.8), H-20));
+}
+
+setTimeout(()=>regrow(), 100);
+canvas.addEventListener('click', e=>{
+  if(e.target.closest&&e.target.closest('.ui')) return;
+  if(plants.length<6) plants.push(new Plant(e.clientX, H-20));
+});
+
+let last=0;
+function loop(now){
+  requestAnimationFrame(loop);
+  const dt=Math.min((now-last)/16,3); last=now;
+  time+=0.016;
+
+  const sky=ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,'#060d10'); sky.addColorStop(0.6,'#091a0f'); sky.addColorStop(1,'#0c1f0a');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+  const grd=ctx.createLinearGradient(0,H-30,0,H);
+  grd.addColorStop(0,'#1a3d12'); grd.addColorStop(1,'#0d1f08');
+  ctx.fillStyle=grd; ctx.fillRect(0,H-30,W,30);
+
+  plants.forEach(p=>{ p.update(dt); p.draw(time); });
+}
+requestAnimationFrame(loop);
+
+document.getElementById('sAngle').oninput=e=>{ ANGLE=parseInt(e.target.value); document.getElementById('vAngle').textContent=ANGLE+'°'; regrow(); };
+document.getElementById('sDecay').oninput=e=>{ DECAY=parseFloat(e.target.value); document.getElementById('vDecay').textContent=DECAY.toFixed(3); regrow(); };
+document.getElementById('sAsym').oninput=e=>{ ASYM=parseFloat(e.target.value); document.getElementById('vAsym').textContent=ASYM.toFixed(2); regrow(); };
+document.getElementById('sWind').oninput=e=>{ WIND_STR=parseFloat(e.target.value); document.getElementById('vWind').textContent=WIND_STR.toFixed(1); };
+document.getElementById('sSpeed').oninput=e=>{ GROW_SPEED=parseInt(e.target.value); document.getElementById('vSpeed').textContent=GROW_SPEED; };
+</script>
+</body>
+</html>

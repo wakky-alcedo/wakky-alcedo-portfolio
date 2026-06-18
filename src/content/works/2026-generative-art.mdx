@@ -1,0 +1,67 @@
+---
+title: ブラウザで動くインタラクティブアート
+description: JavaScriptだけで動く生成アート・物理シミュレーション集。インストール不要でブラウザ上でそのままインタラクティブに体験できる。
+category: Web系
+tags:
+  - JavaScript
+  - 生成アート
+  - シミュレーション
+  - Canvas
+  - 生成AI
+thumbnail: ../../assets/images/generative-art.png
+date: 2026-06-18
+wip: true
+unpublished: false
+featured: 0
+---
+import ArtCard from '../../components/content/ArtCard.astro';
+
+# ブラウザで動くインタラクティブアート
+
+**制作時期:** 2026/06~
+
+## 概要
+
+JavaScriptとCanvas APIだけで動く，インタラクティブな生成アート・物理シミュレーション集です。
+インストール不要，ブラウザを開くだけで動きます。
+
+各作品はパラメータをスライダーでリアルタイムに調整でき，挙動の変化を直感的に観察できます。
+
+すべてClaudeCodeで作成しています．
+
+## 技術スタック
+
+| 項目 | 内容 |
+|------|------|
+| 言語 | JavaScript（バンドラなし） |
+| 描画 | Canvas 2D API |
+| 依存ライブラリ | なし（完全にゼロ依存） |
+| 動作環境 | モダンブラウザ（Chrome / Firefox / Safari） |
+
+## 作品紹介
+
+### ムクドリの群れ — Boids
+
+Craig Reynoldsの Boids アルゴリズムを実装。**分離・整列・結合**という3つのシンプルなルールだけで，数百羽の鳥が複雑な群れ行動を自己組織化する。パラメータを変えると群れが散り散りになったり，完全に同期して動いたりと，創発現象を直接いじって体験できる。
+
+<ArtCard file="/art/boids_murmuration.html" title="ムクドリの群れ — Boids" />
+
+### フラクタル植物 — 成長シミュレーション
+
+L-System（Lindenmayer System）で植物の形を生成。
+ずっと見ていられるように，時間が経過すると一部が枯れて，新しい枝が成長します．
+
+<ArtCard file="/art/fractal_growth.html" title="フラクタル植物 — 成長シミュレーション" />
+
+### 音楽ビジュアライザー
+
+Web Audio API でマイク入力または音声ファイルをリアルタイム解析し，周波数スペクトルをビジュアル化。音のない空間でも波形の美しさを観察できる。
+デフォルトではマイクがオンになっていないので，「マイクを起動」を押してマイクの使用を許可すること。
+
+<ArtCard file="/art/audio_visualizer.html" title="音楽ビジュアライザー" />
+
+### パーティクル物理サンドボックス
+
+重力・反発係数・摩擦をスライダーで制御しながら粒子の挙動を観察する。マウスでパーティクルを引き寄せたり弾いたりしてインタラクティブに遊べる。
+
+<ArtCard file="/art/particle_sandbox.html" title="パーティクル物理サンドボックス" />

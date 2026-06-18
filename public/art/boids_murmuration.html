@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ムクドリの群れ — Boids</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#06080f;color:#fff;font-family:sans-serif;overflow:hidden;}
+canvas{display:block;position:fixed;top:0;left:0;width:100%;height:100%;}
+.ui{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;width:min(520px,90vw);}
+.panel{background:rgba(6,8,15,0.75);backdrop-filter:blur(12px);border:0.5px solid rgba(255,255,255,0.1);border-radius:14px;padding:14px 18px;width:100%;}
+.sliders{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;}
+.sl{display:flex;flex-direction:column;gap:3px;}
+.sl label{font-size:11px;color:rgba(255,255,255,0.4);display:flex;justify-content:space-between;}
+.sl label span{color:rgba(255,255,255,0.85);}
+input[type=range]{width:100%;accent-color:#5DCAA5;cursor:pointer;}
+.btns{display:flex;gap:8px;justify-content:center;}
+button{padding:8px 18px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.8);font-size:12px;cursor:pointer;transition:background 0.15s;}
+button:hover{background:rgba(255,255,255,0.12);}
+.stat{font-size:11px;color:rgba(255,255,255,0.25);text-align:center;}
+.hint{font-size:11px;color:rgba(255,255,255,0.2);text-align:center;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui">
+  <div class="panel">
+    <div class="sliders">
+      <div class="sl"><label>鳥の総数 <span id="vN">600</span></label><input type="range" id="sN" min="100" max="1500" step="50" value="600"></div>
+      <div class="sl"><label>飛行速度 <span id="vS">2.8</span></label><input type="range" id="sS" min="1" max="6" step="0.1" value="2.8"></div>
+      <div class="sl"><label>分離（ぶつからない） <span id="vSep">1.5</span></label><input type="range" id="sSep" min="0" max="4" step="0.1" value="1.5"></div>
+      <div class="sl"><label>整列（同じ向きに） <span id="vAli">1.0</span></label><input type="range" id="sAli" min="0" max="4" step="0.1" value="1.0"></div>
+      <div class="sl"><label>結合（固まる） <span id="vCoh">0.8</span></label><input type="range" id="sCoh" min="0" max="4" step="0.1" value="0.8"></div>
+      <div class="sl"><label>視野の広さ <span id="vVis">80</span></label><input type="range" id="sVis" min="20" max="200" step="5" value="80"></div>
+      <div class="sl"><label>🦅 天敵の速さ <span id="vPSpd">1.0</span></label><input type="range" id="sPSpd" min="0.3" max="3.0" step="0.1" value="1.0"></div>
+      <div class="sl"><label>🌬 風の強さ <span id="vWStr">1.0</span></label><input type="range" id="sWStr" min="0.1" max="4.0" step="0.1" value="1.0"></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="btns">
+      <button onclick="scatter()">💥 散らす</button>
+      <button onclick="togglePredator()">🦅 天敵 <span id="predLabel">OFF</span></button>
+      <button onclick="toggleWind()">🌬 風 <span id="windLabel">OFF</span></button>
+      <button onclick="reset()">↺ リセット</button>
+    </div>
+  </div>
+  <div class="stat" id="stat">— 羽</div>
+  <div class="hint">クリック＆ドラッグで群れを引き寄せる</div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+// params
+let SPEED = 2.8, SEP = 1.5, ALI = 1.0, COH = 0.8, VIS = 80, N = 600;
+let PRED_SPEED = 1.0, WIND_STR = 1.0;
+const SEP_DIST = 25;
+let predatorOn = false, windOn = false;
+let mouseX = -999, mouseY = -999, mouseDown = false;
+
+// boids
+let boids = [];
+class Boid {
+  constructor(){
+    this.x = Math.random()*W; this.y = Math.random()*H;
+    const a = Math.random()*Math.PI*2;
+    this.vx = Math.cos(a)*SPEED; this.vy = Math.sin(a)*SPEED;
+    this.trail = [];
+  }
+}
+
+// predator — targetX/Yは追跡目標の指数移動平均（EMA）
+let pred = { x: W/2, y: H/2, vx: 1.5, vy: 0.8, angle: 0, targetX: W/2, targetY: H/2 };
+
+function reset(){
+  boids = [];
+  for(let i=0;i<N;i++) boids.push(new Boid());
+  pred.x = -200; pred.y = -200;
+}
+reset();
+
+function scatter(){
+  boids.forEach(b=>{
+    const a = Math.random()*Math.PI*2;
+    b.vx += Math.cos(a)*5; b.vy += Math.sin(a)*5;
+  });
+}
+
+function togglePredator(){
+  predatorOn = !predatorOn;
+  document.getElementById('predLabel').textContent = predatorOn ? 'ON' : 'OFF';
+  if(predatorOn){ pred.x = 50; pred.y = 50; }
+}
+
+function toggleWind(){
+  windOn = !windOn;
+  document.getElementById('windLabel').textContent = windOn ? 'ON' : 'OFF';
+}
+
+// spatial grid for performance
+function buildGrid(boids){
+  const cell = VIS;
+  const grid = new Map();
+  boids.forEach((b,i)=>{
+    const gx = Math.floor(b.x/cell), gy = Math.floor(b.y/cell);
+    const key = gx+','+gy;
+    if(!grid.has(key)) grid.set(key,[]);
+    grid.get(key).push(i);
+  });
+  return {grid, cell};
+}
+
+function getNeighborIndices(boid, grid, cell){
+  const gx = Math.floor(boid.x/cell), gy = Math.floor(boid.y/cell);
+  const result = [];
+  for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++){
+    const key = (gx+dx)+','+(gy+dy);
+    const arr = grid.get(key);
+    if(arr) arr.forEach(i=>result.push(i));
+  }
+  return result;
+}
+
+function update(){
+  const {grid, cell} = buildGrid(boids);
+  const vis2 = VIS*VIS;
+  const sep2 = SEP_DIST*SEP_DIST;
+
+  // update predator
+  if(predatorOn){
+    // 群れの重心を計算
+    let cx=0, cy=0;
+    boids.forEach(b=>{cx+=b.x; cy+=b.y;});
+    cx/=boids.length; cy/=boids.length;
+
+    // 追跡目標をEMA（指数移動平均）で滑らかに更新 — 急な重心ジャンプを吸収
+    const smooth = 0.04;
+    pred.targetX += (cx - pred.targetX) * smooth;
+    pred.targetY += (cy - pred.targetY) * smooth;
+
+    // 滑らかな目標に向かってゆっくり加速（慣性が大きく、向き変えが遅い）
+    const dx = pred.targetX - pred.x, dy = pred.targetY - pred.y;
+    const d = Math.sqrt(dx*dx+dy*dy) + 1;
+    const accel = 0.06 * PRED_SPEED;
+    pred.vx += dx/d * accel;
+    pred.vy += dy/d * accel;
+
+    // 速度上限
+    const ps = Math.sqrt(pred.vx*pred.vx + pred.vy*pred.vy);
+    const maxPs = SPEED * 1.8 * PRED_SPEED;
+    if(ps > maxPs){ pred.vx=pred.vx/ps*maxPs; pred.vy=pred.vy/ps*maxPs; }
+
+    // 向きは速度ベクトルをEMAで滑らかに補間（ピクピク防止）
+    const targetAngle = Math.atan2(pred.vy, pred.vx);
+    let da = targetAngle - pred.angle;
+    if(da > Math.PI)  da -= Math.PI*2;
+    if(da < -Math.PI) da += Math.PI*2;
+    pred.angle += da * 0.08;
+
+    pred.x += pred.vx; pred.y += pred.vy;
+    if(pred.x<0){pred.x=0;pred.vx=Math.abs(pred.vx);}
+    if(pred.x>W){pred.x=W;pred.vx=-Math.abs(pred.vx);}
+    if(pred.y<0){pred.y=0;pred.vy=Math.abs(pred.vy);}
+    if(pred.y>H){pred.y=H;pred.vy=-Math.abs(pred.vy);}
+  }
+
+  for(let i=0;i<boids.length;i++){
+    const b = boids[i];
+    let sepX=0,sepY=0, aliX=0,aliY=0, cohX=0,cohY=0;
+    let nSep=0, nAli=0, nCoh=0;
+
+    const neighbors = getNeighborIndices(b, grid, cell);
+    for(let j=0;j<neighbors.length;j++){
+      const idx = neighbors[j];
+      if(idx===i) continue;
+      const o = boids[idx];
+      const dx=o.x-b.x, dy=o.y-b.y;
+      const d2=dx*dx+dy*dy;
+      if(d2>vis2) continue;
+      // alignment & cohesion
+      aliX+=o.vx; aliY+=o.vy; nAli++;
+      cohX+=o.x; cohY+=o.y; nCoh++;
+      // separation
+      if(d2<sep2 && d2>0){
+        const d=Math.sqrt(d2);
+        sepX-=dx/d; sepY-=dy/d; nSep++;
+      }
+    }
+
+    let ax=0, ay=0;
+    if(nSep>0){ ax+=sepX/nSep*SEP; ay+=sepY/nSep*SEP; }
+    if(nAli>0){ ax+=(aliX/nAli-b.vx)*ALI*0.1; ay+=(aliY/nAli-b.vy)*ALI*0.1; }
+    if(nCoh>0){ ax+=(cohX/nCoh-b.x)*COH*0.001; ay+=(cohY/nCoh-b.y)*COH*0.001; }
+
+    // flee predator
+    if(predatorOn){
+      const dx=b.x-pred.x, dy=b.y-pred.y;
+      const d2=dx*dx+dy*dy;
+      if(d2<120*120){
+        const d=Math.sqrt(d2)+1;
+        ax+=dx/d*3; ay+=dy/d*3;
+      }
+    }
+
+    // attract to mouse
+    if(mouseDown && mouseX>0){
+      const dx=mouseX-b.x, dy=mouseY-b.y;
+      const d=Math.sqrt(dx*dx+dy*dy)+1;
+      ax+=dx/d*0.4; ay+=dy/d*0.4;
+    }
+
+    // wind
+    if(windOn){ ax+=0.08*WIND_STR; ay+=Math.sin(b.x*0.005+Date.now()*0.0005)*0.03*WIND_STR; }
+
+    b.vx+=ax; b.vy+=ay;
+
+    // limit speed
+    const spd=Math.sqrt(b.vx*b.vx+b.vy*b.vy);
+    if(spd>SPEED*1.5){b.vx=b.vx/spd*SPEED*1.5; b.vy=b.vy/spd*SPEED*1.5;}
+    if(spd<SPEED*0.5&&spd>0){b.vx=b.vx/spd*SPEED*0.5; b.vy=b.vy/spd*SPEED*0.5;}
+
+    // trail
+    b.trail.push({x:b.x,y:b.y});
+    if(b.trail.length>8) b.trail.shift();
+
+    b.x+=b.vx; b.y+=b.vy;
+    // wall bounce — 画面端に近づくと内側に押し返す力
+    const margin = 60, turnF = 0.25;
+    if(b.x < margin)       b.vx += turnF * (1 - b.x/margin);
+    if(b.x > W - margin)   b.vx -= turnF * (1 - (W-b.x)/margin);
+    if(b.y < margin)       b.vy += turnF * (1 - b.y/margin);
+    if(b.y > H - margin)   b.vy -= turnF * (1 - (H-b.y)/margin);
+    // 万が一はみ出した場合のクランプ
+    if(b.x < 0){ b.x=0; b.vx=Math.abs(b.vx); }
+    if(b.x > W){ b.x=W; b.vx=-Math.abs(b.vx); }
+    if(b.y < 0){ b.y=0; b.vy=Math.abs(b.vy); }
+    if(b.y > H){ b.y=H; b.vy=-Math.abs(b.vy); }
+  }
+}
+
+function draw(){
+  ctx.fillStyle='rgba(6,8,15,0.28)';
+  ctx.fillRect(0,0,W,H);
+
+  // draw boids
+  for(let i=0;i<boids.length;i++){
+    const b = boids[i];
+    const angle = Math.atan2(b.vy, b.vx);
+    const spd = Math.sqrt(b.vx*b.vx+b.vy*b.vy);
+    const brightness = Math.min(1, 0.45 + spd/SPEED*0.4);
+
+    // trail
+    if(b.trail.length>1){
+      ctx.beginPath();
+      ctx.moveTo(b.trail[0].x, b.trail[0].y);
+      for(let t=1;t<b.trail.length;t++) ctx.lineTo(b.trail[t].x,b.trail[t].y);
+      ctx.strokeStyle=`rgba(120,160,220,${brightness*0.18})`;
+      ctx.lineWidth=0.8; ctx.stroke();
+    }
+
+    // body — tiny arrowhead
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.rotate(angle);
+    ctx.beginPath();
+    ctx.moveTo(4,0); ctx.lineTo(-3,1.8); ctx.lineTo(-2,0); ctx.lineTo(-3,-1.8);
+    ctx.closePath();
+    ctx.fillStyle=`rgba(${180+spd*8},${200+spd*4},255,${brightness})`;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // predator
+  if(predatorOn){
+    ctx.save();
+    ctx.translate(pred.x, pred.y);
+    ctx.rotate(pred.angle);
+    ctx.beginPath();
+    ctx.moveTo(12,0); ctx.lineTo(-8,5); ctx.lineTo(-4,0); ctx.lineTo(-8,-5);
+    ctx.closePath();
+    ctx.fillStyle='rgba(255,120,60,0.9)';
+    ctx.fill();
+    // glow
+    ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,80,40,0.06)'; ctx.fill();
+    ctx.restore();
+  }
+
+  document.getElementById('stat').textContent = boids.length + ' 羽';
+}
+
+function loop(){
+  requestAnimationFrame(loop);
+  update();
+  draw();
+}
+loop();
+
+// controls
+canvas.addEventListener('mousedown',e=>{ mouseX=e.clientX;mouseY=e.clientY;mouseDown=true; });
+canvas.addEventListener('mousemove',e=>{ if(mouseDown){mouseX=e.clientX;mouseY=e.clientY;} });
+canvas.addEventListener('mouseup',()=>{ mouseDown=false;mouseX=-999; });
+canvas.addEventListener('touchstart',e=>{ e.preventDefault(); const t=e.touches[0]; mouseX=t.clientX;mouseY=t.clientY;mouseDown=true; },{passive:false});
+canvas.addEventListener('touchmove',e=>{ e.preventDefault(); const t=e.touches[0]; mouseX=t.clientX;mouseY=t.clientY; },{passive:false});
+canvas.addEventListener('touchend',()=>{ mouseDown=false;mouseX=-999; });
+
+document.getElementById('sN').oninput=e=>{ N=parseInt(e.target.value); document.getElementById('vN').textContent=N; reset(); };
+document.getElementById('sS').oninput=e=>{ SPEED=parseFloat(e.target.value); document.getElementById('vS').textContent=SPEED.toFixed(1); };
+document.getElementById('sSep').oninput=e=>{ SEP=parseFloat(e.target.value); document.getElementById('vSep').textContent=SEP.toFixed(1); };
+document.getElementById('sAli').oninput=e=>{ ALI=parseFloat(e.target.value); document.getElementById('vAli').textContent=ALI.toFixed(1); };
+document.getElementById('sCoh').oninput=e=>{ COH=parseFloat(e.target.value); document.getElementById('vCoh').textContent=COH.toFixed(1); };
+document.getElementById('sVis').oninput=e=>{ VIS=parseInt(e.target.value); document.getElementById('vVis').textContent=VIS; };
+document.getElementById('sPSpd').oninput=e=>{ PRED_SPEED=parseFloat(e.target.value); document.getElementById('vPSpd').textContent=PRED_SPEED.toFixed(1); };
+document.getElementById('sWStr').oninput=e=>{ WIND_STR=parseFloat(e.target.value); document.getElementById('vWStr').textContent=WIND_STR.toFixed(1); };
+</script>
+</body>
+</html>
