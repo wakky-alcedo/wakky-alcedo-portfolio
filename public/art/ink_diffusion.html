@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>流体シミュレーション — インクが水に溶けていく</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #04090f;
+    color: #c8e6f0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+  }
+  canvas { display: block; flex: 1; min-height: 0; cursor: crosshair; }
+
+  #ui {
+    background: rgba(4, 12, 22, 0.92);
+    border-top: 1px solid rgba(104, 206, 214, 0.15);
+    padding: 8px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .ctrl { display: flex; align-items: center; gap: 6px; }
+  label { font-size: 0.72rem; color: rgba(200, 230, 240, 0.65); white-space: nowrap; }
+  input[type=range] {
+    width: 80px; height: 3px;
+    -webkit-appearance: none; appearance: none;
+    background: rgba(104, 206, 214, 0.25); border-radius: 2px; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 11px; height: 11px;
+    border-radius: 50%; background: #68ced6; cursor: pointer;
+  }
+  .val { font-size: 0.7rem; color: #68ced6; min-width: 28px; }
+
+  #color-picker { display: flex; gap: 5px; align-items: center; }
+  .color-dot {
+    width: 16px; height: 16px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; transition: border-color 0.15s, transform 0.15s;
+    flex-shrink: 0;
+  }
+  .color-dot.active { border-color: #fff; transform: scale(1.25); }
+
+  #hint {
+    font-size: 0.68rem;
+    color: rgba(200, 230, 240, 0.4);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  #clear-btn {
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    background: rgba(104, 206, 214, 0.12);
+    border: 1px solid rgba(104, 206, 214, 0.3);
+    color: #68ced6;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  #clear-btn:hover { background: rgba(104, 206, 214, 0.25); }
+
+  #auto-btn {
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    background: rgba(104, 206, 214, 0.12);
+    border: 1px solid rgba(104, 206, 214, 0.3);
+    color: #68ced6;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  #auto-btn.active {
+    background: rgba(104, 206, 214, 0.3);
+    border-color: rgba(104, 206, 214, 0.8);
+    color: #fff;
+  }
+  .auto-ctrls { display: contents; }
+  .auto-ctrls.hidden > * { display: none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="ui">
+  <div class="ctrl">
+    <label>粘度</label>
+    <input type="range" id="s-visc" min="0" max="100" value="3">
+    <span class="val" id="v-visc">3</span>
+  </div>
+  <div class="ctrl">
+    <label>拡散</label>
+    <input type="range" id="s-diff" min="0" max="100" value="10">
+    <span class="val" id="v-diff">10</span>
+  </div>
+  <div class="ctrl">
+    <label>渦</label>
+    <input type="range" id="s-curl" min="0" max="100" value="20">
+    <span class="val" id="v-curl">20</span>
+  </div>
+  <div class="ctrl">
+    <label>減衰</label>
+    <input type="range" id="s-fade" min="0" max="100" value="5">
+    <span class="val" id="v-fade">5</span>
+  </div>
+  <div class="ctrl">
+    <label>インク色</label>
+    <div id="color-picker"></div>
+  </div>
+  <button id="auto-btn">自動モード</button>
+  <div class="auto-ctrls hidden" id="auto-ctrls">
+    <div class="ctrl">
+      <label>頻度</label>
+      <input type="range" id="s-rate" min="1" max="100" value="30">
+      <span class="val" id="v-rate">30</span>
+    </div>
+    <div class="ctrl">
+      <label>サイズ</label>
+      <input type="range" id="s-size" min="1" max="100" value="40">
+      <span class="val" id="v-size">40</span>
+    </div>
+    <div class="ctrl">
+      <label>勢い</label>
+      <input type="range" id="s-impulse" min="0" max="100" value="30">
+      <span class="val" id="v-impulse">30</span>
+    </div>
+  </div>
+  <button id="clear-btn">クリア</button>
+  <span id="hint">ドラッグでインクを落とす</span>
+</div>
+
+<script>
+// -------------------------------------------------------
+// Fluid solver: simplified Stable Fluids (Jos Stam 1999)
+// Grid-based on CPU, rendered to Canvas 2D ImageData
+// -------------------------------------------------------
+
+const INK_COLORS = [
+  { label: 'インディゴ', r: 40,  g: 80,  b: 220 },
+  { label: 'バーミリオン', r: 220, g: 60,  b: 30  },
+  { label: 'エメラルド', r: 20,  g: 180, b: 120 },
+  { label: 'バイオレット', r: 160, g: 40,  b: 220 },
+  { label: 'ゴールデン', r: 230, g: 180, b: 20  },
+  { label: 'ローズ', r: 220, g: 80,  b: 140 },
+];
+
+let currentColor = 0;
+
+// Build color picker
+const picker = document.getElementById('color-picker');
+INK_COLORS.forEach((c, i) => {
+  const dot = document.createElement('div');
+  dot.className = 'color-dot' + (i === 0 ? ' active' : '');
+  dot.style.background = `rgb(${c.r},${c.g},${c.b})`;
+  dot.title = c.label;
+  dot.addEventListener('click', () => {
+    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+    dot.classList.add('active');
+    currentColor = i;
+  });
+  picker.appendChild(dot);
+});
+
+// --- Fluid solver ---
+const ITER = 10;          // Gauss-Seidel iterations
+let N = 128;              // grid size (power of 2 preferred)
+let dt = 0.016;
+
+// Grid arrays: velocity (u,v), density per channel (r,g,b), scratch buffers
+let u, v, u0, v0;
+let dr, dg, db, dr0, dg0, db0;
+
+function idx(x, y) { return x + y * (N + 2); }
+
+function allocate() {
+  const size = (N + 2) * (N + 2);
+  u  = new Float32Array(size); v  = new Float32Array(size);
+  u0 = new Float32Array(size); v0 = new Float32Array(size);
+  dr = new Float32Array(size); dg = new Float32Array(size); db = new Float32Array(size);
+  dr0= new Float32Array(size); dg0= new Float32Array(size); db0= new Float32Array(size);
+}
+
+function set_bnd(b, x) {
+  for (let i = 1; i <= N; i++) {
+    x[idx(0,   i)] = b === 1 ? -x[idx(1, i)] : x[idx(1, i)];
+    x[idx(N+1, i)] = b === 1 ? -x[idx(N, i)] : x[idx(N, i)];
+    x[idx(i,   0)] = b === 2 ? -x[idx(i, 1)] : x[idx(i, 1)];
+    x[idx(i, N+1)] = b === 2 ? -x[idx(i, N)] : x[idx(i, N)];
+  }
+  x[idx(0,   0  )] = 0.5*(x[idx(1,0)] + x[idx(0,1)]);
+  x[idx(0,   N+1)] = 0.5*(x[idx(1,N+1)] + x[idx(0,N)]);
+  x[idx(N+1, 0  )] = 0.5*(x[idx(N,0)] + x[idx(N+1,1)]);
+  x[idx(N+1, N+1)] = 0.5*(x[idx(N,N+1)] + x[idx(N+1,N)]);
+}
+
+function lin_solve(b, x, x0, a, c) {
+  const cInv = 1.0 / c;
+  for (let k = 0; k < ITER; k++) {
+    for (let j = 1; j <= N; j++) {
+      for (let i = 1; i <= N; i++) {
+        x[idx(i,j)] = (x0[idx(i,j)] + a*(
+          x[idx(i-1,j)] + x[idx(i+1,j)] +
+          x[idx(i,j-1)] + x[idx(i,j+1)]
+        )) * cInv;
+      }
+    }
+    set_bnd(b, x);
+  }
+}
+
+function diffuse(b, x, x0, diff) {
+  const a = dt * diff * N * N;
+  lin_solve(b, x, x0, a, 1 + 4*a);
+}
+
+function advect(b, d, d0, ux, uy) {
+  const dt0 = dt * N;
+  for (let j = 1; j <= N; j++) {
+    for (let i = 1; i <= N; i++) {
+      let x = i - dt0 * ux[idx(i,j)];
+      let y = j - dt0 * uy[idx(i,j)];
+      x = Math.max(0.5, Math.min(N + 0.5, x));
+      y = Math.max(0.5, Math.min(N + 0.5, y));
+      const i0 = Math.floor(x), i1 = i0 + 1;
+      const j0 = Math.floor(y), j1 = j0 + 1;
+      const s1 = x - i0, s0 = 1 - s1;
+      const t1 = y - j0, t0 = 1 - t1;
+      d[idx(i,j)] = s0*(t0*d0[idx(i0,j0)] + t1*d0[idx(i0,j1)]) +
+                    s1*(t0*d0[idx(i1,j0)] + t1*d0[idx(i1,j1)]);
+    }
+  }
+  set_bnd(b, d);
+}
+
+function project(ux, uy, p, div) {
+  const h = 1.0 / N;
+  for (let j = 1; j <= N; j++) {
+    for (let i = 1; i <= N; i++) {
+      div[idx(i,j)] = -0.5*h*(ux[idx(i+1,j)]-ux[idx(i-1,j)] + uy[idx(i,j+1)]-uy[idx(i,j-1)]);
+      p[idx(i,j)] = 0;
+    }
+  }
+  set_bnd(0, div); set_bnd(0, p);
+  lin_solve(0, p, div, 1, 4);
+  for (let j = 1; j <= N; j++) {
+    for (let i = 1; i <= N; i++) {
+      ux[idx(i,j)] -= 0.5*(p[idx(i+1,j)] - p[idx(i-1,j)]) * N;
+      uy[idx(i,j)] -= 0.5*(p[idx(i,j+1)] - p[idx(i,j-1)]) * N;
+    }
+  }
+  set_bnd(1, ux); set_bnd(2, uy);
+}
+
+function vorticity_confinement(strength) {
+  if (strength < 0.0001) return;
+  const curl = new Float32Array((N+2)*(N+2));
+  const lx   = new Float32Array((N+2)*(N+2));
+  const ly   = new Float32Array((N+2)*(N+2));
+
+  for (let j = 1; j <= N; j++) {
+    for (let i = 1; i <= N; i++) {
+      curl[idx(i,j)] = 0.5*(v[idx(i+1,j)] - v[idx(i-1,j)] - u[idx(i,j+1)] + u[idx(i,j-1)]);
+    }
+  }
+  for (let j = 2; j < N; j++) {
+    for (let i = 2; i < N; i++) {
+      const absCurl = Math.abs(curl[idx(i,j)]);
+      const gx = (Math.abs(curl[idx(i+1,j)]) - Math.abs(curl[idx(i-1,j)])) * 0.5;
+      const gy = (Math.abs(curl[idx(i,j+1)]) - Math.abs(curl[idx(i,j-1)])) * 0.5;
+      const len = Math.sqrt(gx*gx + gy*gy) + 1e-5;
+      lx[idx(i,j)] =  gy / len;
+      ly[idx(i,j)] = -gx / len;
+      u[idx(i,j)] += strength * dt * lx[idx(i,j)] * absCurl;
+      v[idx(i,j)] += strength * dt * ly[idx(i,j)] * absCurl;
+    }
+  }
+}
+
+function step(visc, diff, fade) {
+  // velocity step
+  u0.set(u); v0.set(v);
+  diffuse(1, u, u0, visc);
+  diffuse(2, v, v0, visc);
+  project(u, v, u0, v0);
+
+  u0.set(u); v0.set(v);
+  advect(1, u, u0, u0, v0);
+  advect(2, v, v0, u0, v0);
+  project(u, v, u0, v0);
+
+  vorticity_confinement(getParam('curl'));
+
+  // density step
+  const fadeFactor = 1.0 - fade * dt;
+  for (let d of [dr, dg, db]) {
+    for (let i = 0; i < d.length; i++) { d[i] *= fadeFactor; }
+  }
+
+  dr0.set(dr); dg0.set(dg); db0.set(db);
+  diffuse(0, dr, dr0, diff);
+  diffuse(0, dg, dg0, diff);
+  diffuse(0, db, db0, diff);
+  advect(0, dr, dr0, u, v);
+  advect(0, dg, dg0, u, v);
+  advect(0, db, db0, u, v);
+}
+
+// --- Canvas setup ---
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let imgData, pixels;
+
+function resize() {
+  canvas.width  = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+  // Choose grid size based on shorter dimension for performance
+  const shortest = Math.min(canvas.width, canvas.clientHeight);
+  N = shortest > 700 ? 256 : shortest > 400 ? 192 : 128;
+  allocate();
+  imgData = ctx.createImageData(canvas.width, canvas.height);
+  pixels  = imgData.data;
+  pixels.fill(255);
+}
+
+window.addEventListener('resize', resize);
+resize();
+
+// --- Render ---
+function render() {
+  const W = canvas.width, H = canvas.height;
+  const scaleX = N / W, scaleY = N / H;
+
+  for (let py = 0; py < H; py++) {
+    for (let px = 0; px < W; px++) {
+      const gx = Math.min(N, Math.max(1, Math.floor(px * scaleX + 1)));
+      const gy = Math.min(N, Math.max(1, Math.floor(py * scaleY + 1)));
+      const i  = idx(gx, gy);
+      const r  = Math.min(1, dr[i]);
+      const g  = Math.min(1, dg[i]);
+      const b  = Math.min(1, db[i]);
+
+      // Composite ink over a deep water background
+      const alpha = Math.min(1, r + g + b);
+      const bg_r = 6, bg_g = 14, bg_b = 28;
+      const p = (py * W + px) * 4;
+      pixels[p  ] = bg_r + (r * 255 - bg_r) * alpha | 0;
+      pixels[p+1] = bg_g + (g * 255 - bg_g) * alpha | 0;
+      pixels[p+2] = bg_b + (b * 255 - bg_b) * alpha | 0;
+      pixels[p+3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
+
+// --- Input ---
+function getParam(id) {
+  const v = document.getElementById('s-' + id)?.value ?? 0;
+  return parseFloat(v) / 100;
+}
+
+let mx = 0, my = 0, dragging = false;
+
+function toGrid(px, py) {
+  return {
+    gx: Math.floor(px / canvas.clientWidth  * N) + 1,
+    gy: Math.floor(py / canvas.clientHeight * N) + 1,
+  };
+}
+
+function addInk(px, py, ox, oy) {
+  const c = INK_COLORS[currentColor];
+  const { gx, gy } = toGrid(px, py);
+  const R = 2;
+  const strength = 50;
+  const velStrength = 5;
+  const vx = (px - ox) * velStrength;
+  const vy = (py - oy) * velStrength;
+
+  for (let dj = -R; dj <= R; dj++) {
+    for (let di = -R; di <= R; di++) {
+      if (di*di + dj*dj > R*R) continue;
+      const nx = gx + di, ny = gy + dj;
+      if (nx < 1 || nx > N || ny < 1 || ny > N) continue;
+      const t = (R - Math.sqrt(di*di+dj*dj)) / R;
+      dr[idx(nx,ny)] += c.r / 255 * t * strength;
+      dg[idx(nx,ny)] += c.g / 255 * t * strength;
+      db[idx(nx,ny)] += c.b / 255 * t * strength;
+      u[idx(nx,ny)]  += vx * t;
+      v[idx(nx,ny)]  += vy * t;
+    }
+  }
+}
+
+canvas.addEventListener('mousedown', e => {
+  dragging = true;
+  const r = canvas.getBoundingClientRect();
+  mx = e.clientX - r.left; my = e.clientY - r.top;
+  addInk(mx, my, mx, my);
+});
+canvas.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const r = canvas.getBoundingClientRect();
+  const nx = e.clientX - r.left, ny = e.clientY - r.top;
+  addInk(nx, ny, mx, my);
+  mx = nx; my = ny;
+});
+canvas.addEventListener('mouseup',   () => { dragging = false; });
+canvas.addEventListener('mouseleave',() => { dragging = false; });
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault(); dragging = true;
+  const r = canvas.getBoundingClientRect();
+  const t = e.touches[0];
+  mx = t.clientX - r.left; my = t.clientY - r.top;
+  addInk(mx, my, mx, my);
+}, { passive: false });
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (!dragging) return;
+  const r = canvas.getBoundingClientRect();
+  const t = e.touches[0];
+  const nx = t.clientX - r.left, ny = t.clientY - r.top;
+  addInk(nx, ny, mx, my);
+  mx = nx; my = ny;
+}, { passive: false });
+canvas.addEventListener('touchend', () => { dragging = false; });
+
+// clear
+document.getElementById('clear-btn').addEventListener('click', () => {
+  allocate();
+  imgData = ctx.createImageData(canvas.width, canvas.height);
+  pixels  = imgData.data;
+});
+
+// sliders
+['visc','diff','curl','fade','rate','size','impulse'].forEach(id => {
+  const s = document.getElementById('s-' + id);
+  const v = document.getElementById('v-' + id);
+  if (s && v) s.addEventListener('input', () => { v.textContent = s.value; });
+});
+
+// --- Auto-drop mode ---
+let autoMode = false;
+let autoAccum = 0;
+
+const autoBtn   = document.getElementById('auto-btn');
+const autoCtrls = document.getElementById('auto-ctrls');
+
+autoBtn.addEventListener('click', () => {
+  autoMode = !autoMode;
+  autoBtn.classList.toggle('active', autoMode);
+  autoCtrls.classList.toggle('hidden', !autoMode);
+});
+
+function autoDropTick(elapsed) {
+  if (!autoMode) return;
+  const rate    = getParam('rate');    // 0-1 → drops/sec scaled
+  const size    = getParam('size');    // 0-1 → radius
+  const impulse = getParam('impulse'); // 0-1 → velocity kick
+
+  // rate slider: 1→~0.2 drops/s, 100→~8 drops/s
+  const dropsPerSec = 0.2 + rate * 7.8;
+  autoAccum += elapsed * dropsPerSec;
+
+  while (autoAccum >= 1) {
+    autoAccum -= 1;
+    dropRandomInk(size, impulse);
+  }
+}
+
+function dropRandomInk(size, impulse) {
+  const gx = Math.floor(Math.random() * N) + 1;
+  const gy = Math.floor(Math.random() * N) + 1;
+  // random color from palette
+  const c  = INK_COLORS[Math.floor(Math.random() * INK_COLORS.length)];
+  // radius: size 0→1 grid cell, 1→6 grid cells
+  const R       = Math.max(1, Math.round(1 + size * 5));
+  const strength = 30 + size * 40;
+  // random velocity direction for natural drip feel
+  const angle = Math.random() * Math.PI * 2;
+  const speed = impulse * 8;
+  const vx = Math.cos(angle) * speed;
+  const vy = Math.sin(angle) * speed;
+
+  for (let dj = -R; dj <= R; dj++) {
+    for (let di = -R; di <= R; di++) {
+      if (di*di + dj*dj > R*R) continue;
+      const nx = gx + di, ny = gy + dj;
+      if (nx < 1 || nx > N || ny < 1 || ny > N) continue;
+      const t = (R - Math.sqrt(di*di + dj*dj)) / R;
+      dr[idx(nx,ny)] += c.r / 255 * t * strength;
+      dg[idx(nx,ny)] += c.g / 255 * t * strength;
+      db[idx(nx,ny)] += c.b / 255 * t * strength;
+      u[idx(nx,ny)]  += vx * t;
+      v[idx(nx,ny)]  += vy * t;
+    }
+  }
+}
+
+// --- Loop ---
+let last = 0;
+function loop(ts) {
+  const elapsed = Math.min(ts - last, 50) / 1000;
+  last = ts;
+  dt = elapsed;
+
+  autoDropTick(elapsed);
+
+  step(
+    getParam('visc') * 0.0001,   // viscosity
+    getParam('diff') * 0.00005,  // diffusion
+    getParam('fade') * 0.5       // fade
+  );
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(ts => { last = ts; requestAnimationFrame(loop); });
+</script>
+</body>
+</html>
