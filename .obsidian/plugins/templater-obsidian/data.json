@@ -1,6 +1,6 @@
 {
   "command_timeout": 5,
-  "templates_folder": "",
+  "templates_folder": "99_System/template",
   "templates_pairs": [
     [
       "",
@@ -33,7 +33,7 @@
   ],
   "startup_templates": [
     "99_System/scripts/mdx_drop_handler.md",
-    ""
+    "99_System/t"
   ],
   "intellisense_render": 1,
   "ignore_folders_on_creation": [

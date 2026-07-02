@@ -3,14 +3,13 @@
 if (!tp.file.title.includes("Untitled")) {
 		return;
 }
-// 1. 入力ダイアログを表示  
-let filename = await tp.system.prompt("ファイル名を入力してください");  
-// 2. 入力がなければデフォルト名（Untitledのまま）   
-if (filename == null || filename == "") { filename = tp.file.title; }  
-// 3. ファイルをリネーム   
-await tp.file.rename(filename);   
-// ファイルの場所を変更  
-const targetFolder = "src/content/works";   
+
+// ファイル名
+let filename = await tp.system.prompt("ファイル名を入力してください");
+if (filename == null || filename == "") {
+  filename = tp.file.title;
+}
+const targetFolder = "src/content/blog";
 await tp.file.move(`${targetFolder}/${filename}`);
 
 // タイトル

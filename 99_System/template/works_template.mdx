@@ -1,16 +1,13 @@
 <%*
 // ガード句：テンプレートフォルダ内のファイル、または Untitled 以外のファイルなら実行しない 
-if (!tp.file.title.includes("Untitled")) {
-		return;
+if (!tp.file.title.includes("Untitled")) { return; }
+
+// ファイル名
+let filename = await tp.system.prompt("ファイル名を入力してください");
+if (filename == null || filename == "") {
+  filename = tp.file.title;
 }
-// 1. 入力ダイアログを表示  
-let filename = await tp.system.prompt("ファイル名を入力してください");  
-// 2. 入力がなければデフォルト名（Untitledのまま）   
-if (filename == null || filename == "") { filename = tp.file.title; }  
-// 3. ファイルをリネーム   
-await tp.file.rename(filename);   
-// ファイルの場所を変更  
-const targetFolder = "src/content/works";   
+const targetFolder = "src/content/works";
 await tp.file.move(`${targetFolder}/${filename}`);
 
 // タイトル
@@ -18,14 +15,14 @@ await tp.file.move(`${targetFolder}/${filename}`);
 let title = await tp.system.prompt("タイトルを入力してください");  
 if (title == null || title == "") { title = tp.file.title; }  
 %>---
-title: 対戦型列車戦（工華祭）
-description: 高専の文化祭「工華祭」に出展した，対戦型の戦車ロボットで打ち合うゲーム企画です．
+title: <% title %>
+description: 
 date: <% tp.file.creation_date() %>
 thumbnail: ../../assets/images/thumbnail_work1.webp
 tags:
   - 
-wip: false
-unpublished: false
+wip: true
+unpublished: true
 ---
 import CustomImage from '../../components/content/CustomImage.astro';
 import FlexRow from '../../components/content/FlexRow.astro';
