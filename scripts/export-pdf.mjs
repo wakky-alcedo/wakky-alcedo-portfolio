@@ -11,7 +11,7 @@
 
 import { chromium } from 'playwright';
 import { PDFDocument } from 'pdf-lib';
-import { readdir } from 'fs/promises';
+import { readdir, readFile } from 'fs/promises';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { basename, resolve } from 'path';
 import { execSync, spawn } from 'child_process';
@@ -31,6 +31,16 @@ const OUTPUT_FILE = args.find(a => a.startsWith('--out='))?.slice(6) ?? 'portfol
 
 const BASE_URL = `http://localhost:${PORT}`;
 
+// --- frontmatter から featured を抽出 ---
+async function getFrontmatterValue(filePath, key) {
+  const content = await readFile(filePath, 'utf-8');
+  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return undefined;
+
+  const keyMatch = match[1].match(new RegExp(`^${key}:\\s*(.*)$`, 'm'));
+  return keyMatch ? keyMatch[1].trim() : undefined;
+}
+
 // --- ページ一覧を src/content から自動収集 ---
 async function collectRoutes() {
   const routes = ['/', '/works', '/blog', '/about', '/contact'];
@@ -39,11 +49,34 @@ async function collectRoutes() {
     const dir = resolve(ROOT, 'src/content', collection);
     if (!existsSync(dir)) continue;
     const files = await readdir(dir);
+
+    let items = [];
     for (const file of files) {
       if (!/\.(md|mdx)$/.test(file)) continue;
       const slug = basename(file).replace(/\.(md|mdx)$/, '');
-      routes.push(`/${collection}/${slug}`);
+      const filePath = resolve(dir, file);
+
+      if (collection === 'works') {
+        const featured = await getFrontmatterValue(filePath, 'featured');
+        items.push({
+          slug,
+          featured: featured ? parseInt(featured, 10) : 0,
+          path: `/${collection}/${slug}`
+        });
+      } else {
+        items.push({
+          slug,
+          path: `/${collection}/${slug}`
+        });
+      }
     }
+
+    // works は featured の降順でソート
+    if (collection === 'works') {
+      items.sort((a, b) => b.featured - a.featured);
+    }
+
+    items.forEach(item => routes.push(item.path));
   }
 
   return routes;
