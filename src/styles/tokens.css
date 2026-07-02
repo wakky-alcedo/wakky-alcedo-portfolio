@@ -12,6 +12,7 @@
   --layout-breakpoint-md: 1024px;
 
   /* z-indexレイヤー */
+  --z-caustics:    0;
   --z-fish-bg:     1;
   --z-fish-mid:    2;
   --z-fish-front:  3;

@@ -4,6 +4,7 @@ import { horizontalScroll } from './horizontalScroll';
 import { scrollKingfisher } from './scrollKingfisher';
 import { WaterRipple } from '../canvas/ripple';
 import { FishSimulation } from '../canvas/fish';
+import { CausticsEffect } from '../canvas/caustics';
 import { setupVisibility, type Pauseable } from '../utils/visibility';
 
 let started = false;
@@ -21,6 +22,11 @@ export function initScrollScene(): void {
   const rippleCanvas = document.getElementById('water-surface');
   if (rippleCanvas instanceof HTMLCanvasElement) {
     modules.push(new WaterRipple(rippleCanvas));
+  }
+
+  const causticsCanvas = document.getElementById('caustics-layer');
+  if (causticsCanvas instanceof HTMLCanvasElement) {
+    modules.push(new CausticsEffect(causticsCanvas));
   }
 
   const fishCanvas = document.getElementById('fish-layer');

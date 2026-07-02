@@ -168,7 +168,8 @@ wakky-alcedo-portfolio/
 │   │   │   └── workCardTransition.ts # Works遷移（自己完結モジュール）
 │   │   ├── canvas/
 │   │   │   ├── fish.ts              # 魚Boidシミュレーション（4レイヤー）
-│   │   │   └── ripple.ts            # 水面リプル
+│   │   │   ├── ripple.ts            # 水面リプル
+│   │   │   └── caustics.ts          # 水中コースティクス（水面からの揺らめく光）
 │   │   └── utils/
 │   │       ├── visibility.ts        # Page Visibility API（バックグラウンド停止）
 │   │       ├── deviceOrientation.ts # iOS/Android 傾き取得・requestPermission管理
@@ -223,6 +224,7 @@ wakky-alcedo-portfolio/
   --layout-breakpoint-md: 1024px;
 
   /* z-indexレイヤー */
+  --z-caustics:    0;
   --z-fish-bg:     1;
   --z-fish-mid:    2;
   --z-fish-front:  3;
