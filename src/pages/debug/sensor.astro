@@ -1,0 +1,283 @@
+---
+// 管理者用隠しデバッグページ — どこからもリンクされない
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Sensor Debug</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        background: #00112C;
+        color: #F9FFFD;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 16px;
+        padding: 16px;
+        min-height: 100dvh;
+      }
+
+      h1 {
+        font-size: 18px;
+        margin-bottom: 16px;
+        color: #68CED6;
+      }
+
+      .section {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+
+      .section-title {
+        font-size: 12px;
+        color: #FFA100;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 8px;
+      }
+
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+      }
+      .row:last-child { border-bottom: none; }
+
+      .label { color: #68CED6; font-size: 14px; }
+      .value { font-size: 18px; font-weight: bold; min-width: 80px; text-align: right; }
+
+      .status-pending  { color: #888; }
+      .status-granted  { color: #4caf50; }
+      .status-denied   { color: #f44336; }
+      .status-unsupported { color: #ff9800; }
+
+      .bar-container {
+        width: 100%;
+        height: 24px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 4px;
+        position: relative;
+        margin-top: 8px;
+        overflow: hidden;
+      }
+      .bar-center {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        width: 1px;
+        height: 100%;
+        background: rgba(255,255,255,0.3);
+      }
+      .bar-fill {
+        position: absolute;
+        top: 0;
+        height: 100%;
+        background: #0063AA;
+        transition: none;
+      }
+      .bar-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: rgba(255,255,255,0.4);
+        margin-top: 2px;
+      }
+
+      button {
+        width: 100%;
+        padding: 14px;
+        font-size: 16px;
+        font-family: inherit;
+        background: #0063AA;
+        color: #F9FFFD;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-bottom: 12px;
+      }
+      button:active { background: #004d88; }
+      button:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+      .log-entry {
+        font-size: 13px;
+        color: rgba(255,255,255,0.6);
+        padding: 2px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+      }
+      .log-entry:last-child { border-bottom: none; }
+
+      .hz { color: #FFA100; font-size: 22px; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <h1>🔧 Sensor Debug</h1>
+
+    <button id="btn-request">センサー許可をリクエスト</button>
+
+    <div class="section">
+      <div class="section-title">パーミッション状態</div>
+      <div class="row">
+        <span class="label">status</span>
+        <span class="value status-pending" id="status">pending</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">生のセンサー値</div>
+      <div class="row">
+        <span class="label">alpha <small style="color:#888">(z軸/コンパス 0〜360)</small></span>
+        <span class="value" id="val-alpha">—</span>
+      </div>
+      <div class="row">
+        <span class="label">beta <small style="color:#888">(x軸/前後 -180〜180)</small></span>
+        <span class="value" id="val-beta">—</span>
+      </div>
+      <div class="row">
+        <span class="label">gamma <small style="color:#888">(y軸/左右 -90〜90)</small></span>
+        <span class="value" id="val-gamma">—</span>
+      </div>
+      <div class="row">
+        <span class="label">absolute</span>
+        <span class="value" id="val-absolute">—</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">加工後の値 (tiltX)</div>
+      <div class="row">
+        <span class="label">tiltX <small style="color:#888">(gamma/30, -1〜1)</small></span>
+        <span class="value" id="val-tiltx">—</span>
+      </div>
+      <div class="bar-container">
+        <div class="bar-center"></div>
+        <div class="bar-fill" id="bar-fill" style="left:50%;width:0%"></div>
+      </div>
+      <div class="bar-labels"><span>-1</span><span>0</span><span>+1</span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">イベント頻度</div>
+      <div class="row">
+        <span class="label">発火回数/秒</span>
+        <span class="hz" id="val-hz">—</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">直近 gamma 値ログ (10件)</div>
+      <div id="log-container">
+        <div class="log-entry" style="color:rgba(255,255,255,0.3)">イベント待機中…</div>
+      </div>
+    </div>
+
+    <script>
+      const TILT_MAX_GAMMA = 30;
+
+      const elStatus    = document.getElementById('status')!;
+      const elAlpha     = document.getElementById('val-alpha')!;
+      const elBeta      = document.getElementById('val-beta')!;
+      const elGamma     = document.getElementById('val-gamma')!;
+      const elAbsolute  = document.getElementById('val-absolute')!;
+      const elTiltX     = document.getElementById('val-tiltx')!;
+      const elBarFill   = document.getElementById('bar-fill')!;
+      const elHz        = document.getElementById('val-hz')!;
+      const elLog       = document.getElementById('log-container')!;
+      const btnRequest  = document.getElementById('btn-request') as HTMLButtonElement;
+
+      let eventCount = 0;
+      let gammaLog: string[] = [];
+      let listening = false;
+
+      function fmt(v: number | null): string {
+        return v === null ? '—' : v.toFixed(2);
+      }
+
+      function setStatus(s: 'pending' | 'granted' | 'denied' | 'unsupported') {
+        elStatus.textContent = s;
+        elStatus.className = `value status-${s}`;
+      }
+
+      function startListening() {
+        if (listening) return;
+        listening = true;
+
+        window.addEventListener('deviceorientation', (e: DeviceOrientationEvent) => {
+          eventCount++;
+
+          elAlpha.textContent    = fmt(e.alpha);
+          elBeta.textContent     = fmt(e.beta);
+          elGamma.textContent    = fmt(e.gamma);
+          elAbsolute.textContent = String(e.absolute);
+
+          const gamma = e.gamma ?? 0;
+          const tiltX = Math.max(-1, Math.min(1, gamma / TILT_MAX_GAMMA));
+          elTiltX.textContent = tiltX.toFixed(4);
+
+          // バー: tiltX -1〜1 → left 0〜100%, fill from center(50%)
+          if (tiltX >= 0) {
+            (elBarFill as HTMLElement).style.left  = '50%';
+            (elBarFill as HTMLElement).style.width = `${tiltX * 50}%`;
+          } else {
+            const w = Math.abs(tiltX) * 50;
+            (elBarFill as HTMLElement).style.left  = `${50 - w}%`;
+            (elBarFill as HTMLElement).style.width = `${w}%`;
+          }
+
+          // ログ
+          const entry = `[${new Date().toLocaleTimeString()}] gamma=${fmt(e.gamma)}  tiltX=${tiltX.toFixed(3)}`;
+          gammaLog.unshift(entry);
+          if (gammaLog.length > 10) gammaLog.pop();
+          elLog.innerHTML = gammaLog.map(l => `<div class="log-entry">${l}</div>`).join('');
+        });
+
+        // Hz 計測 (1秒ごと)
+        setInterval(() => {
+          elHz.textContent = String(eventCount);
+          eventCount = 0;
+        }, 1000);
+      }
+
+      // 初期チェック
+      if (typeof DeviceOrientationEvent === 'undefined') {
+        setStatus('unsupported');
+        btnRequest.disabled = true;
+        btnRequest.textContent = '非対応ブラウザ';
+      }
+
+      btnRequest.addEventListener('click', async () => {
+        if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+          // iOS 13+
+          try {
+            const result = await (DeviceOrientationEvent as any).requestPermission();
+            if (result === 'granted') {
+              setStatus('granted');
+              btnRequest.disabled = true;
+              btnRequest.textContent = '許可済み';
+              startListening();
+            } else {
+              setStatus('denied');
+              btnRequest.textContent = '拒否されました（設定 → Safari → モーションを許可）';
+            }
+          } catch {
+            setStatus('denied');
+          }
+        } else {
+          // Android: 許可不要
+          setStatus('granted');
+          btnRequest.disabled = true;
+          btnRequest.textContent = '許可済み（Android/自動）';
+          startListening();
+        }
+      });
+    </script>
+  </body>
+</html>

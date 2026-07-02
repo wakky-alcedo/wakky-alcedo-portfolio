@@ -131,7 +131,9 @@ wakky-alcedo-portfolio/
 │   │   │   ├── index.astro          # Blog一覧
 │   │   │   └── [slug].astro         # Blog詳細
 │   │   ├── about.astro
-│   │   └── contact.astro
+│   │   ├── contact.astro
+│   │   └── debug/
+│   │       └── sensor.astro         # 管理者用センサーデバッグページ（noindex、非リンク）
 │   ├── components/
 │   │   ├── layout/
 │   │   │   ├── Header.astro         # ロゴ＋ナビ
