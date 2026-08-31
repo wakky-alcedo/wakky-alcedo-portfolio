@@ -1,0 +1,50 @@
+---
+title: Claudeに回路設計させてみた
+description: Claudeって回路設計もできるんですね
+date: 2026-07-25 12:52
+thumbnail: ../../assets/images/20260725_130240.png
+tags:
+  - kicad
+  - ハード
+  - ClaudeCode
+  - 回路設計
+wip: false
+unpublished: false
+---
+import CustomImage from '../../components/content/CustomImage.astro';
+import FlexRow from '../../components/content/FlexRow.astro';
+import YouTube from '../../components/content/YouTube.astro';
+
+## 概要
+
+## 全体の流れ
+1. チャットベースで仕様書(SPEC.md)を作って，ブラッシュアップする
+2. 開発リポジトリを作ってAIの環境構築
+3. SPEC.mdとPLAN.mdを作って，開発を進めさせる（後で詳述）
+4. 生成されたガーバーファイルを使って，JLCPCBに発注
+## 1. 仕様定義
+ここは，結構ちゃんと絡みました．
+主な私からの修正点は，
+- esp32はチップを直接実装するんじゃなくて，seeedのxiao使えば済むんじゃね？
+- シャント抵抗の使い方違うのでは？ それだとGND浮くじゃん
+- 
+## 2. 環境構築
+以下の環境を使った．どんなツールを使うかから，環境構築までAIがやってくれたので，私は何もしていない．
+- [mixelpixx/KiCAD-MCP-Server - github](https://github.com/mixelpixx/KiCAD-MCP-Server): 基本的なkicadの操作に使用
+- Freerouting v2.2.4: 配線の自動化に使用
+## 3. AIを使った回路設計
+
+import img_20260725_130026 from '../../assets/images/20260725_130026.png';
+
+<CustomImage src={img_20260725_130026} alt="Claudeが生成した回路図" caption="Claudeが生成した回路図" />
+
+import img_20260725_130240 from '../../assets/images/20260725_130240.png';
+
+<CustomImage src={img_20260725_130240} alt="Claudeが生成した配線図" caption="Claudeが生成した配線図" />
+
+## 4. 発注
+
+PCBが届いたらまた記事にします．
+
+## 関連リンク
+- 
