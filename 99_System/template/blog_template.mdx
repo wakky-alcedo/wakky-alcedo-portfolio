@@ -17,7 +17,7 @@ await tp.file.move(`${targetFolder}/${filename}`);
 let title = await tp.system.prompt("タイトルを入力してください");  
 if (title == null || title == "") { title = tp.file.title; }  
 %>---
-title: 対戦型列車戦（工華祭）
+title: <% title %>
 description: 高専の文化祭「工華祭」に出展した，対戦型の戦車ロボットで打ち合うゲーム企画です．
 date: <% tp.file.creation_date() %>
 thumbnail: ../../assets/images/thumbnail_work1.webp
