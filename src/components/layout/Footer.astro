@@ -42,7 +42,9 @@ const year = new Date().getFullYear();
         <span class="footer__toggle-track">
           <span class="footer__toggle-thumb"></span>
         </span>
-        <span class="footer__toggle-text" id="print-mode-text">インク節約（白背景）</span>
+        <!-- BaseLayout が描画前に html[data-print-mode] を設定するので、ラベルは CSS で出し分ける -->
+        <span class="footer__toggle-text footer__print-label--economy">印刷設定：ライト（インク節約）</span>
+        <span class="footer__toggle-text footer__print-label--vivid">印刷設定：ダーク（画面そのまま）</span>
       </label>
     </div>
 
@@ -76,13 +78,11 @@ const year = new Date().getFullYear();
 
   const STORAGE_KEY = 'print-mode';
   const printToggle = document.getElementById('print-economy-toggle') as HTMLInputElement | null;
-  const printModeText = document.getElementById('print-mode-text');
 
   function applyPrintMode(mode: string) {
     document.documentElement.dataset.printMode = mode;
     localStorage.setItem(STORAGE_KEY, mode);
     if (printToggle) printToggle.checked = mode !== 'vivid';
-    if (printModeText) printModeText.textContent = mode === 'vivid' ? '印刷設定：ダーク（画面そのまま）' : '印刷設定：ライト（インク節約）';
   }
 
   applyPrintMode(localStorage.getItem(STORAGE_KEY) ?? 'economy');
@@ -214,5 +214,16 @@ const year = new Date().getFullYear();
   font-size: 0.8rem;
   color: var(--color-text);
   opacity: 0.5;
+}
+.footer__print-label--vivid {
+  display: none;
+}
+
+:global(html[data-print-mode="vivid"]) .footer__print-label--economy {
+  display: none;
+}
+
+:global(html[data-print-mode="vivid"]) .footer__print-label--vivid {
+  display: inline;
 }
 </style>
