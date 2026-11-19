@@ -6,7 +6,8 @@ import BlogCard from '../blog/BlogCard.astro';
 import SectionTitle from '../common/SectionTitle.astro';
 import FishLayer from './FishLayer.astro';
 import profilePicture from '../../assets/images/profile_picture.jpg';
-import { SOCIAL, EMAIL_ENCODED } from '../../config/site';
+import EmailReveal from '../common/EmailReveal.astro';
+import { SOCIAL } from '../../config/site';
 
 const rawWorks = await getCollection('works', ({ data }) => !data.unpublished);
 
@@ -107,36 +108,18 @@ const skillTags = [
           </svg>
           note
         </a>
-        <span class="contact-email" id="contact-email" data-email={EMAIL_ENCODED}>
+        <EmailReveal class="contact-email">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <rect x="2" y="4" width="20" height="16" rx="2"/>
             <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
           </svg>
-          <span id="email-text">メールを表示</span>
-        </span>
+          <span data-email-text>メールを表示</span>
+        </EmailReveal>
       </div>
     </div>
   </section>
 </div>
 
-<script>
-  // メールアドレス難読化
-  const emailEl = document.getElementById('contact-email');
-  const emailText = document.getElementById('email-text');
-  if (emailEl && emailText) {
-    emailEl.style.cursor = 'pointer';
-    emailEl.addEventListener('click', () => {
-      const encoded = emailEl.dataset.email ?? '';
-      const decoded = atob(encoded);
-      emailText.textContent = decoded;
-      const link = document.createElement('a');
-      link.href = `mailto:${decoded}`;
-      link.textContent = decoded;
-      emailText.replaceWith(link);
-      emailEl.style.cursor = 'default';
-    });
-  }
-</script>
 
 <style>
 .underwater {
@@ -303,6 +286,15 @@ const skillTags = [
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
+}
+
+.contact-email {
+  /* button のデフォルト見た目を消す */
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
 }
 
 .contact-link,

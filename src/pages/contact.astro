@@ -4,7 +4,8 @@ import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
 import SectionTitle from '../components/common/SectionTitle.astro';
 import BackButton from '../components/common/BackButton.astro';
-import { SOCIAL, EMAIL_ENCODED } from '../config/site';
+import EmailReveal from '../components/common/EmailReveal.astro';
+import { SOCIAL } from '../config/site';
 ---
 
 <BaseLayout title="Contact" description="お問い合わせ・連絡先">
@@ -40,47 +41,22 @@ import { SOCIAL, EMAIL_ENCODED } from '../config/site';
           </a>
         </li>
         <li class="contact-item">
-          <button
-            class="contact-link contact-link--email"
-            id="reveal-email"
-            data-email={EMAIL_ENCODED}
-            aria-label="メールアドレスを表示"
-          >
+          <EmailReveal class="contact-link contact-link--email">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <rect x="2" y="4" width="20" height="16" rx="2"/>
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
             </svg>
             <div>
               <span class="contact-link__label">Email</span>
-              <span class="contact-link__hint" id="email-display">クリックして表示</span>
+              <span class="contact-link__hint" data-email-text>クリックして表示</span>
             </div>
-          </button>
+          </EmailReveal>
         </li>
       </ul>
     </div>
   </main>
   <Footer />
 </BaseLayout>
-
-<script>
-  const btn = document.getElementById('reveal-email') as HTMLButtonElement | null;
-  const display = document.getElementById('email-display');
-  if (btn && display) {
-    btn.addEventListener('click', () => {
-      const decoded = atob(btn.dataset.email ?? '');
-      display.textContent = decoded;
-      // 表示後はボタンを mailto リンクに置き換える
-      // スコープ付きスタイル（data-astro-cid-*）が効くよう、ボタンの属性を引き継ぐ
-      const a = document.createElement('a');
-      for (const { name, value } of Array.from(btn.attributes)) {
-        if (!['id', 'data-email', 'aria-label'].includes(name)) a.setAttribute(name, value);
-      }
-      a.href = `mailto:${decoded}`;
-      a.innerHTML = btn.innerHTML;
-      btn.replaceWith(a);
-    });
-  }
-</script>
 
 <style>
 .page-main { padding-top: 80px; min-height: 100vh; }

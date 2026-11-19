@@ -7,7 +7,8 @@ import SectionTitle from '../components/common/SectionTitle.astro';
 import BackButton from '../components/common/BackButton.astro';
 import profilePicture from '../assets/images/profile_picture.jpg';
 import wakkyAlcedoIcon from '../assets/images/wakky_alcedo_icon.jpg';
-import { SOCIAL, EMAIL_ENCODED } from '../config/site';
+import EmailReveal from '../components/common/EmailReveal.astro';
+import { SOCIAL } from '../config/site';
 
 const timeline = [
   { date: '2024/03', event: '群馬工業高等専門学校 機械工学科 卒業' },
@@ -156,12 +157,7 @@ const links = Object.values(SOCIAL);
         <ul class="link-list">
           <li class="link-list__item">
             <span class="link-list__label">Email</span>
-            <button
-              class="link-list__email"
-              id="about-reveal-email"
-              data-email={EMAIL_ENCODED}
-              aria-label="メールアドレスを表示"
-            >クリックして表示</button>
+            <EmailReveal class="link-list__email">クリックして表示</EmailReveal>
           </li>
           {links.map(link => (
             <li class="link-list__item">
@@ -175,19 +171,6 @@ const links = Object.values(SOCIAL);
   </main>
   <Footer />
 </BaseLayout>
-
-<script>
-  const btn = document.getElementById('about-reveal-email') as HTMLButtonElement | null;
-  if (btn) {
-    btn.addEventListener('click', () => {
-      const decoded = atob(btn.dataset.email ?? '');
-      const link = document.createElement('a');
-      link.href = `mailto:${decoded}`;
-      link.textContent = decoded;
-      btn.replaceWith(link);
-    });
-  }
-</script>
 
 <style>
 .page-main { padding-top: 80px; min-height: 100vh; }

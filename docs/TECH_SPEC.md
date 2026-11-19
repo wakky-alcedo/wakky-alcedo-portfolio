@@ -160,7 +160,8 @@ wakky-alcedo-portfolio/
 │   │   │   └── ArtCard.astro        # インタラクティブアート（public/art）のプレビューカード
 │   │   └── common/
 │   │       ├── SectionTitle.astro
-│   │       └── BackButton.astro     # トップ以外のページの戻るボタン
+│   │       ├── BackButton.astro     # トップ以外のページの戻るボタン
+│   │       └── EmailReveal.astro    # クリックでメールアドレスを復元して mailto リンクにする
 │   ├── config/                      # 制御パラメータ・サイト設定（AGENTS 7.6）
 │   │   ├── quality.ts               # AdaptiveQuality の判定閾値
 │   │   ├── image.ts                 # ライトボックス画像の最大幅
