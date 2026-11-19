@@ -4,7 +4,7 @@
 
 | レイヤー | 採用技術 | 選定理由 |
 |----------|----------|----------|
-| フレームワーク | **Astro 5.x** | ポートフォリオに最適な静的サイト生成。コンテンツコレクションでWorks/Blogを型安全に管理。Island Architectureでアニメーションを遅延ロード可能 |
+| フレームワーク | **Astro 6.x** | ポートフォリオに最適な静的サイト生成。コンテンツコレクションでWorks/Blogを型安全に管理 |
 | 言語 | **TypeScript** | アニメーション/Canvasの複雑なロジックを型安全に記述 |
 | スクロールアニメーション | **GSAP + ScrollTrigger** | 業界標準。カワセミ飛び込み演出のような精密なスクロール連動アニメーションに最適。※GSAPは個人ポートフォリオ用途では無料ライセンス可 |
 | Canvas演出 | **Canvas API（ネイティブ）** | 魚シミュレーション・水面リプル。外部ライブラリ不要で軽量 |
@@ -17,21 +17,20 @@
 
 ## アーキテクチャ方針
 
-### Island Architecture（Astroの核心）
+### 静的HTML＋後から起動する演出スクリプト
 
 ```
-静的HTML（コンテンツ）← サーバーサイドレンダリング、JS不要
+静的HTML（コンテンツ）← ビルド時に生成、JS不要
          +
-アニメーションIsland ← JSを遅延ロード
-  ├─ Canvas要素（DOM参照必須）→ client:only
-  └─ GSAP ScrollTrigger     → client:load（window.load 後に refresh）
+演出スクリプト ← Astro の <script>（type=module で遅延実行）
+  └─ window.load 後に initScrollScene()（src/pages/index.astro）
+       ├─ GSAP ScrollTrigger（カワセミ・横スクロール）→ 最後に refresh
+       └─ Canvas（水面・コースティクス・魚）
 ```
 
 - コンテンツ（テキスト・画像）は即座に表示 → FCP高速化
-- GSAP・Canvasスクリプトは `client:only` / `client:load` で後から注入
-- これにより非機能要件「段階的読み込み」を構造レベルで担保
-
-> ⚠️ `client:idle` と `client:only` の混在禁止。Canvas島は `client:only`、ScrollTrigger初期化は `client:load` に統一する。
+- UIフレームワークの Island（`client:*`）は使わない。演出はすべて素の TypeScript モジュール
+- 画像の読み込み完了（window.load）後に起動するので、ScrollTrigger の位置ズレを防げる
 
 ### スクロールアニメーションの制御方針
 
@@ -42,7 +41,7 @@
 | スクロール連動のアニメーション値 | `gsap.set(element, { y, opacity, ... })` で直接制御 |
 | カワセミ位置・魚オフセット等 | GSAPのTweenターゲットプロパティに渡す |
 | デザイントークン（色・余白等） | CSS Custom Properties（静的用途のみ） |
-| シーン境界の定数（水面Y座標等） | JS定数として管理（`WATER_SURFACE_VH = 100`） |
+| 演出の制御パラメータ | `src/config/scene.ts` で管理 |
 
 > 理由：CSS変数をJSで毎フレーム `style.setProperty()` 更新すると、スタイル再計算（Recalculate Style）がメインスレッドで走りモバイルでパフォーマンス問題が発生する。
 
@@ -141,36 +140,41 @@ wakky-alcedo-portfolio/
 │   │   │   └── BaseLayout.astro     # <head>・OGP・メタタグ共通レイアウト
 │   │   ├── home/
 │   │   │   ├── HeroSection.astro    # 水上エリア全体
-│   │   │   ├── WaterSurface.astro   # 水面リプルCanvas（client:only）
+│   │   │   ├── WaterSurface.astro   # 水面リプルCanvas
 │   │   │   ├── UnderwaterSection.astro # 水中コンテンツエリア
-│   │   │   └── ScrollKingfisher.astro  # 右端スクロールバー役（client:only）
+│   │   │   ├── FishLayer.astro      # 魚Canvas（画像URLをdata属性で渡す）
+│   │   │   └── ScrollKingfisher.astro  # 右端スクロールバー役
 │   │   ├── works/
 │   │   │   ├── WorkCard.astro       # サムネイル・ホバー演出
 │   │   │   └── SortableWorksGrid.astro # Featured/Newest 切り替え付きの作品一覧（トップ・Works一覧で共通）
 │   │   ├── blog/
 │   │   │   └── BlogCard.astro       # タイトル＋冒頭文
 │   │   ├── content/
-│   │   │   ├── CustomImage.astro    # 記事内画像（幅指定・キャプション・代替テキスト）
-│   │   │   └── FlexRow.astro        # 記事内画像の横並びレイアウト
+│   │   │   ├── CustomImage.astro    # 記事内画像（幅指定・キャプション・ライトボックス）
+│   │   │   ├── FlexRow.astro        # 記事内画像の横並びレイアウト
+│   │   │   ├── YouTube.astro        # 記事内の動画埋め込み
+│   │   │   ├── TwitterEmbed.astro   # 記事内のポスト埋め込み（oEmbed）
+│   │   │   ├── NoteEmbed.astro      # 記事内のnote記事カード（oEmbed）
+│   │   │   ├── ExternalLink.astro   # 外部URLなら新しいタブで開くリンク
+│   │   │   └── ArtCard.astro        # インタラクティブアート（public/art）のプレビューカード
 │   │   └── common/
-│   │       └── SectionTitle.astro
+│   │       ├── SectionTitle.astro
+│   │       └── BackButton.astro     # トップ以外のページの戻るボタン
 │   ├── config/                      # 制御パラメータ・サイト設定（AGENTS 7.6）
 │   │   ├── quality.ts               # AdaptiveQuality の判定閾値
 │   │   ├── image.ts                 # ライトボックス画像の最大幅
 │   │   ├── scene.ts                 # トップページの演出パラメータ（Canvas・カワセミ）
 │   │   └── site.ts                  # SNSリンク・メールアドレス（全ページ共通）
+│   ├── content.config.ts            # コンテンツコレクションのzodスキーマ定義
 │   ├── content/
-│   │   ├── config.ts                # zodスキーマ定義（title, date, thumbnail, tags, description 必須）
-│   │   ├── works/
-│   │   │   ├── work1.md
-│   │   │   └── work2.md
-│   │   └── blog/
-│   │       └── placeholder.md
+│   │   ├── works/                   # 作品記事（YYYY-slug.mdx）
+│   │   └── blog/                    # ブログ記事（YYYYMM-slug.md / .mdx）
 │   ├── scripts/
 │   │   ├── animation/
 │   │   │   ├── scrollScene.ts       # オーケストレーター（init/destroyのみ）
-│   │   │   ├── kingfisher.ts        # カワセミアニメーション（自己完結モジュール）
-│   │   │   └── workCardTransition.ts # Works遷移（自己完結モジュール）
+│   │   │   ├── kingfisher.ts        # ヒーローのカワセミ（スクロール連動の飛び込み・アイドル演出）
+│   │   │   ├── scrollKingfisher.ts  # 右端カワセミ（スクロールバー役・浮上・Worksカード遷移演出）
+│   │   │   └── horizontalScroll.ts  # Blogの横スクロール（ピン固定）
 │   │   ├── canvas/
 │   │   │   ├── canvasAnimation.ts   # Canvas共通の基底クラス（ループ・リサイズ・一時停止）
 │   │   │   ├── fish.ts              # 魚Boidシミュレーション（4レイヤー）
@@ -179,7 +183,8 @@ wakky-alcedo-portfolio/
 │   │   └── utils/
 │   │       ├── visibility.ts        # SceneModule/Pauseable と Page Visibility（非表示中にCanvasを停止）
 │   │       ├── deviceOrientation.ts # iOS/Android 傾き取得・TiltTracker・requestPermission管理
-│   │       ├── adaptiveQuality.ts   # フレームレート監視・品質自動調整
+│   │       ├── adaptiveQuality.ts   # フレーム間隔監視・品質自動調整
+│   │       ├── device.ts            # スマホ判定・Canvas の DPR 上限
 │   │       └── motionPreference.ts  # prefers-reduced-motion 判定
 │   ├── styles/
 │   │   ├── tokens.css               # CSS Custom Properties（デザイントークン専用）
@@ -323,10 +328,10 @@ export async function requestOrientationPermission(): Promise<boolean> {
 
 | 対策 | 実装方法 |
 |------|----------|
-| コンテンツ先行表示 | Canvas/GSAP は `client:only` / `client:load` で遅延注入 |
+| コンテンツ先行表示 | 演出スクリプトは window.load 後に起動 |
 | ScrollTrigger位置ズレ防止 | `window.load` 後に `ScrollTrigger.refresh()` を呼ぶ |
-| バックグラウンド停止 | Page Visibility API → `cancelAnimationFrame` |
-| アダプティブ品質 | `adaptiveQuality.ts` でフレームレート監視 → `liteMode` 切り替え |
+| バックグラウンド停止 | Page Visibility API で Canvas の描画ループだけを pause / resume |
+| アダプティブ品質 | `adaptiveQuality.ts` でフレーム間隔を監視 → `liteMode` 切り替え |
 | Canvas blur 効率化 | PC: `ctx.filter` + OffscreenCanvas合成。スマホ: blur スキップし直接描画 |
 | Retina対応 | DPR を `canvasDpr()` でキャップ（スマホ 1.5 / PC 2） |
 | 画像最適化 | Astro `<Image>` コンポーネント（`width`/`height` 必須指定）|
@@ -339,7 +344,7 @@ export async function requestOrientationPermission(): Promise<boolean> {
 ## コンテンツコレクション型定義
 
 ```ts
-// content/config.ts
+// src/content.config.ts
 import { defineCollection, z } from 'astro:content';
 
 const works = defineCollection({
@@ -381,7 +386,7 @@ export const collections = { works, blog };
 タブ非表示中は `Pauseable`（`pause` / `resume`）を実装した Canvas だけを止め、状態は保持したまま再開する。
 GSAP（ScrollTrigger）は非表示中は rAF ごと止まるため対象にしない（destroy → init し直すとインラインの transform が残り状態がずれるため）。
 
-状態の共有はカスタムイベント（`dispatchEvent(new CustomEvent('scene:underwater'))`）で疎結合に伝達する。
+状態の共有はカスタムイベントで疎結合に伝達する（`kingfisher:dive` → 水面の波紋、`kingfisher:catch` → 魚の差し替え、`orientation:enabled` → 傾きパララックス開始）。
 
 ---
 
