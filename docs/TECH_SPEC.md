@@ -153,8 +153,7 @@ wakky-alcedo-portfolio/
 │   │   │   ├── CustomImage.astro    # 記事内画像（幅指定・キャプション・代替テキスト）
 │   │   │   └── FlexRow.astro        # 記事内画像の横並びレイアウト
 │   │   └── common/
-│   │       ├── SectionTitle.astro
-│   │       └── PrintModeToggle.astro # 印刷配色モード切替トグル
+│   │       └── SectionTitle.astro
 │   ├── config/                      # 制御パラメータ・サイト設定（AGENTS 7.6）
 │   │   ├── quality.ts               # AdaptiveQuality の判定閾値
 │   │   ├── image.ts                 # ライトボックス画像の最大幅
@@ -226,16 +225,9 @@ wakky-alcedo-portfolio/
   --color-bg:         #00112C;
   --color-text:       #F9FFFD;
 
-  /* レイアウト定数 */
-  --layout-breakpoint-sm: 640px;
-  --layout-breakpoint-md: 1024px;
-
-  /* z-indexレイヤー */
+  /* z-indexレイヤー（魚の4レイヤーは1枚の Canvas 内で描き分ける） */
   --z-caustics:    0;
   --z-fish-bg:     1;
-  --z-fish-mid:    2;
-  --z-fish-front:  3;
-  --z-fish-near:   4;
   --z-ui:          10;
   --z-kingfisher:  20;
   --z-header:      100;

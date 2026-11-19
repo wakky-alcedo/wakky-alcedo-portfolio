@@ -7,16 +7,9 @@
   --color-bg:         #00112C;
   --color-text:       #F9FFFD;
 
-  /* レイアウト定数 */
-  --layout-breakpoint-sm: 640px;
-  --layout-breakpoint-md: 1024px;
-
-  /* z-indexレイヤー */
+  /* z-indexレイヤー（魚の4レイヤーは1枚の Canvas 内で描き分ける） */
   --z-caustics:    0;
   --z-fish-bg:     1;
-  --z-fish-mid:    2;
-  --z-fish-front:  3;
-  --z-fish-near:   4;
   --z-ui:          10;
   --z-kingfisher:  20;
   --z-header:      100;
