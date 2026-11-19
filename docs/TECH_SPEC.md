@@ -156,7 +156,8 @@ wakky-alcedo-portfolio/
 │   │       └── PrintModeToggle.astro # 印刷配色モード切替トグル
 │   ├── config/                      # 制御パラメータ・サイト設定（AGENTS 7.6）
 │   │   ├── quality.ts               # AdaptiveQuality の判定閾値
-│   │   └── image.ts                 # ライトボックス画像の最大幅
+│   │   ├── image.ts                 # ライトボックス画像の最大幅
+│   │   └── site.ts                  # SNSリンク・メールアドレス（全ページ共通）
 │   ├── content/
 │   │   ├── config.ts                # zodスキーマ定義（title, date, thumbnail, tags, description 必須）
 │   │   ├── works/

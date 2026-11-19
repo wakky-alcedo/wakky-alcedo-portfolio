@@ -7,6 +7,7 @@ import SectionTitle from '../components/common/SectionTitle.astro';
 import BackButton from '../components/common/BackButton.astro';
 import profilePicture from '../assets/images/profile_picture.jpg';
 import wakkyAlcedoIcon from '../assets/images/wakky_alcedo_icon.jpg';
+import { SOCIAL, EMAIL_ENCODED } from '../config/site';
 
 const timeline = [
   { date: '2024/03', event: '群馬工業高等専門学校 機械工学科 卒業' },
@@ -20,16 +21,7 @@ const certifications = [
   '第三級アマチュア無線技士',
 ];
 
-const links = [
-  { label: 'Twitter / X', value: '@wakky_alcedo', href: 'https://twitter.com/wakky_alcedo' },
-  { label: 'Instagram', value: '@taku.t_0716', href: 'https://www.instagram.com/taku.t_0716/' },
-  { label: 'GitHub', value: 'github.com/wakky-alcedo', href: 'https://github.com/wakky-alcedo' },
-  { label: 'note', value: 'note.com/wakkyalcedo', href: 'https://note.com/wakkyalcedo' },
-  { label: 'Qiita', value: 'qiita.com/wakky-alcedo', href: 'https://qiita.com/wakky-alcedo' },
-  { label: '大学の所属研究室', value: 'Science Tokyo SDDL', href: 'http://www.sddl.mech.e.titech.ac.jp' },
-];
-
-const emailEncoded = 'd2Fra3kuYWxjZWRvQGdtYWlsLmNvbQ==';
+const links = Object.values(SOCIAL);
 ---
 
 <BaseLayout title="About" description="Wakky-Alcedo のプロフィール">
@@ -167,7 +159,7 @@ const emailEncoded = 'd2Fra3kuYWxjZWRvQGdtYWlsLmNvbQ==';
             <button
               class="link-list__email"
               id="about-reveal-email"
-              data-email={emailEncoded}
+              data-email={EMAIL_ENCODED}
               aria-label="メールアドレスを表示"
             >クリックして表示</button>
           </li>

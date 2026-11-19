@@ -4,6 +4,7 @@ import Header from '../components/layout/Header.astro';
 import Footer from '../components/layout/Footer.astro';
 import SectionTitle from '../components/common/SectionTitle.astro';
 import BackButton from '../components/common/BackButton.astro';
+import { SOCIAL, EMAIL_ENCODED } from '../config/site';
 ---
 
 <BaseLayout title="Contact" description="お問い合わせ・連絡先">
@@ -17,24 +18,24 @@ import BackButton from '../components/common/BackButton.astro';
 
       <ul class="contact-list">
         <li class="contact-item">
-          <a href="https://twitter.com/" target="_blank" rel="noopener noreferrer" class="contact-link">
+          <a href={SOCIAL.twitter.href} target="_blank" rel="noopener noreferrer" class="contact-link">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.626zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
             </svg>
             <div>
               <span class="contact-link__label">Twitter / X</span>
-              <span class="contact-link__hint">@wakky_alcedo</span>
+              <span class="contact-link__hint">{SOCIAL.twitter.value}</span>
             </div>
           </a>
         </li>
         <li class="contact-item">
-          <a href="https://note.com/" target="_blank" rel="noopener noreferrer" class="contact-link">
+          <a href={SOCIAL.note.href} target="_blank" rel="noopener noreferrer" class="contact-link">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M3 3h18v18H3V3zm2 2v14h14V5H5zm2 3h10v2H7V8zm0 4h10v2H7v-2zm0 4h6v2H7v-2z"/>
             </svg>
             <div>
               <span class="contact-link__label">note</span>
-              <span class="contact-link__hint">wakky-alcedo</span>
+              <span class="contact-link__hint">{SOCIAL.note.value}</span>
             </div>
           </a>
         </li>
@@ -42,7 +43,7 @@ import BackButton from '../components/common/BackButton.astro';
           <button
             class="contact-link contact-link--email"
             id="reveal-email"
-            data-email="dGFrdWppLmNvcm90b24udGhhbmtzQGdtYWlsLmNvbQ=="
+            data-email={EMAIL_ENCODED}
             aria-label="メールアドレスを表示"
           >
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -68,12 +69,15 @@ import BackButton from '../components/common/BackButton.astro';
     btn.addEventListener('click', () => {
       const decoded = atob(btn.dataset.email ?? '');
       display.textContent = decoded;
-      btn.setAttribute('aria-label', decoded);
+      // 表示後はボタンを mailto リンクに置き換える
+      // スコープ付きスタイル（data-astro-cid-*）が効くよう、ボタンの属性を引き継ぐ
       const a = document.createElement('a');
+      for (const { name, value } of Array.from(btn.attributes)) {
+        if (!['id', 'data-email', 'aria-label'].includes(name)) a.setAttribute(name, value);
+      }
       a.href = `mailto:${decoded}`;
-      a.className = 'contact-link contact-link--email-reveal';
       a.innerHTML = btn.innerHTML;
-      (display as HTMLElement).textContent = decoded;
+      btn.replaceWith(a);
     });
   }
 </script>

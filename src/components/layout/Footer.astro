@@ -1,4 +1,6 @@
 ---
+import { SOCIAL } from '../../config/site';
+
 const year = new Date().getFullYear();
 ---
 
@@ -6,7 +8,7 @@ const year = new Date().getFullYear();
   <div class="footer__inner">
     <div class="footer__links">
       <a
-        href="https://twitter.com/"
+        href={SOCIAL.twitter.href}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Twitter"
@@ -17,7 +19,7 @@ const year = new Date().getFullYear();
         </svg>
       </a>
       <a
-        href="https://note.com/"
+        href={SOCIAL.note.href}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="note"
