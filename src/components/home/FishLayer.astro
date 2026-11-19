@@ -10,8 +10,7 @@ const fishImg2 = await getImage({ src: fish2, width: 96 });
 <canvas
   id="fish-layer"
   class="fish-layer"
-  role="img"
-  aria-label="水中を泳ぐ魚のアニメーション"
+  aria-hidden="true"
   data-fish1={fishImg1.src}
   data-fish2={fishImg2.src}
 ></canvas>

@@ -97,7 +97,7 @@ if (prefersReduced) {
 }
 ```
 
-> Canvas要素には `role="img"` と `aria-label` を付与する。スクロールバー役カワセミはキーボード操作を阻害しない実装にする。
+> 背景演出の Canvas（水面・コースティクス・魚）は装飾なので `aria-hidden="true"` にして読み上げ対象から外す。スクロールバー役カワセミはキーボード操作を阻害しない実装にする。
 
 ---
 
@@ -232,45 +232,14 @@ wakky-alcedo-portfolio/
 
 ## デザインシステム（CSS Custom Properties）
 
-```css
-/* tokens.css — デザイントークン専用。アニメーション値には使わない */
-:root {
-  /* カラーパレット */
-  --color-primary:    #0063AA;
-  --color-secondary:  #68CED6;
-  --color-accent:     #FFA100;
-  --color-bg:         #00112C;
-  --color-text:       #F9FFFD;
+トークンの値は `src/styles/tokens.css` を正とする（ここには写さない）。設計上の決まりだけを記す。
 
-  /* 透明度付きで使うための RGB 成分（例: rgba(var(--color-secondary-rgb), 0.3)） */
-  --color-primary-rgb:   0, 99, 170;
-  --color-secondary-rgb: 104, 206, 214;
-  --color-accent-rgb:    255, 161, 0;
-  --color-bg-rgb:        0, 17, 44;
-
-  /* z-indexレイヤー（魚の4レイヤーは1枚の Canvas 内で描き分ける） */
-  --z-caustics:    0;
-  --z-fish-bg:     1;
-  --z-ui:          10;
-  --z-kingfisher:  20;
-  --z-header:      100;
-}
-
-/* アクセシビリティ：アニメーション全停止 */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-```
-
-```css
-/* global.css — safe-area-inset（ノッチ/Dynamic Island対応） */
-.header { padding-top: env(safe-area-inset-top); }
-.footer { padding-bottom: env(safe-area-inset-bottom); }
-.scroll-kingfisher { right: env(safe-area-inset-right, 0); }
-```
+- **カラーパレット**: primary（青）/ secondary（シアン）/ accent（オレンジ）/ bg（濃紺）/ text の5色。Phase 2 の時間帯変化はこの5色の差し替えで行う
+- **透明度付きの色**: `rgba(var(--color-secondary-rgb), 0.3)` のように `--color-*-rgb` を使い、RGB 値を直書きしない
+- **z-index**: `--z-caustics` < `--z-fish-bg` < `--z-ui` < `--z-kingfisher` < `--z-header` の順で重ねる
+- **アニメーション値には使わない**（「スクロールアニメーションの制御方針」参照）
+- **reduced-motion**: `tokens.css` で全アニメーション・トランジションを実質停止する
+- **safe-area-inset**: ヘッダー・フッター・右端カワセミはノッチ／Dynamic Island を避ける（`src/styles/global.css`）
 
 ---
 
@@ -316,29 +285,13 @@ mainCtx.drawImage(offscreen, 0, 0);
 
 ## DeviceOrientation 実装仕様
 
-iOS 13+ では `requestPermission()` が必須。以下の制約を必ず守る：
+iOS 13+ では `requestPermission()` が必須（実装: `src/scripts/utils/deviceOrientation.ts` の `requestOrientationPermission`）。以下の制約を必ず守る：
 
-```ts
-// deviceOrientation.ts
-export async function requestOrientationPermission(): Promise<boolean> {
-  if (typeof DeviceOrientationEvent === 'undefined') return false;
+- **必ずユーザーの click ハンドラ内から直接呼ぶ**（`setTimeout` などを挟むと拒否される）
+- `requestPermission` がない環境（Android など）は許可不要として扱う
+- 傾きは `gamma` を `TILT.maxGammaDeg`（`src/config/scene.ts`）で -1〜1 に正規化して使う
 
-  // iOS判定
-  if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-    try {
-      // ⚠️ 必ずユーザーのclickハンドラ内から直接呼ぶこと（setTimeout経由は拒否される）
-      const result = await (DeviceOrientationEvent as any).requestPermission();
-      return result === 'granted';
-    } catch {
-      return false; // 拒否時：「設定 → Safari → モーションセンサーを許可」案内UIを表示
-    }
-  }
-  // Android: パーミッション不要
-  return true;
-}
-```
-
-フッターのトグルの `click` ハンドラ内から上記関数を直接呼ぶ。拒否時はトグルを disabled にして「Safariの設定から再許可が必要です」ガイダンスを表示する。
+フッターのトグルの `click` ハンドラ内から直接呼ぶ。拒否時はトグルを disabled にして「Safariの設定から再許可が必要です」ガイダンスを表示する。
 
 ---
 
@@ -361,39 +314,17 @@ export async function requestOrientationPermission(): Promise<boolean> {
 
 ## コンテンツコレクション型定義
 
-```ts
-// src/content.config.ts
-import { defineCollection, z } from 'astro:content';
+スキーマは `src/content.config.ts` を正とする（ここには写さない）。各フィールドの意味と決まり：
 
-const works = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/works' }), // .mdxはコンポーネント埋め込み記事用
-  schema: ({ image }) => z.object({
-    title:       z.string(),
-    description: z.string(),
-    date:        dateOnly,          // YYYY-MM-DD のみ（works: 作品の時期 / blog: 投稿日）。定義は src/content.config.ts
-    thumbnail:   image(),          // Astro画像最適化対応
-    tags:        z.array(z.string()).default([]),
-    wip:         z.boolean().default(false), // trueならカード右上にWIPバッジを表示して公開
-    unpublished: z.boolean().default(false), // trueなら一覧・詳細ページから除外
-    featured:    z.number().default(0),      // 数値が高いほどFeatured順で上位表示（同値なら新しい順）
-  }),
-});
-
-const blog = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
-  schema: ({ image }) => z.object({
-    title:       z.string(),
-    description: z.string(),
-    date:        dateOnly,
-    thumbnail:   image().optional(),
-    tags:        z.array(z.string()).default([]),
-    wip:         z.boolean().default(false),
-    unpublished: z.boolean().default(false),
-  }),
-});
-
-export const collections = { works, blog };
-```
+| フィールド | Works | Blog | 意味 |
+|------------|-------|------|------|
+| `title` / `description` | 必須 | 必須 | タイトル／カードのホバーで出す概要（1文程度） |
+| `date` | 必須 | 必須 | `YYYY-MM-DD` のみ。Works は**作品の時期**、Blog は投稿日。Newest 順の並びと記事の日付表示に使う |
+| `thumbnail` | 必須 | 任意 | カードと記事ヒーローの画像。Blog で省略するとカードはグラデーションの仮画像 |
+| `tags` | 任意 | 任意 | 記事・カードのタグ |
+| `wip` | 任意 | 任意 | true でカード右上に WIP バッジを出して公開 |
+| `unpublished` | 任意 | 任意 | true で一覧・詳細ページ・PDF から除外 |
+| `featured` | 任意 | — | 大きいほど Featured 順で上位（同値は新しい順） |
 
 ---
 
