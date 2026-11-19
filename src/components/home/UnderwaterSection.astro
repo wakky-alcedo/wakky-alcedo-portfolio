@@ -2,7 +2,8 @@
 import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import SortableWorksGrid from '../works/SortableWorksGrid.astro';
-import BlogCard from '../blog/BlogCard.astro';
+import CardCollection from '../common/CardCollection.astro';
+import EntryCard from '../common/EntryCard.astro';
 import SectionTitle from '../common/SectionTitle.astro';
 import FishLayer from './FishLayer.astro';
 import profilePicture from '../../assets/images/profile_picture.jpg';
@@ -47,19 +48,19 @@ const skillTags = [
   <section class="underwater__section" id="works">
     <div class="underwater__container">
       <SectionTitle title="Works" subtitle="制作物・プロジェクト" />
-      <SortableWorksGrid works={rawWorks} class="underwater__works" />
+      <SortableWorksGrid works={rawWorks} mobile="row" class="underwater__works" />
       <a href="/works" class="underwater__more-link">すべての作品を見る →</a>
     </div>
   </section>
 
   <!-- Blog -->
-  <section class="underwater__section hscroll" id="blog" data-hscroll>
-    <div class="underwater__container hscroll__head">
+  <section class="underwater__section" id="blog">
+    <div class="underwater__container">
       <SectionTitle title="Blog" subtitle="活動記録・思考メモ" />
-    </div>
-    <div class="hscroll__track" data-hscroll-track>
-      {allBlog.slice(0, 5).map(post => <BlogCard post={post} />)}
-      <a href="/blog" class="hscroll__more">すべての記事を見る →</a>
+      <CardCollection mobile="row">
+        {allBlog.slice(0, 6).map(post => <EntryCard entry={post} />)}
+      </CardCollection>
+      <a href="/blog" class="underwater__more-link">すべての記事を見る →</a>
     </div>
   </section>
 
@@ -170,48 +171,6 @@ const skillTags = [
   padding: 0 2rem;
 }
 
-/* 横スクロールセクション（GSAPピン固定パターン） */
-.hscroll {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 4rem 0;
-  overflow: hidden;
-}
-
-.hscroll__head {
-  flex-shrink: 0;
-}
-
-.hscroll__head :global(.section-title) {
-  margin-bottom: 1.5rem;
-}
-
-.hscroll__track {
-  display: flex;
-  align-items: stretch;
-  gap: 1.25rem;
-  padding-left: max(2rem, calc((100vw - 1200px) / 2));
-  padding-right: 2rem;
-  width: max-content;
-  will-change: transform;
-}
-
-.hscroll__more {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  min-width: 200px;
-  font-size: 0.95rem;
-  color: var(--color-secondary);
-  opacity: 0.8;
-  transition: opacity 0.2s;
-}
-
-.hscroll__more:hover {
-  opacity: 1;
-}
-
 .underwater__works {
   margin-top: 1.5rem;
 }
@@ -319,19 +278,6 @@ const skillTags = [
     flex-direction: column;
     align-items: center;
     text-align: center;
-  }
-}
-
-/* prefers-reduced-motion: 横スクロールピン演出を行わないため、
-   折り返し表示にして全カードへアクセス可能にする */
-@media (prefers-reduced-motion: reduce) {
-  .hscroll {
-    overflow: visible;
-  }
-
-  .hscroll__track {
-    flex-wrap: wrap;
-    width: auto;
   }
 }
 </style>

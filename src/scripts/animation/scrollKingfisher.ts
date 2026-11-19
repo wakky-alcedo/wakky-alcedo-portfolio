@@ -23,7 +23,7 @@ export class ScrollKingfisher implements SceneModule {
 
     this.el.addEventListener('click', this.handleClick);
 
-    this.workCards = Array.from(document.querySelectorAll<HTMLAnchorElement>('.work-card'));
+    this.workCards = Array.from(document.querySelectorAll<HTMLAnchorElement>('.entry-card[data-collection="works"]'));
     this.workCards.forEach((card) => card.addEventListener('click', this.handleWorkCardClick));
 
     if (prefersReducedMotion()) {

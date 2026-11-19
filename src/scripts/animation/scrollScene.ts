@@ -1,6 +1,5 @@
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { kingfisher } from './kingfisher';
-import { horizontalScroll } from './horizontalScroll';
 import { scrollKingfisher } from './scrollKingfisher';
 import { WaterRipple } from '../canvas/ripple';
 import { FishSimulation } from '../canvas/fish';
@@ -36,7 +35,7 @@ export function initScrollScene(): void {
     canvases.push(new FishSimulation(fishCanvas));
   }
 
-  const modules: SceneModule[] = [kingfisher, horizontalScroll, scrollKingfisher, ...canvases];
+  const modules: SceneModule[] = [kingfisher, scrollKingfisher, ...canvases];
   modules.forEach((module) => module.init());
   setupVisibility(canvases);
 

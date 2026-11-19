@@ -7,5 +7,5 @@ const allWorks = (await getCollection('works', ({ data }) => !data.unpublished))
 ---
 
 <PageLayout title="Works" description="制作物・プロジェクト一覧" subtitle="制作物・プロジェクト" width="wide">
-  <SortableWorksGrid works={allWorks} />
+  <SortableWorksGrid works={allWorks} mobile="grid" />
 </PageLayout>

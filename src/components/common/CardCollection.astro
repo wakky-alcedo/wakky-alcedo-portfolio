@@ -1,0 +1,52 @@
+---
+interface Props {
+  /** スマホ（〜640px）での並べ方: grid=1カラムで縦に積む / row=横スワイプ */
+  mobile: 'grid' | 'row';
+  class?: string;
+}
+
+// rest には親の scoped スタイル用属性（data-astro-cid-*）が入るのでルート要素に渡す
+const { mobile, class: className, ...rest } = Astro.props;
+---
+
+<!-- カード一覧の共通レイアウト。PC・タブレットはタイル、スマホは mobile の指定に従う -->
+<div class:list={['card-collection', `card-collection--mobile-${mobile}`, className]} {...rest}>
+  <slot />
+</div>
+
+<style>
+.card-collection {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.card-collection[hidden] {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  /* 縦スクロールはページ送り、横スワイプはカード送りと操作を分ける */
+  .card-collection--mobile-row {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 2rem;
+    /* コンテナの左右余白をはみ出して画面端までスワイプできるようにする */
+    margin-inline: -2rem;
+    padding: 0.25rem 2rem 0.75rem;
+    scrollbar-width: none;
+  }
+
+  .card-collection--mobile-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .card-collection--mobile-row > :global(*) {
+    flex: 0 0 min(80vw, 320px);
+    scroll-snap-align: start;
+  }
+}
+</style>

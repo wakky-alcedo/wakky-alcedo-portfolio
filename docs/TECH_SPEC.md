@@ -24,7 +24,7 @@
          +
 演出スクリプト ← Astro の <script>（type=module で遅延実行）
   └─ window.load 後に initScrollScene()（src/pages/index.astro）
-       ├─ GSAP ScrollTrigger（カワセミ・横スクロール）→ 最後に refresh
+       ├─ GSAP ScrollTrigger（カワセミ）→ 最後に refresh
        └─ Canvas（水面・コースティクス・魚）
 ```
 
@@ -54,18 +54,17 @@
 
 > 理由：CSS変数をJSで毎フレーム `style.setProperty()` 更新すると、スタイル再計算（Recalculate Style）がメインスレッドで走りモバイルでパフォーマンス問題が発生する。
 
-### 横スクロールセクション（Blog）の実装方針
+### カード一覧（Works / Blog）のレイアウト方針
 
-**iOS Safariでの縦×横スクロール干渉を避けるため、`overflow-x: scroll` は使わない。**
+**縦スクロールはページ送り、横スワイプはカード送りと、操作を分ける。** 縦スクロールに連動して横に動かす（GSAP のピン固定）パターンは使わない。
 
-GSAPの「水平スクロールセクション」パターンを採用する：
-- `ScrollTrigger` でセクションをピン固定
-- `gsap.to(container, { x: -totalWidth })` で横移動をスクロール量に連動させる
-- タッチデバイスでの動作検証はPhase 2完了時点で必須
+| 画面 | トップの Works / Blog | /works・/blog 一覧 |
+|------|------------------------|---------------------|
+| PC・タブレット | タイル（`auto-fill, minmax(280px, 1fr)`） | タイル |
+| スマホ（〜640px） | ネイティブの横スクロール（`overflow-x: auto` + scroll-snap） | 1カラムのタイル |
 
-### Works セクション（トップページ）
-
-Works一覧ページ（`/works`）と同様、`grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))` によるタイル表示。横スクロールピンは使用しない（将来的に変更の可能性あり）。
+- 並べ方は `CardCollection.astro`（`mobile="grid" | "row"`）、カードは Works / Blog 共通の `EntryCard.astro`
+- 横スワイプ行は `overscroll-behavior-x: contain` で縦スクロールへ連鎖させない
 
 ### ScrollTrigger 初期化タイミング
 
@@ -156,10 +155,7 @@ wakky-alcedo-portfolio/
 │   │   │   ├── FishLayer.astro      # 魚Canvas（画像URLをdata属性で渡す）
 │   │   │   └── ScrollKingfisher.astro  # 右端スクロールバー役
 │   │   ├── works/
-│   │   │   ├── WorkCard.astro       # サムネイル・ホバー演出
 │   │   │   └── SortableWorksGrid.astro # Featured/Newest 切り替え付きの作品一覧（トップ・Works一覧で共通）
-│   │   ├── blog/
-│   │   │   └── BlogCard.astro       # タイトル＋冒頭文
 │   │   ├── content/
 │   │   │   ├── CustomImage.astro    # 記事内画像（幅指定・キャプション・ライトボックス）
 │   │   │   ├── FlexRow.astro        # 記事内画像の横並びレイアウト
@@ -171,6 +167,8 @@ wakky-alcedo-portfolio/
 │   │   └── common/
 │   │       ├── SectionTitle.astro
 │   │       ├── BackButton.astro     # トップ以外のページの戻るボタン
+│   │       ├── EntryCard.astro      # Works/Blog 共通カード（トップ画像・タイトル・タグ・ホバーで概要）
+│   │       ├── CardCollection.astro # カード一覧のレイアウト（PCはタイル、スマホは縦積み or 横スワイプ）
 │   │       └── EmailReveal.astro    # クリックでメールアドレスを復元して mailto リンクにする
 │   ├── config/                      # 制御パラメータ・サイト設定（AGENTS 7.6）
 │   │   ├── quality.ts               # AdaptiveQuality の判定閾値
@@ -187,8 +185,7 @@ wakky-alcedo-portfolio/
 │   │   ├── animation/
 │   │   │   ├── scrollScene.ts       # オーケストレーター（init/destroyのみ）
 │   │   │   ├── kingfisher.ts        # ヒーローのカワセミ（スクロール連動の飛び込み・アイドル演出）
-│   │   │   ├── scrollKingfisher.ts  # 右端カワセミ（スクロールバー役・浮上・Worksカード遷移演出）
-│   │   │   └── horizontalScroll.ts  # Blogの横スクロール（ピン固定）
+│   │   │   └── scrollKingfisher.ts  # 右端カワセミ（スクロールバー役・浮上・Worksカード遷移演出）
 │   │   ├── canvas/
 │   │   │   ├── canvasAnimation.ts   # Canvas共通の基底クラス（ループ・リサイズ・一時停止）
 │   │   │   ├── fish.ts              # 魚Boidシミュレーション（4レイヤー）
@@ -432,10 +429,10 @@ GSAP（ScrollTrigger）は非表示中は rAF ごと止まるため対象にし�
 ### Phase 2 — コアアニメーション（1〜2セッション）
 - [ ] 水面リプル（Canvas ripple.ts、`ctx.filter` + OffscreenCanvas）
 - [ ] カワセミ飛び込み演出（GSAP ScrollTrigger、`window.load`後に初期化）
-- [ ] Works/Blog 横スクロールセクション（GSAPピン固定パターン）
+- [x] Works/Blog のカード一覧（PCはタイル、スマホは横スワイプ。GSAPピン固定は廃止）
 - [ ] アイドルアニメーション（放置で周期的に飛び込み）
 - [ ] スクロールカワセミ（右端スクロールバー役）
-- [ ] タッチデバイスでの横スクロール動作検証
+- [ ] タッチデバイスでの横スワイプ動作検証
 
 ### Phase 3a — 魚シミュレーション（1セッション）
 - [ ] 4レイヤーCanvas構成（OffscreenCanvas + blur合成）
@@ -456,16 +453,14 @@ GSAP（ScrollTrigger）は非表示中は rAF ごと止まるため対象にし�
   - カワセミ画像に `densities={[1,2]}` ・LCP画像に `fetchpriority="high"` を追加して画像解像度・LCP発見性を改善
 - [x] `prefers-reduced-motion` 全モジュール検証
   - `tokens.css`: `animation-iteration-count: 1` と `scroll-behavior: auto` を追加し、無限ループアニメーションのちらつき・スムーススクロールを停止
-  - `UnderwaterSection.astro`: reduced-motion時はWorks/Blogの横スクロールピンが効かないため `.hscroll`/`.hscroll__track` を折り返しレイアウトに切り替え、全カードへアクセス可能に
   - `scrollKingfisher.ts`: reduced-motion時は `window.scrollTo` を `behavior: 'auto'` に
 - [x] Canvas `will-change: contents` ・GPU合成確認
   - FishLayer / WaterSurface は `will-change: contents`、カワセミ系は `will-change: transform` で構成済みであることを確認
 - [ ] 各種ブラウザ（Safari / Chrome / Firefox）動作検証
   - Chrome（Chromium系）はpreviewツールで確認済み。Safari/Firefoxの実機検証はWindows環境では不可のため、ユーザー側での確認待ち
   - 確認観点：
-    - GSAP ScrollTriggerによる横スクロールセクション（Works/Blog）のピン固定・スクロール連動
+    - スマホでの Works/Blog の横スワイプ（縦スクロールと干渉しないこと）
     - Canvas演出（魚Boid・水面リプル・カワセミ捕食演出）の描画とフレームレート
-    - `prefers-reduced-motion` 有効時のフォールバックレイアウト（横スクロール→折り返し）
     - DeviceOrientationパララックス（iOS Safariの権限ダイアログ含む）
 
 ---

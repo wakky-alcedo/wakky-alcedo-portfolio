@@ -1,15 +1,18 @@
 ---
 import type { CollectionEntry } from 'astro:content';
-import WorkCard from './WorkCard.astro';
+import EntryCard from '../common/EntryCard.astro';
+import CardCollection from '../common/CardCollection.astro';
 
 interface Props {
   works: CollectionEntry<'works'>[];
+  /** スマホでの並べ方（CardCollection 参照） */
+  mobile: 'grid' | 'row';
   /** 親コンポーネントから余白などを付けるためのクラス */
   class?: string;
 }
 
 // rest には親の scoped スタイル用属性（data-astro-cid-*）が入るのでルート要素に渡す
-const { works, class: className, ...rest } = Astro.props;
+const { works, mobile, class: className, ...rest } = Astro.props;
 
 const byNewest = (a: CollectionEntry<'works'>, b: CollectionEntry<'works'>) =>
   b.data.date.getTime() - a.data.date.getTime();
@@ -24,12 +27,12 @@ const worksNewest = [...works].sort(byNewest);
     <button class="sort-btn active" type="button" data-sort="featured">Featured</button>
     <button class="sort-btn" type="button" data-sort="newest">Newest</button>
   </div>
-  <div class="works-grid" data-sort-panel="featured">
-    {worksFeatured.map((work) => <WorkCard work={work} />)}
-  </div>
-  <div class="works-grid" data-sort-panel="newest" hidden>
-    {worksNewest.map((work) => <WorkCard work={work} />)}
-  </div>
+  <CardCollection mobile={mobile} data-sort-panel="featured">
+    {worksFeatured.map((work) => <EntryCard entry={work} />)}
+  </CardCollection>
+  <CardCollection mobile={mobile} data-sort-panel="newest" hidden>
+    {worksNewest.map((work) => <EntryCard entry={work} />)}
+  </CardCollection>
 </div>
 
 <style>
@@ -54,16 +57,6 @@ const worksNewest = [...works].sort(byNewest);
   background: var(--color-secondary);
   color: var(--color-bg);
   border-color: var(--color-secondary);
-}
-
-.works-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.works-grid[hidden] {
-  display: none;
 }
 </style>
 
