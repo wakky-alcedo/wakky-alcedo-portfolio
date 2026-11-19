@@ -1,7 +1,8 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import type { Pauseable } from '../utils/visibility';
+import type { SceneModule } from '../utils/visibility';
 import { prefersReducedMotion } from '../utils/motionPreference';
+import { SCROLL_KINGFISHER } from '../../config/scene';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -10,7 +11,7 @@ gsap.registerPlugin(ScrollTrigger);
  * #underwater のスクロール進捗に応じて上下移動し、
  * クリックでトップ（水上）へ浮上する。
  */
-export class ScrollKingfisher implements Pauseable {
+export class ScrollKingfisher implements SceneModule {
   private trigger?: ScrollTrigger;
   private el: HTMLElement | null = null;
   private workCards: HTMLAnchorElement[] = [];
@@ -36,7 +37,8 @@ export class ScrollKingfisher implements Pauseable {
       end: 'bottom bottom',
       onUpdate: (self) => {
         if (!this.el) return;
-        const top = 8 + self.progress * 84;
+        const { topMinPct, topMaxPct } = SCROLL_KINGFISHER;
+        const top = topMinPct + self.progress * (topMaxPct - topMinPct);
         gsap.set(this.el, { top: `${top}%` });
       },
       onToggle: (self) => {
@@ -67,7 +69,7 @@ export class ScrollKingfisher implements Pauseable {
     this.dispatchCatch();
     window.setTimeout(() => {
       window.location.href = card.href;
-    }, 400);
+    }, SCROLL_KINGFISHER.navigateDelayMs);
   };
 
   private dispatchCatch(): void {
@@ -82,10 +84,11 @@ export class ScrollKingfisher implements Pauseable {
 
   private playCatchAnimation(): void {
     if (!this.el || prefersReducedMotion()) return;
+    const { grab, release } = SCROLL_KINGFISHER.catchAnimation;
     gsap
       .timeline()
-      .to(this.el, { scale: 1.3, rotation: -15, duration: 0.15, ease: 'power1.out' })
-      .to(this.el, { scale: 1, rotation: 0, duration: 0.35, ease: 'bounce.out' });
+      .to(this.el, { ...grab, ease: 'power1.out' })
+      .to(this.el, { scale: 1, rotation: 0, duration: release.duration, ease: 'bounce.out' });
   }
 }
 

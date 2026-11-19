@@ -37,13 +37,17 @@ const skillTags = [
 ---
 
 <div class="underwater" id="underwater">
-  <canvas
-    id="caustics-layer"
-    class="caustics-layer"
-    role="presentation"
-    aria-hidden="true"
-  ></canvas>
-  <FishLayer />
+  <!-- 背景演出: 水中セクション全体ではなくビューポート分だけ確保し、sticky で画面に追従させる -->
+  <div class="underwater__backdrop" aria-hidden="true">
+    <div class="underwater__viewport">
+      <canvas
+        id="caustics-layer"
+        class="caustics-layer"
+        role="presentation"
+      ></canvas>
+      <FishLayer />
+    </div>
+  </div>
 
   <!-- Works -->
   <section class="underwater__section" id="works">
@@ -176,6 +180,21 @@ const skillTags = [
 .underwater {
   background: var(--color-bg);
   position: relative;
+}
+
+.underwater__backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.underwater__viewport {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100lvh; /* スマホのアドレスバー開閉でリサイズさせない */
+  /* sticky はスタッキングコンテキストを作るため、caustics の screen 合成用に背景色を敷く */
+  background: var(--color-bg);
 }
 
 .caustics-layer {

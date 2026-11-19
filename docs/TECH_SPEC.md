@@ -157,6 +157,7 @@ wakky-alcedo-portfolio/
 │   ├── config/                      # 制御パラメータ・サイト設定（AGENTS 7.6）
 │   │   ├── quality.ts               # AdaptiveQuality の判定閾値
 │   │   ├── image.ts                 # ライトボックス画像の最大幅
+│   │   ├── scene.ts                 # トップページの演出パラメータ（Canvas・カワセミ）
 │   │   └── site.ts                  # SNSリンク・メールアドレス（全ページ共通）
 │   ├── content/
 │   │   ├── config.ts                # zodスキーマ定義（title, date, thumbnail, tags, description 必須）
@@ -171,12 +172,13 @@ wakky-alcedo-portfolio/
 │   │   │   ├── kingfisher.ts        # カワセミアニメーション（自己完結モジュール）
 │   │   │   └── workCardTransition.ts # Works遷移（自己完結モジュール）
 │   │   ├── canvas/
+│   │   │   ├── canvasAnimation.ts   # Canvas共通の基底クラス（ループ・リサイズ・一時停止）
 │   │   │   ├── fish.ts              # 魚Boidシミュレーション（4レイヤー）
 │   │   │   ├── ripple.ts            # 水面リプル
 │   │   │   └── caustics.ts          # 水中コースティクス（水面からの揺らめく光）
 │   │   └── utils/
-│   │       ├── visibility.ts        # Page Visibility API（バックグラウンド停止）
-│   │       ├── deviceOrientation.ts # iOS/Android 傾き取得・requestPermission管理
+│   │       ├── visibility.ts        # SceneModule/Pauseable と Page Visibility（非表示中にCanvasを停止）
+│   │       ├── deviceOrientation.ts # iOS/Android 傾き取得・TiltTracker・requestPermission管理
 │   │       ├── adaptiveQuality.ts   # フレームレート監視・品質自動調整
 │   │       └── motionPreference.ts  # prefers-reduced-motion 判定
 │   ├── styles/
@@ -258,14 +260,12 @@ wakky-alcedo-portfolio/
 
 ## 魚シミュレーション設計
 
-魚は4つの深度レイヤーに分けて描画する。
+魚は4つの深度レイヤーに分けて描画する。奥ほど小さく・ぼかし強め・遅く、ページスクロールへの追従も遅くする（奥行き表現）。
+レイヤーごとのスケール・ブラー・速度・密度・スクロール追従率は `src/config/scene.ts` の `FISH.layers` で管理する。
 
-| レイヤー | 深度 | スケール | ブラー | 速度 | 個体数 |
-|----------|------|----------|--------|------|--------|
-| Layer 1（奥）| 最遠 | 0.4 | blur(3px) | 遅 | 8匹 |
-| Layer 2 | 遠 | 0.6 | blur(1.5px) | 中低 | 6匹 |
-| Layer 3 | 中 | 0.8 | blur(0.5px) | 中 | 4匹 |
-| Layer 4（手前）| 最近 | 1.0 | なし | 速 | 3匹 |
+**Canvasの配置：**
+魚とコースティクスの Canvas は `#underwater` 全体ではなくビューポートサイズで確保し、`position: sticky` で画面に追従させる（`UnderwaterSection.astro` の `.underwater__viewport`）。
+水中セクション全体の高さで確保すると DPR2 で数百MB規模になるため。個体数は画面面積×密度で決め、スクロール量に応じて座標をずらしてラップアラウンドさせる。
 
 **Canvasのブラー実装方針：**
 CSS `filter: blur()` を Canvas 要素にかけない。代わりに Canvas 2D APIの `ctx.filter = 'blur(3px)'` で描画時に適用する。Layer1〜3はオフスクリーンCanvasに描いてから合成することで負荷を最小化する。
@@ -280,15 +280,15 @@ mainCtx.drawImage(offscreen, 0, 0);
 ```
 
 **Canvas共通実装ルール：**
+- 全Canvasは基底クラス `src/scripts/canvas/canvasAnimation.ts` を継承し、`update` / `draw` だけを実装する（ループ・dt上限・リサイズ・DPR・一時停止・reduced-motion時の静止描画は基底クラスが担う）
 - `will-change: contents` を Canvas 要素に指定（`transform` ではない）
-- `ResizeObserver` でウィンドウリサイズを監視し `canvas.width = width * devicePixelRatio` を再設定
-- 全Canvasで `devicePixelRatio` に対応してRetinaディスプレイの粗さを防ぐ
+- 制御パラメータは `src/config/scene.ts` に置き、各モジュールに直書きしない
 
-**アルゴリズム：** Boid軽量版（分離・整列・結合）。O(n²) で合計21匹は問題ないが、空間グリッド分割を用意しておく。
+**アルゴリズム：** Boid軽量版（分離・整列・結合）。レイヤー内のみの O(n²) で、画面あたり十数匹なら問題ない。
 
 **モバイル最適化：**
 - `utils/device.ts` の `isMobile()` でスマホを判定（`max-width: 768px`）
-- スマホでは起動直後から `liteMode`（レイヤー2枚・個体数半減）。PC はフレーム落ち連続30回で発動
+- スマホでは起動直後から `liteMode`（レイヤー2枚・個体数半減）。PC はフレーム間隔の超過が連続すると発動（閾値は `src/config/quality.ts`）
 - DPR を最大 1.5（スマホ）/ 2（PC）にキャップ（`canvasDpr()`）
 - スマホでは `ctx.filter` + OffscreenCanvas blur をスキップし直接描画（最重要最適化）
 
@@ -383,26 +383,10 @@ export const collections = { works, blog };
 
 ## アニメーションモジュール設計原則
 
-`scrollScene.ts` はオーケストレーターとして薄く保つ。各モジュールは `init` / `destroy` インターフェースを持ち自己完結する。
+`scrollScene.ts` はオーケストレーターとして薄く保つ。各モジュールは `SceneModule`（`init` / `destroy`）を実装し自己完結する（`src/scripts/utils/visibility.ts`）。
 
-```ts
-// 各アニメーションモジュールの共通インターフェース
-interface AnimationModule {
-  init(): void;
-  destroy(): void;
-}
-
-// scrollScene.ts（オーケストレーターの例）
-import { kingfisher } from './kingfisher';
-import { fishSimulation } from '../canvas/fish';
-import { setupVisibility } from '../utils/visibility';
-
-export function initScrollScene() {
-  kingfisher.init();
-  fishSimulation.init();
-  setupVisibility([kingfisher, fishSimulation]); // 一括停止
-}
-```
+タブ非表示中は `Pauseable`（`pause` / `resume`）を実装した Canvas だけを止め、状態は保持したまま再開する。
+GSAP（ScrollTrigger）は非表示中は rAF ごと止まるため対象にしない（destroy → init し直すとインラインの transform が残り状態がずれるため）。
 
 状態の共有はカスタムイベント（`dispatchEvent(new CustomEvent('scene:underwater'))`）で疎結合に伝達する。
 

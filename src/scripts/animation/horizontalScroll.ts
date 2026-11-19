@@ -1,6 +1,6 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import type { Pauseable } from '../utils/visibility';
+import type { SceneModule } from '../utils/visibility';
 import { prefersReducedMotion } from '../utils/motionPreference';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -11,7 +11,7 @@ gsap.registerPlugin(ScrollTrigger);
  * トラック要素を `x` で横移動させることで iOS Safari の
  * 縦×横スクロール干渉を回避する。
  */
-export class HorizontalScroll implements Pauseable {
+export class HorizontalScroll implements SceneModule {
   private triggers: ScrollTrigger[] = [];
 
   init(): void {

@@ -1,15 +1,9 @@
-import type { Pauseable } from '../utils/visibility';
-import { prefersReducedMotion } from '../utils/motionPreference';
+import { CanvasAnimation } from './canvasAnimation';
 import { AdaptiveQuality } from '../utils/adaptiveQuality';
-import { onOrientationChange } from '../utils/deviceOrientation';
-import { canvasDpr, isMobile } from '../utils/device';
+import { TiltTracker } from '../utils/deviceOrientation';
+import { FISH } from '../../config/scene';
 
-interface LayerConfig {
-  scale: number;
-  blurPx: number;
-  speed: number; // px/sec
-  count: number;
-}
+type LayerConfig = (typeof FISH.layers)[number];
 
 interface Fish {
   x: number;
@@ -19,118 +13,108 @@ interface Fish {
   img: HTMLImageElement;
 }
 
-const FISH_BASE_SIZE = 48; // px（scale 1.0時の表示サイズ）
-
-const LAYER_CONFIGS: LayerConfig[] = [
-  { scale: 0.4, blurPx: 3, speed: 22, count: 8 }, // Layer1（奥）
-  { scale: 0.6, blurPx: 1.5, speed: 32, count: 6 }, // Layer2
-  { scale: 0.8, blurPx: 0.5, speed: 44, count: 4 }, // Layer3
-  { scale: 1.0, blurPx: 0, speed: 58, count: 3 }, // Layer4（手前）
-];
-
-// liteMode時に使用するレイヤー（4→2に削減）
-const LITE_LAYER_INDICES = [0, 3];
-
-const SEPARATION_RADIUS = 28;
-const ALIGNMENT_RADIUS = 60;
-const COHESION_RADIUS = 90;
-const SEPARATION_WEIGHT = 1.4;
-const ALIGNMENT_WEIGHT = 0.6;
-const COHESION_WEIGHT = 0.4;
-const MIN_SPEED_RATIO = 0.4;
-
-// カーソル/クリック逃避はLayer3・4のみ
-const FLEE_LAYER_INDICES = [2, 3];
-const FLEE_RADIUS = 70;
-const FLEE_WEIGHT = 3.5;
-const FLEE_CLICK_RADIUS = 140;
-
-// カワセミがキャッチできる魚の探索半径
-const CATCH_RADIUS = 90;
-
-// DeviceOrientationパララックスのレイヤー別オフセット量(px、傾き最大時)
-const PARALLAX_OFFSETS = [3, 7, 13, 20];
-const PARALLAX_LERP = 3; // 1秒あたりの補間係数
+const ALL_LAYER_INDICES = FISH.layers.map((_, index) => index);
 
 /**
  * 魚のBoidシミュレーション（4レイヤー、奥行き表現）。
- * Layer1〜3はOffscreenCanvasにctx.filterでblurをかけてから合成する。
+ * canvas はビューポートサイズで、ページスクロールに合わせてレイヤーごとの速さで魚をずらす（奥ほどゆっくり）。
+ * blur のあるレイヤーは OffscreenCanvas に ctx.filter をかけてから合成する（スマホは blur なし）。
  */
-export class FishSimulation implements Pauseable {
-  private readonly canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D | null = null;
+export class FishSimulation extends CanvasAnimation {
   private images: HTMLImageElement[] = [];
-  private imagesLoaded = false;
-  private layers: Fish[][] = [];
+  private layers: Fish[][] = FISH.layers.map(() => []);
   private offscreens: (OffscreenCanvas | null)[] = [];
   private offCtxs: (OffscreenCanvasRenderingContext2D | null)[] = [];
-  private resizeObserver?: ResizeObserver;
-  private rafId = 0;
-  private lastTime = 0;
-  private width = 0;
-  private height = 0;
-  private dpr = 1;
-  private running = false;
-  private quality = new AdaptiveQuality();
-  private unsubscribeQuality?: () => void;
   private pointer: { x: number; y: number } | null = null;
-  private targetTiltX = 0;
-  private tiltX = 0;
-  private unsubscribeOrientation?: () => void;
+  private tilt = new TiltTracker();
+  private lastScrollY = 0;
+  private unsubscribeQuality?: () => void;
 
   constructor(canvas: HTMLCanvasElement) {
-    this.canvas = canvas;
+    super(canvas);
+    this.quality = new AdaptiveQuality();
   }
 
-  init(): void {
-    if (this.running) return;
-    this.running = true;
+  protected async setup(): Promise<void> {
+    await this.loadImages();
 
-    if (prefersReducedMotion()) return;
-
-    const ctx = this.canvas.getContext('2d');
-    if (!ctx) return;
-    this.ctx = ctx;
-
-    this.unsubscribeQuality = this.quality.onChange((lite) => this.applyLiteMode(lite));
-
+    this.unsubscribeQuality = this.quality?.onChange(() => this.syncFishCount());
     window.addEventListener('pointermove', this.handlePointerMove, { passive: true });
     window.addEventListener('pointerdown', this.handlePointerDown, { passive: true });
     window.addEventListener('pointerleave', this.handlePointerLeave, { passive: true });
     window.addEventListener('kingfisher:catch', this.handleCatch as EventListener);
-    document.addEventListener('orientation:enabled', this.handleOrientationEnabled);
+    this.tilt.start();
 
-    this.loadImages()
-      .then(() => {
-        if (!this.running) return;
-
-        this.resizeObserver = new ResizeObserver(() => this.handleResize());
-        this.resizeObserver.observe(this.canvas);
-        this.handleResize();
-
-        if (this.layers.length === 0) {
-          this.spawnFish(this.quality.isLiteMode() ? LITE_LAYER_INDICES : [0, 1, 2, 3]);
-        }
-
-        this.lastTime = performance.now();
-        this.rafId = requestAnimationFrame(this.loop);
-      })
-      .catch(() => {
-        // 画像読み込み失敗時は何も描画しない
-      });
+    this.lastScrollY = window.scrollY;
+    this.syncFishCount();
   }
 
-  destroy(): void {
-    this.running = false;
-    cancelAnimationFrame(this.rafId);
-    this.resizeObserver?.disconnect();
+  protected teardown(): void {
     this.unsubscribeQuality?.();
-    this.unsubscribeOrientation?.();
+    this.tilt.stop();
     window.removeEventListener('pointermove', this.handlePointerMove);
     window.removeEventListener('pointerdown', this.handlePointerDown);
     window.removeEventListener('pointerleave', this.handlePointerLeave);
     window.removeEventListener('kingfisher:catch', this.handleCatch as EventListener);
-    document.removeEventListener('orientation:enabled', this.handleOrientationEnabled);
+  }
+
+  protected onResize(): void {
+    this.offscreens = FISH.layers.map((layer) =>
+      layer.blurPx > 0 && !this.mobile ? new OffscreenCanvas(this.canvas.width, this.canvas.height) : null,
+    );
+    this.offCtxs = this.offscreens.map((off) => off?.getContext('2d') ?? null);
+    if (this.images.length > 0) this.syncFishCount();
+  }
+
+  private async loadImages(): Promise<void> {
+    if (this.images.length > 0) return;
+
+    const srcs = [this.canvas.dataset.fish1, this.canvas.dataset.fish2].filter(
+      (src): src is string => Boolean(src),
+    );
+    if (srcs.length === 0) throw new Error('fish image sources are missing');
+
+    this.images = await Promise.all(
+      srcs.map(
+        (src) =>
+          new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = src;
+          }),
+      ),
+    );
+  }
+
+  /** 画面面積と品質モードから決まる匹数に各レイヤーを合わせる（既存の魚はそのまま残す） */
+  private syncFishCount(): void {
+    const lite = this.quality?.isLiteMode() ?? false;
+    const activeLayers: readonly number[] = lite ? FISH.liteLayerIndices : ALL_LAYER_INDICES;
+    const areaMpx = (this.width * this.height) / 1e6;
+
+    FISH.layers.forEach((config, index) => {
+      const list = this.layers[index];
+      let target = 0;
+      if (activeLayers.includes(index)) {
+        const count = config.densityPerMpx * areaMpx * (lite ? FISH.liteCountRatio : 1);
+        target = Math.max(FISH.minCountPerLayer, Math.round(count));
+      }
+      while (list.length < target) list.push(this.createFish(config));
+      list.length = target;
+    });
+  }
+
+  private createFish(config: LayerConfig): Fish {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = config.speed * (FISH.boid.minSpawnSpeedRatio + Math.random() * (1 - FISH.boid.minSpawnSpeedRatio));
+    return {
+      x: Math.random() * this.width,
+      y: Math.random() * this.height,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      img: this.images[Math.floor(Math.random() * this.images.length)],
+    };
   }
 
   private getCanvasLocalPoint(clientX: number, clientY: number): { x: number; y: number } | null {
@@ -153,13 +137,13 @@ export class FishSimulation implements Pauseable {
     const point = this.getCanvasLocalPoint(event.clientX, event.clientY);
     if (!point) return;
 
-    for (const layerIndex of FLEE_LAYER_INDICES) {
-      const config = LAYER_CONFIGS[layerIndex];
-      for (const fish of this.layers[layerIndex] ?? []) {
+    for (const layerIndex of FISH.fleeLayerIndices) {
+      const config = FISH.layers[layerIndex];
+      for (const fish of this.layers[layerIndex]) {
         const dx = fish.x - point.x;
         const dy = fish.y - point.y;
         const dist = Math.hypot(dx, dy);
-        if (dist < FLEE_CLICK_RADIUS) {
+        if (dist < FISH.fleeClickRadius) {
           const dirX = dist > 0 ? dx / dist : Math.random() * 2 - 1;
           const dirY = dist > 0 ? dy / dist : Math.random() * 2 - 1;
           fish.vx = dirX * config.speed;
@@ -169,24 +153,18 @@ export class FishSimulation implements Pauseable {
     }
   };
 
-  private handleOrientationEnabled = (): void => {
-    this.unsubscribeOrientation?.();
-    this.unsubscribeOrientation = onOrientationChange((tilt) => {
-      this.targetTiltX = tilt;
-    });
-  };
-
+  /** カワセミのキャッチ: 近くの魚（いなければ手前レイヤーのどれか）を1匹差し替える */
   private handleCatch = (event: Event): void => {
     const detail = (event as CustomEvent<{ x: number; y: number }>).detail;
     if (!detail) return;
     const point = this.getCanvasLocalPoint(detail.x, detail.y);
 
     let target: { layerIndex: number; fish: Fish } | null = null;
-    let bestDist = CATCH_RADIUS;
+    let bestDist: number = FISH.catchRadius;
 
     if (point) {
-      for (const layerIndex of FLEE_LAYER_INDICES) {
-        for (const fish of this.layers[layerIndex] ?? []) {
+      for (const layerIndex of FISH.fleeLayerIndices) {
+        for (const fish of this.layers[layerIndex]) {
           const dist = Math.hypot(fish.x - point.x, fish.y - point.y);
           if (dist < bestDist) {
             bestDist = dist;
@@ -197,108 +175,39 @@ export class FishSimulation implements Pauseable {
     }
 
     if (!target) {
-      const layerIndex = FLEE_LAYER_INDICES[FLEE_LAYER_INDICES.length - 1];
+      const layerIndex = FISH.fleeLayerIndices[FISH.fleeLayerIndices.length - 1];
       const list = this.layers[layerIndex];
-      if (list?.length) {
-        target = { layerIndex, fish: list[Math.floor(Math.random() * list.length)] };
-      }
+      if (list.length) target = { layerIndex, fish: list[Math.floor(Math.random() * list.length)] };
     }
 
     if (target) {
       const { layerIndex, fish } = target;
-      this.layers[layerIndex] = this.layers[layerIndex].filter((f) => f !== fish);
-      this.layers[layerIndex].push(this.createFish(LAYER_CONFIGS[layerIndex]));
+      const list = this.layers[layerIndex];
+      list[list.indexOf(fish)] = this.createFish(FISH.layers[layerIndex]);
     }
   };
 
-  private async loadImages(): Promise<void> {
-    if (this.imagesLoaded) return;
+  protected update(dt: number): void {
+    this.tilt.update(dt);
 
-    const srcs = [this.canvas.dataset.fish1, this.canvas.dataset.fish2].filter(
-      (src): src is string => Boolean(src),
-    );
-    if (srcs.length === 0) throw new Error('fish image sources are missing');
-
-    this.images = await Promise.all(
-      srcs.map(
-        (src) =>
-          new Promise<HTMLImageElement>((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = reject;
-            img.src = src;
-          }),
-      ),
-    );
-    this.imagesLoaded = true;
-  }
-
-  private handleResize(): void {
-    this.dpr = canvasDpr();
-    this.width = this.canvas.clientWidth;
-    this.height = this.canvas.clientHeight;
-    this.canvas.width = this.width * this.dpr;
-    this.canvas.height = this.height * this.dpr;
-
-    this.offscreens = LAYER_CONFIGS.map((layer) =>
-      layer.blurPx > 0 ? new OffscreenCanvas(this.canvas.width, this.canvas.height) : null,
-    );
-    this.offCtxs = this.offscreens.map((off) => off?.getContext('2d') ?? null);
-  }
-
-  private spawnFish(layerIndices: number[]): void {
-    this.layers = LAYER_CONFIGS.map((config, index) => {
-      if (!layerIndices.includes(index)) return [];
-
-      const count = this.quality.isLiteMode() ? Math.max(1, Math.floor(config.count / 2)) : config.count;
-
-      return Array.from({ length: count }, () => this.createFish(config));
-    });
-  }
-
-  private createFish(config: LayerConfig): Fish {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = config.speed * (0.5 + Math.random() * 0.5);
-    return {
-      x: Math.random() * this.width,
-      y: Math.random() * this.height,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      img: this.images[Math.floor(Math.random() * this.images.length)],
-    };
-  }
-
-  private applyLiteMode(lite: boolean): void {
-    if (!lite) return;
-    this.spawnFish(LITE_LAYER_INDICES);
-  }
-
-  private loop = (time: number): void => {
-    if (!this.running) return;
-    const dt = Math.min((time - this.lastTime) / 1000, 0.1);
-    this.lastTime = time;
-
-    this.quality.recordFrame(dt * 1000);
-
-    this.update(dt);
-    this.draw();
-
-    this.rafId = requestAnimationFrame(this.loop);
-  };
-
-  private update(dt: number): void {
-    this.tiltX += (this.targetTiltX - this.tiltX) * Math.min(1, dt * PARALLAX_LERP);
+    const scrollY = window.scrollY;
+    const scrollDelta = scrollY - this.lastScrollY;
+    this.lastScrollY = scrollY;
 
     this.layers.forEach((fishList, layerIndex) => {
-      const config = LAYER_CONFIGS[layerIndex];
+      const config = FISH.layers[layerIndex];
+      const scrollShift = scrollDelta * config.scrollFactor;
+      for (const fish of fishList) fish.y -= scrollShift;
       this.flock(fishList, config, layerIndex, dt);
     });
   }
 
   private flock(fishList: Fish[], config: LayerConfig, layerIndex: number, dt: number): void {
+    const { boid } = FISH;
     const maxSpeed = config.speed;
-    const minSpeed = maxSpeed * MIN_SPEED_RATIO;
-    const margin = FISH_BASE_SIZE * config.scale;
+    const minSpeed = maxSpeed * boid.minSpeedRatio;
+    const margin = FISH.baseSize * config.scale;
+    const flees = (FISH.fleeLayerIndices as readonly number[]).includes(layerIndex);
 
     for (const fish of fishList) {
       let sepX = 0;
@@ -317,17 +226,17 @@ export class FishSimulation implements Pauseable {
         const dy = fish.y - other.y;
         const dist = Math.hypot(dx, dy);
 
-        if (dist > 0 && dist < SEPARATION_RADIUS) {
+        if (dist > 0 && dist < boid.separationRadius) {
           sepX += dx / dist;
           sepY += dy / dist;
           sepCount += 1;
         }
-        if (dist < ALIGNMENT_RADIUS) {
+        if (dist < boid.alignmentRadius) {
           aliX += other.vx;
           aliY += other.vy;
           aliCount += 1;
         }
-        if (dist < COHESION_RADIUS) {
+        if (dist < boid.cohesionRadius) {
           cohX += other.x;
           cohY += other.y;
           cohCount += 1;
@@ -338,24 +247,24 @@ export class FishSimulation implements Pauseable {
       let ay = 0;
 
       if (sepCount > 0) {
-        ax += (sepX / sepCount) * SEPARATION_WEIGHT;
-        ay += (sepY / sepCount) * SEPARATION_WEIGHT;
+        ax += (sepX / sepCount) * boid.separationWeight;
+        ay += (sepY / sepCount) * boid.separationWeight;
       }
       if (aliCount > 0) {
-        ax += (aliX / aliCount - fish.vx) * ALIGNMENT_WEIGHT * 0.05;
-        ay += (aliY / aliCount - fish.vy) * ALIGNMENT_WEIGHT * 0.05;
+        ax += (aliX / aliCount - fish.vx) * boid.alignmentWeight;
+        ay += (aliY / aliCount - fish.vy) * boid.alignmentWeight;
       }
       if (cohCount > 0) {
-        ax += (cohX / cohCount - fish.x) * COHESION_WEIGHT * 0.01;
-        ay += (cohY / cohCount - fish.y) * COHESION_WEIGHT * 0.01;
+        ax += (cohX / cohCount - fish.x) * boid.cohesionWeight;
+        ay += (cohY / cohCount - fish.y) * boid.cohesionWeight;
       }
 
-      if (FLEE_LAYER_INDICES.includes(layerIndex) && this.pointer) {
+      if (flees && this.pointer) {
         const dx = fish.x - this.pointer.x;
         const dy = fish.y - this.pointer.y;
         const dist = Math.hypot(dx, dy);
-        if (dist > 0 && dist < FLEE_RADIUS) {
-          const force = (1 - dist / FLEE_RADIUS) * FLEE_WEIGHT;
+        if (dist > 0 && dist < FISH.fleeRadius) {
+          const force = (1 - dist / FISH.fleeRadius) * FISH.fleeWeight;
           ax += (dx / dist) * force * maxSpeed;
           ay += (dy / dist) * force * maxSpeed;
         }
@@ -376,60 +285,48 @@ export class FishSimulation implements Pauseable {
       fish.x += fish.vx * dt;
       fish.y += fish.vy * dt;
 
-      // 画面端でラップアラウンド
+      // 画面端でラップアラウンド（スクロールで画面外に出た魚も反対側から戻る）
       if (fish.x < -margin) fish.x = this.width + margin;
       if (fish.x > this.width + margin) fish.x = -margin;
-      if (fish.y < -margin) fish.y = this.height + margin;
-      if (fish.y > this.height + margin) fish.y = -margin;
+      if (fish.y < -margin) fish.y += this.height + margin * 2;
+      if (fish.y > this.height + margin) fish.y -= this.height + margin * 2;
     }
   }
 
-  private draw(): void {
-    const { ctx } = this;
-    if (!ctx) return;
-
+  protected draw(ctx: CanvasRenderingContext2D): void {
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    const skipBlur = isMobile();
     this.layers.forEach((fishList, layerIndex) => {
-      const config = LAYER_CONFIGS[layerIndex];
-      if (config.blurPx > 0 && !skipBlur) {
-        this.drawBlurredLayer(fishList, config, layerIndex);
+      if (fishList.length === 0) return;
+      const offCtx = this.offCtxs[layerIndex];
+      const offscreen = this.offscreens[layerIndex];
+      if (offCtx && offscreen) {
+        offCtx.clearRect(0, 0, offscreen.width, offscreen.height);
+        offCtx.filter = `blur(${FISH.layers[layerIndex].blurPx * this.dpr}px)`;
+        this.drawFishList(offCtx, fishList, layerIndex);
+        ctx.drawImage(offscreen, 0, 0);
       } else {
-        this.drawFishList(ctx, fishList, config, layerIndex);
+        this.drawFishList(ctx, fishList, layerIndex);
       }
     });
-  }
-
-  private drawBlurredLayer(fishList: Fish[], config: LayerConfig, layerIndex: number): void {
-    const { ctx } = this;
-    const offCtx = this.offCtxs[layerIndex];
-    const offscreen = this.offscreens[layerIndex];
-    if (!ctx || !offCtx || !offscreen) return;
-
-    offCtx.clearRect(0, 0, offscreen.width, offscreen.height);
-    offCtx.filter = `blur(${config.blurPx * this.dpr}px)`;
-    this.drawFishList(offCtx, fishList, config, layerIndex);
-
-    ctx.drawImage(offscreen, 0, 0);
   }
 
   private drawFishList(
     ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
     fishList: Fish[],
-    config: LayerConfig,
     layerIndex: number,
   ): void {
-    const size = FISH_BASE_SIZE * config.scale * this.dpr;
-    const offsetX = this.tiltX * PARALLAX_OFFSETS[layerIndex] * this.dpr;
+    const config = FISH.layers[layerIndex];
+    const size = FISH.baseSize * config.scale * this.dpr;
+    const offsetX = this.tilt.value * config.parallaxPx * this.dpr;
 
     for (const fish of fishList) {
       const dir = fish.vx >= 0 ? 1 : -1;
-      const tilt = Math.atan2(fish.vy, Math.abs(fish.vx)) * 0.5;
+      const bodyTilt = Math.atan2(fish.vy, Math.abs(fish.vx)) * FISH.boid.bodyTiltRatio;
 
       ctx.save();
       ctx.translate(fish.x * this.dpr + offsetX, fish.y * this.dpr);
-      ctx.rotate(tilt);
+      ctx.rotate(bodyTilt);
       ctx.scale(dir, 1);
       ctx.drawImage(fish.img, -size / 2, -size / 2, size, size);
       ctx.restore();
