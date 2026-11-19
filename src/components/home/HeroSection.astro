@@ -156,18 +156,18 @@ import WaterSurface from './WaterSurface.astro';
 .hero__cta {
   display: inline-block;
   padding: 0.75rem 2rem;
-  background: var(--color-primary);
-  border: 2px solid var(--color-secondary);
+  background: var(--color-accent);
+  border: 2px solid var(--color-accent);
   border-radius: 100px;
-  color: var(--color-text);
+  color: var(--color-bg);
   font-weight: 600;
   font-size: 0.95rem;
   transition: background 0.2s, transform 0.2s;
 }
 
 .hero__cta:hover {
-  background: var(--color-secondary);
-  color: var(--color-bg);
+  background: transparent;
+  color: var(--color-accent);
   transform: translateY(-2px);
 }
 

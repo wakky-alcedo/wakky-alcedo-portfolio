@@ -111,8 +111,8 @@ const year = new Date().getFullYear();
 
 <style>
 .footer {
-  background: rgba(var(--color-bg-rgb), 0.95);
-  border-top: 1px solid rgba(var(--color-secondary-rgb), 0.15);
+  background: var(--surface-bar);
+  border-top: 1px solid var(--line-subtle);
   padding: 2rem 1.5rem;
 }
 
@@ -139,7 +139,7 @@ const year = new Date().getFullYear();
 
 .footer__sns-link:hover {
   opacity: 1;
-  color: var(--color-secondary);
+  color: var(--color-accent);
 }
 
 .footer__orientation {
@@ -175,7 +175,7 @@ const year = new Date().getFullYear();
 }
 
 .footer__toggle-input:checked + .footer__toggle-track {
-  background: var(--color-secondary);
+  background: var(--color-accent);
 }
 
 .footer__toggle-thumb {

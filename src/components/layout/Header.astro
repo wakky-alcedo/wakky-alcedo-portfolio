@@ -58,9 +58,9 @@ nav?.addEventListener('click', (event) => {
   left: 0;
   right: 0;
   z-index: var(--z-header);
-  background: rgba(var(--color-bg-rgb), 0.85);
+  background: var(--surface-bar);
   backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(var(--color-secondary-rgb), 0.15);
+  border-bottom: 1px solid var(--line-subtle);
 }
 
 .header__inner {
@@ -96,7 +96,7 @@ nav?.addEventListener('click', (event) => {
 .header__nav-link:hover,
 .header__nav-link.is-active {
   opacity: 1;
-  color: var(--color-secondary);
+  color: var(--color-accent);
 }
 
 .header__menu-btn {
@@ -137,9 +137,9 @@ nav?.addEventListener('click', (event) => {
     top: 64px;
     left: 0;
     right: 0;
-    background: rgba(var(--color-bg-rgb), 0.95);
+    background: var(--surface-bar);
     backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(var(--color-secondary-rgb), 0.15);
+    border-bottom: 1px solid var(--line-subtle);
   }
 
   .header__nav.is-open {

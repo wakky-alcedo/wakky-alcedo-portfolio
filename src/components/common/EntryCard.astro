@@ -14,7 +14,7 @@ const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month:
 
 <!--
   Works / Blog 共通のカード（トップ・一覧ページ）。上にトップ画像、下にタイトルとタグ。
-  タグの配色は Works=シアン / Blog=アクセント。Blog は日付も出す。
+  タグは控えめな中立色（色はトップ画像に任せる）。Blog は日付も出す。
 -->
 <a href={`/${entry.collection}/${entry.id}`} class:list={['entry-card', `entry-card--${entry.collection}`]} data-collection={entry.collection}>
   {wip && <span class="entry-card__wip">WIP</span>}
@@ -45,8 +45,8 @@ const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month:
   position: relative;
   border-radius: 12px;
   overflow: hidden;
-  background: rgba(var(--color-primary-rgb), 0.1);
-  border: 1px solid rgba(var(--color-secondary-rgb), 0.2);
+  background: var(--surface-card);
+  border: 1px solid var(--line-subtle);
   transition: transform 0.3s, border-color 0.3s;
   min-width: 280px;
   flex-shrink: 0;
@@ -54,7 +54,7 @@ const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month:
 
 .entry-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(var(--color-secondary-rgb), 0.6);
+  border-color: var(--line-strong);
 }
 
 .entry-card__thumb {
@@ -131,19 +131,11 @@ const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month:
   font-size: 0.7rem;
   padding: 0.125rem 0.5rem;
   border-radius: 100px;
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
+  color: var(--tag-text);
 }
 
-.entry-card--works .entry-card__tag {
-  background: rgba(var(--color-primary-rgb), 0.4);
-  border: 1px solid rgba(var(--color-secondary-rgb), 0.3);
-  color: var(--color-secondary);
-}
-
-.entry-card--blog .entry-card__tag {
-  background: rgba(var(--color-accent-rgb), 0.15);
-  border: 1px solid rgba(var(--color-accent-rgb), 0.3);
-  color: var(--color-accent);
-}
 
 .entry-card__wip {
   position: absolute;
