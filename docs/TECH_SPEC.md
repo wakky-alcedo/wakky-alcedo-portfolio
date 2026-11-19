@@ -165,6 +165,7 @@ wakky-alcedo-portfolio/
 │   │       └── EmailReveal.astro    # クリックでメールアドレスを復元して mailto リンクにする
 │   ├── config/                      # 制御パラメータ・サイト設定（AGENTS 7.6）
 │   │   ├── quality.ts               # AdaptiveQuality の判定閾値
+│   │   ├── art.ts                   # ArtCard のプレビュー読み込み範囲
 │   │   ├── image.ts                 # ライトボックス画像の最大幅
 │   │   ├── scene.ts                 # トップページの演出パラメータ（Canvas・カワセミ）
 │   │   └── site.ts                  # SNSリンク・メールアドレス（全ページ共通）
