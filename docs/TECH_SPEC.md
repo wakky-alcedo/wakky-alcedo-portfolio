@@ -32,6 +32,15 @@
 - UIフレームワークの Island（`client:*`）は使わない。演出はすべて素の TypeScript モジュール
 - 画像の読み込み完了（window.load）後に起動するので、ScrollTrigger の位置ズレを防げる
 
+### ブレークポイント
+
+| 区分 | 幅 | 用途 |
+|------|----|------|
+| スマホ | 〜640px | 1カラム化・カードの横スワイプ・Canvas の軽量化 |
+| タブレット | 〜1024px | 現状は専用の切り替えなし（PC と同じ） |
+
+値は `src/config/breakpoints.ts` を正とし、CSS の `@media` では同じ値を直書きする（変数が使えないため）。
+
 ### スクロールアニメーションの制御方針
 
 **CSS変数をアニメーション値に使わない。**
@@ -166,6 +175,7 @@ wakky-alcedo-portfolio/
 │   ├── config/                      # 制御パラメータ・サイト設定（AGENTS 7.6）
 │   │   ├── quality.ts               # AdaptiveQuality の判定閾値
 │   │   ├── art.ts                   # ArtCard のプレビュー読み込み範囲
+│   │   ├── breakpoints.ts           # 画面幅の切り替え点（CSS の @media にも同じ値を使う）
 │   │   ├── image.ts                 # ライトボックス画像の最大幅
 │   │   ├── scene.ts                 # トップページの演出パラメータ（Canvas・カワセミ）
 │   │   └── site.ts                  # SNSリンク・メールアドレス（全ページ共通）
@@ -295,7 +305,7 @@ mainCtx.drawImage(offscreen, 0, 0);
 **アルゴリズム：** Boid軽量版（分離・整列・結合）。レイヤー内のみの O(n²) で、画面あたり十数匹なら問題ない。
 
 **モバイル最適化：**
-- `utils/device.ts` の `isMobile()` でスマホを判定（`max-width: 768px`）
+- `utils/device.ts` の `isMobile()` でスマホを判定（`BREAKPOINTS.sp` 以下）
 - スマホでは起動直後から `liteMode`（レイヤー2枚・個体数半減）。PC はフレーム間隔の超過が連続すると発動（閾値は `src/config/quality.ts`）
 - DPR を最大 1.5（スマホ）/ 2（PC）にキャップ（`canvasDpr()`）
 - スマホでは `ctx.filter` + OffscreenCanvas blur をスキップし直接描画（最重要最適化）
