@@ -137,7 +137,8 @@ wakky-alcedo-portfolio/
 │   │   ├── layout/
 │   │   │   ├── Header.astro         # ロゴ＋ナビ
 │   │   │   ├── Footer.astro         # SNS・コピーライト・傾きトグル
-│   │   │   └── BaseLayout.astro     # <head>・OGP・メタタグ共通レイアウト
+│   │   │   ├── BaseLayout.astro     # <head>・OGP・メタタグ共通レイアウト
+│   │   │   └── ArticleLayout.astro  # Works/Blog 詳細ページ共通（ヒーロー・タグ・本文・戻るリンク）
 │   │   ├── home/
 │   │   │   ├── HeroSection.astro    # 水上エリア全体
 │   │   │   ├── WaterSurface.astro   # 水面リプルCanvas
