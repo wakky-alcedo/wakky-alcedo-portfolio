@@ -145,7 +145,8 @@ wakky-alcedo-portfolio/
 │   │   │   ├── UnderwaterSection.astro # 水中コンテンツエリア
 │   │   │   └── ScrollKingfisher.astro  # 右端スクロールバー役（client:only）
 │   │   ├── works/
-│   │   │   └── WorkCard.astro       # サムネイル・ホバー演出
+│   │   │   ├── WorkCard.astro       # サムネイル・ホバー演出
+│   │   │   └── SortableWorksGrid.astro # Featured/Newest 切り替え付きの作品一覧（トップ・Works一覧で共通）
 │   │   ├── blog/
 │   │   │   └── BlogCard.astro       # タイトル＋冒頭文
 │   │   ├── content/

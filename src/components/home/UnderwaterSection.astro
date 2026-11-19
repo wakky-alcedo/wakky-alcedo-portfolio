@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
-import WorkCard from '../works/WorkCard.astro';
+import SortableWorksGrid from '../works/SortableWorksGrid.astro';
 import BlogCard from '../blog/BlogCard.astro';
 import SectionTitle from '../common/SectionTitle.astro';
 import FishLayer from './FishLayer.astro';
@@ -9,13 +9,6 @@ import profilePicture from '../../assets/images/profile_picture.jpg';
 import { SOCIAL, EMAIL_ENCODED } from '../../config/site';
 
 const rawWorks = await getCollection('works', ({ data }) => !data.unpublished);
-
-const worksFeatured = [...rawWorks].sort((a, b) => {
-  const d = b.data.featured - a.data.featured;
-  return d !== 0 ? d : b.data.date.getTime() - a.data.date.getTime();
-});
-
-const worksNewest = [...rawWorks].sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 
 const allBlog = (await getCollection('blog', ({ data }) => !data.unpublished))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
@@ -53,16 +46,7 @@ const skillTags = [
   <section class="underwater__section" id="works">
     <div class="underwater__container">
       <SectionTitle title="Works" subtitle="制作物・プロジェクト" />
-      <div class="sort-toggle" id="home-sort-toggle">
-        <button class="sort-btn active" data-sort="featured">Featured</button>
-        <button class="sort-btn" data-sort="newest">Newest</button>
-      </div>
-      <div class="works-grid" id="home-works-featured">
-        {worksFeatured.map(work => <WorkCard work={work} />)}
-      </div>
-      <div class="works-grid hidden" id="home-works-newest">
-        {worksNewest.map(work => <WorkCard work={work} />)}
-      </div>
+      <SortableWorksGrid works={rawWorks} class="underwater__works" />
       <a href="/works" class="underwater__more-link">すべての作品を見る →</a>
     </div>
   </section>
@@ -134,28 +118,6 @@ const skillTags = [
     </div>
   </section>
 </div>
-
-<script>
-  // Works sort toggle
-  const toggle = document.getElementById('home-sort-toggle');
-  if (toggle) {
-    const featured = document.getElementById('home-works-featured')!;
-    const newest = document.getElementById('home-works-newest')!;
-    toggle.querySelectorAll<HTMLButtonElement>('.sort-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        toggle.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        if (btn.dataset.sort === 'featured') {
-          featured.classList.remove('hidden');
-          newest.classList.add('hidden');
-        } else {
-          newest.classList.remove('hidden');
-          featured.classList.add('hidden');
-        }
-      });
-    });
-  }
-</script>
 
 <script>
   // メールアドレス難読化
@@ -267,39 +229,7 @@ const skillTags = [
   opacity: 1;
 }
 
-.sort-toggle {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1.5rem;
-  margin-bottom: 0;
-}
-
-.sort-btn {
-  padding: 0.4rem 1.2rem;
-  border: 1px solid var(--color-border, rgba(104, 206, 214, 0.3));
-  border-radius: 999px;
-  background: transparent;
-  color: var(--color-text, inherit);
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-
-.sort-btn.active {
-  background: var(--color-secondary);
-  color: var(--color-bg);
-  border-color: var(--color-secondary);
-}
-
-.hidden {
-  display: none !important;
-}
-
-/* Works タイル表示 */
-.works-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+.underwater__works {
   margin-top: 1.5rem;
 }
 
