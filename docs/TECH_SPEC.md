@@ -369,7 +369,7 @@ const works = defineCollection({
   schema: ({ image }) => z.object({
     title:       z.string(),
     description: z.string(),
-    date:        z.coerce.date(),
+    date:        dateOnly,          // YYYY-MM-DD のみ（works: 作品の時期 / blog: 投稿日）。定義は src/content.config.ts
     thumbnail:   image(),          // Astro画像最適化対応
     tags:        z.array(z.string()).default([]),
     wip:         z.boolean().default(false), // trueならカード右上にWIPバッジを表示して公開
@@ -383,7 +383,7 @@ const blog = defineCollection({
   schema: ({ image }) => z.object({
     title:       z.string(),
     description: z.string(),
-    date:        z.coerce.date(),
+    date:        dateOnly,
     thumbnail:   image().optional(),
     tags:        z.array(z.string()).default([]),
     wip:         z.boolean().default(false),
