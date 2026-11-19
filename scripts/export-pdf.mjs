@@ -15,6 +15,7 @@ import { readdir, readFile } from 'fs/promises';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { basename, resolve } from 'path';
 import { execSync, spawn } from 'child_process';
+import { createServer } from 'net';
 import { fileURLToPath } from 'url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -31,14 +32,20 @@ const OUTPUT_FILE = args.find(a => a.startsWith('--out='))?.slice(6) ?? 'portfol
 
 const BASE_URL = `http://localhost:${PORT}`;
 
-// --- frontmatter から featured を抽出 ---
-async function getFrontmatterValue(filePath, key) {
-  const content = await readFile(filePath, 'utf-8');
-  const match = content.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return undefined;
-
-  const keyMatch = match[1].match(new RegExp(`^${key}:\\s*(.*)$`, 'm'));
-  return keyMatch ? keyMatch[1].trim() : undefined;
+// --- frontmatter から単純な key: value を抽出 ---
+async function readFrontmatter(filePath) {
+  // BOM 付き・CRLF のファイルもあるので正規化してから読む
+  const content = (await readFile(filePath, 'utf-8')).replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
+  const match = content.match(/^\s*---\n([\s\S]*?)\n---/);
+  const get = (key) => {
+    const keyMatch = match?.[1].match(new RegExp(`^${key}:\\s*(.*)$`, 'm'));
+    return keyMatch ? keyMatch[1].trim() : undefined;
+  };
+  return {
+    unpublished: get('unpublished') === 'true',
+    featured: parseInt(get('featured') ?? '0', 10) || 0,
+    date: new Date(get('date') ?? 0).getTime() || 0,
+  };
 }
 
 // --- ページ一覧を src/content から自動収集 ---
@@ -50,36 +57,33 @@ async function collectRoutes() {
     if (!existsSync(dir)) continue;
     const files = await readdir(dir);
 
-    let items = [];
+    const items = [];
     for (const file of files) {
       if (!/\.(md|mdx)$/.test(file)) continue;
       const slug = basename(file).replace(/\.(md|mdx)$/, '');
-      const filePath = resolve(dir, file);
-
-      if (collection === 'works') {
-        const featured = await getFrontmatterValue(filePath, 'featured');
-        items.push({
-          slug,
-          featured: featured ? parseInt(featured, 10) : 0,
-          path: `/${collection}/${slug}`
-        });
-      } else {
-        items.push({
-          slug,
-          path: `/${collection}/${slug}`
-        });
-      }
+      const meta = await readFrontmatter(resolve(dir, file));
+      // 非公開記事はページが生成されない（404 になる）ので除外する
+      if (meta.unpublished) continue;
+      items.push({ ...meta, path: `/${collection}/${slug}` });
     }
 
-    // works は featured の降順でソート
-    if (collection === 'works') {
-      items.sort((a, b) => b.featured - a.featured);
-    }
+    // サイトの並びに合わせる: works は Featured 順（同値は新しい順）、blog は新しい順
+    items.sort((a, b) => (collection === 'works' ? b.featured - a.featured : 0) || b.date - a.date);
 
     items.forEach(item => routes.push(item.path));
   }
 
   return routes;
+}
+
+// --- ポートが空いているか確認（使用中だと astro preview が別ポートで起動し、別のサーバーを撮ってしまうため） ---
+function assertPortFree(port) {
+  return new Promise((resolvePort, reject) => {
+    const probe = createServer()
+      .once('error', () => reject(new Error(`ポート ${port} は使用中です。--port で別のポートを指定してください`)))
+      .once('listening', () => probe.close(() => resolvePort()))
+      .listen(port, 'localhost');
+  });
 }
 
 // --- プレビューサーバーが立ち上がるまで待機 ---
@@ -106,11 +110,13 @@ async function main() {
   }
 
   // 2. プレビューサーバー起動
+  await assertPortFree(PORT);
   console.log(`🚀 プレビューサーバーを起動 (port ${PORT})...`);
+  // detached で新しいプロセスグループにし、終了時は npm → astro までまとめて止める
   const server = spawn(
     'npm',
     ['run', 'preview', '--', '--port', String(PORT)],
-    { cwd: ROOT, stdio: 'pipe', shell: true }
+    { cwd: ROOT, stdio: 'pipe', detached: true }
   );
   server.stderr.on('data', d => process.stderr.write(d));
 
@@ -164,7 +170,11 @@ async function main() {
     writeFileSync(outPath, bytes);
     console.log(`✨ 完了: ${outPath} (${(bytes.byteLength / 1024).toFixed(0)} KB)`);
   } finally {
-    server.kill();
+    try {
+      process.kill(-server.pid, 'SIGTERM');
+    } catch {
+      // すでに終了している
+    }
   }
 }
 
