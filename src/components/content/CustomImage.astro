@@ -1,6 +1,7 @@
 ---
-import { Image } from 'astro:assets';
+import { Image, getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
+import { LIGHTBOX } from '../../config/image';
 
 interface Props {
   src: ImageMetadata;
@@ -16,6 +17,9 @@ const maxWidth = width === undefined
   : typeof width === 'number'
     ? `${width}px`
     : width;
+
+// ライトボックス用。開くまで読み込ませないよう data-src に持たせる
+const lightboxImage = await getImage({ src, width: Math.min(src.width, LIGHTBOX.maxWidth) });
 ---
 
 <figure class="custom-image" style={maxWidth ? `--custom-image-max-width: ${maxWidth}` : undefined}>
@@ -29,7 +33,7 @@ const maxWidth = width === undefined
   <button class="lightbox__backdrop" aria-label="閉じる" type="button"></button>
   <div class="lightbox__content">
     <button class="lightbox__close" aria-label="閉じる" type="button">✕</button>
-    <img class="lightbox__img" src={src.src} alt={alt} />
+    <img class="lightbox__img" data-src={lightboxImage.src} alt={alt} />
     {caption && <p class="lightbox__caption">{caption}</p>}
   </div>
 </div>
@@ -40,7 +44,7 @@ const maxWidth = width === undefined
     const lightbox = figure?.nextElementSibling as HTMLElement | null;
     if (!lightbox) return;
 
-    const img = lightbox.querySelector<HTMLElement>('.lightbox__img');
+    const img = lightbox.querySelector<HTMLImageElement>('.lightbox__img');
     const ZOOM_LEVELS = [1, 2, 4];
     let zoomIndex = 0;
 
@@ -53,15 +57,23 @@ const maxWidth = width === undefined
       }
     };
 
+    // 画像クリックでフォーカスが外れても閉じられるよう、開いている間だけ document で拾う
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close();
+    };
+
     const close = () => {
       resetZoom();
       lightbox.hidden = true;
       document.body.style.overflow = '';
+      document.removeEventListener('keydown', onKeyDown);
     };
 
     trigger.addEventListener('click', () => {
+      if (img && !img.src && img.dataset.src) img.src = img.dataset.src;
       lightbox.hidden = false;
       document.body.style.overflow = 'hidden';
+      document.addEventListener('keydown', onKeyDown);
       lightbox.querySelector<HTMLElement>('.lightbox__close')?.focus();
     });
 
@@ -89,6 +101,23 @@ const maxWidth = width === undefined
       else img.style.cursor = 'grab';
     };
 
+    // ドラッグ中だけ window にリスナーを付ける（画像の枚数分常駐させない）
+    const onMouseMove = (e: MouseEvent) => {
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+      if (Math.abs(dx - panX) > 2 || Math.abs(dy - panY) > 2) hasDragged = true;
+      panX = dx;
+      panY = dy;
+      applyTransform(ZOOM_LEVELS[zoomIndex]);
+    };
+
+    const onMouseUp = () => {
+      isDragging = false;
+      updateCursor();
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
     img?.addEventListener('mousedown', (e) => {
       if (ZOOM_LEVELS[zoomIndex] === 1) return;
       isDragging = true;
@@ -96,24 +125,9 @@ const maxWidth = width === undefined
       dragStartX = e.clientX - panX;
       dragStartY = e.clientY - panY;
       updateCursor();
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
       e.preventDefault();
-    });
-
-    window.addEventListener('mousemove', (e) => {
-      if (!isDragging) return;
-      const dx = e.clientX - dragStartX;
-      const dy = e.clientY - dragStartY;
-      if (Math.abs(dx - panX) > 2 || Math.abs(dy - panY) > 2) hasDragged = true;
-      panX = dx;
-      panY = dy;
-      applyTransform(ZOOM_LEVELS[zoomIndex]);
-    });
-
-    window.addEventListener('mouseup', () => {
-      if (isDragging) {
-        isDragging = false;
-        updateCursor();
-      }
     });
 
     // タッチ対応
@@ -146,10 +160,6 @@ const maxWidth = width === undefined
       img.style.maxHeight = scale === 1 ? '85vh' : 'none';
       applyTransform(scale);
       updateCursor();
-    });
-
-    lightbox.addEventListener('keydown', (e) => {
-      if ((e as KeyboardEvent).key === 'Escape') close();
     });
   });
 </script>
