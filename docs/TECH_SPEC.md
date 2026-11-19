@@ -138,7 +138,8 @@ wakky-alcedo-portfolio/
 │   │   │   ├── Header.astro         # ロゴ＋ナビ
 │   │   │   ├── Footer.astro         # SNS・コピーライト・傾きトグル
 │   │   │   ├── BaseLayout.astro     # <head>・OGP・メタタグ共通レイアウト
-│   │   │   └── ArticleLayout.astro  # Works/Blog 詳細ページ共通（ヒーロー・タグ・本文・戻るリンク）
+│   │   │   ├── ArticleLayout.astro  # Works/Blog 詳細ページ共通（ヒーロー・タグ・本文・戻るリンク）
+│   │   │   └── PageLayout.astro     # 一覧・About・Contact 共通の外枠（戻るボタン・見出し・本文幅）
 │   │   ├── home/
 │   │   │   ├── HeroSection.astro    # 水上エリア全体
 │   │   │   ├── WaterSurface.astro   # 水面リプルCanvas
@@ -231,6 +232,12 @@ wakky-alcedo-portfolio/
   --color-accent:     #FFA100;
   --color-bg:         #00112C;
   --color-text:       #F9FFFD;
+
+  /* 透明度付きで使うための RGB 成分（例: rgba(var(--color-secondary-rgb), 0.3)） */
+  --color-primary-rgb:   0, 99, 170;
+  --color-secondary-rgb: 104, 206, 214;
+  --color-accent-rgb:    255, 161, 0;
+  --color-bg-rgb:        0, 17, 44;
 
   /* z-indexレイヤー（魚の4レイヤーは1枚の Canvas 内で描き分ける） */
   --z-caustics:    0;

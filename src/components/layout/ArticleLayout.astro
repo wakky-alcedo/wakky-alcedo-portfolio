@@ -89,14 +89,14 @@ const listPage = {
 }
 
 .article--works .article__tag {
-  background: rgba(0, 99, 170, 0.4);
-  border: 1px solid rgba(104, 206, 214, 0.3);
+  background: rgba(var(--color-primary-rgb), 0.4);
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.3);
   color: var(--color-secondary);
 }
 
 .article--blog .article__tag {
-  background: rgba(255, 161, 0, 0.15);
-  border: 1px solid rgba(255, 161, 0, 0.3);
+  background: rgba(var(--color-accent-rgb), 0.15);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.3);
   color: var(--color-accent);
 }
 
@@ -127,7 +127,7 @@ const listPage = {
 .prose :global(li) { margin-bottom: 0.25rem; }
 .prose :global(a) { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; }
 .prose :global(a:hover) { opacity: 0.8; }
-.prose :global(code) { background: rgba(104,206,214,0.1); border-radius: 4px; padding: 0.1em 0.3em; font-size: 0.9em; }
+.prose :global(code) { background: rgba(var(--color-secondary-rgb),0.1); border-radius: 4px; padding: 0.1em 0.3em; font-size: 0.9em; }
 
 .back-link {
   display: inline-block;

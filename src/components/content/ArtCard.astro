@@ -36,7 +36,7 @@ const { file, title } = Astro.props;
 
 <style>
 .art-card {
-  border: 1px solid rgba(104, 206, 214, 0.2);
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.2);
   border-radius: 12px;
   overflow: hidden;
   background: rgba(0, 30, 60, 0.3);
@@ -45,7 +45,7 @@ const { file, title } = Astro.props;
 }
 
 .art-card:hover {
-  border-color: rgba(104, 206, 214, 0.5);
+  border-color: rgba(var(--color-secondary-rgb), 0.5);
   transform: translateY(-2px);
 }
 
@@ -93,7 +93,7 @@ const { file, title } = Astro.props;
 .art-card__play-icon {
   font-size: 2.5rem;
   color: #fff;
-  text-shadow: 0 0 20px rgba(104, 206, 214, 0.8);
+  text-shadow: 0 0 20px rgba(var(--color-secondary-rgb), 0.8);
 }
 
 .art-card__footer {
@@ -145,7 +145,7 @@ function ensureModal() {
     #art-modal { position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center; }
     #art-modal[hidden] { display:none; }
     .art-modal__backdrop { position:absolute;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px); }
-    .art-modal__container { position:relative;width:min(900px,95vw);max-height:95vh;background:#06080f;border:1px solid rgba(104,206,214,0.3);border-radius:16px;overflow:hidden;display:flex;flex-direction:column; }
+    .art-modal__container { position:relative;width:min(900px,95vw);max-height:95vh;background:#06080f;border:1px solid rgba(var(--color-secondary-rgb),0.3);border-radius:16px;overflow:hidden;display:flex;flex-direction:column; }
     .art-modal__header { display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1.25rem;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0; }
     .art-modal__title { font-size:0.9rem;color:var(--color-secondary);font-weight:600; }
     .art-modal__close { background:none;border:none;color:rgba(255,255,255,0.6);font-size:1.1rem;cursor:pointer;padding:0.25rem 0.5rem;border-radius:6px;transition:background 0.15s,color 0.15s; }

@@ -1,10 +1,6 @@
 ---
+import PageLayout from '../components/layout/PageLayout.astro';
 import { Image } from 'astro:assets';
-import BaseLayout from '../components/layout/BaseLayout.astro';
-import Header from '../components/layout/Header.astro';
-import Footer from '../components/layout/Footer.astro';
-import SectionTitle from '../components/common/SectionTitle.astro';
-import BackButton from '../components/common/BackButton.astro';
 import profilePicture from '../assets/images/profile_picture.jpg';
 import wakkyAlcedoIcon from '../assets/images/wakky_alcedo_icon.jpg';
 import EmailReveal from '../components/common/EmailReveal.astro';
@@ -25,156 +21,146 @@ const certifications = [
 const links = Object.values(SOCIAL);
 ---
 
-<BaseLayout title="About" description="Wakky-Alcedo のプロフィール">
-  <Header />
-  <main class="page-main">
-    <div class="page-container">
-      <BackButton href="/" label="トップへ戻る" />
-      <SectionTitle title="About" subtitle="自己紹介" />
+<PageLayout title="About" description="Wakky-Alcedo のプロフィール" subtitle="自己紹介" width="medium">
 
-      <div class="about-profile">
-        <div class="about-profile__identity">
-          <div class="about-profile__photo-wrap">
-            <Image
-              src={profilePicture}
-              alt="プロフィール写真"
-              width={200}
-              height={200}
-              class="about-profile__photo about-profile__photo--default"
-            />
-            <Image
-              src={wakkyAlcedoIcon}
-              alt="Wakky Alcedo アイコン"
-              width={200}
-              height={200}
-              class="about-profile__photo about-profile__photo--hover"
-            />
-          </div>
-          <h2 class="about-profile__name">
-            <span class="about-profile__name-text about-profile__name-text--default">立脇 拓</span>
-            <span class="about-profile__name-text about-profile__name-text--hover">Wakky Alcedo</span>
-          </h2>
-        </div>
+  <div class="about-profile">
+    <div class="about-profile__identity">
+      <div class="about-profile__photo-wrap">
+        <Image
+          src={profilePicture}
+          alt="プロフィール写真"
+          width={200}
+          height={200}
+          class="about-profile__photo about-profile__photo--default"
+        />
+        <Image
+          src={wakkyAlcedoIcon}
+          alt="Wakky Alcedo アイコン"
+          width={200}
+          height={200}
+          class="about-profile__photo about-profile__photo--hover"
+        />
+      </div>
+      <h2 class="about-profile__name">
+        <span class="about-profile__name-text about-profile__name-text--default">立脇 拓</span>
+        <span class="about-profile__name-text about-profile__name-text--hover">Wakky Alcedo</span>
+      </h2>
+    </div>
 
-        <div class="about-profile__bio">
-          <p>小中，高専，大学と，一貫してものづくりをやってきました．手を動かして何かを作ることと，イベントの企画運営が好きです。発明考案展出展，高専ロボコン，全国ロボコン交流会幹事，商品開発インターン，受託開発アルバイト，画像認識&ロボット制御インターン，文化祭の企画・製作・運営などをしてきました。</p>
+    <div class="about-profile__bio">
+      <p>小中，高専，大学と，一貫してものづくりをやってきました．手を動かして何かを作ることと，イベントの企画運営が好きです。発明考案展出展，高専ロボコン，全国ロボコン交流会幹事，商品開発インターン，受託開発アルバイト，画像認識&ロボット制御インターン，文化祭の企画・製作・運営などをしてきました。</p>
 
-          <div class="about-bio__quote">
-            <p class="about-bio__quote-title">「まだ見たことのないものを作りたい」</p>
-            <p>大学の学園祭で，子どもたち向けのリズムゲームやロボット体験企画を主催しています。「まだ誰も見たことがないものを」をコンセプトに，また，製作するゲームはすべてタンジブルなものです。スマホゲームなど，ディスプレイ上のゲームに慣れ親しんだ子どもたちに，あえて体を動かすフィジカルなゲームを体験してほしいという思いからです。子どもたちが，すごく楽しそうにいきいきと遊んでくれるのを見ると，企画してよかったなと思います。</p>
-          </div>
-
-          <div class="about-bio__quote">
-            <p class="about-bio__quote-title">「不満があるなら，自分で作ればいいじゃない」</p>
-            <p>例えば，</p>
-            <ul>
-              <li>照明やエアコンの自動化</li>
-              <li>自分用アプリ（ToDo管理，習慣管理，PC使用時間可視化）の開発</li>
-              <li>3Dプリンタによる蛇口のノブや靴棚の自作</li>
-            </ul>
-            <p>など，身の回りの自動化や便利グッズを自作しています。</p>
-            <ul>
-              <li><a href="https://alcedoworks.com/works/2026-alcedo-personal-app/" target="_blank" rel="noopener noreferrer">自分用アプリ「Alcedo Personal App」(作品ページへ飛びます)</a></li>
-            </ul>
-          </div>
-
-          <div class="about-bio__quote">
-            <p class="about-bio__quote-title">「とりあえずポチる」</p>
-            <p>あのとき挑戦しておけばよかったという後悔はしたくないと思い，フットワーク軽く生きています。九州-群馬100km自転車旅をしたり，トライアスロンに参加したり，etc.</p>
-            <ul>
-              <li><a href="https://www.instagram.com/stories/highlights/18061523467329284/" target="_blank" rel="noopener noreferrer">九州-群馬自転車旅の様子(Instagramに飛びます)</a></li>
-              <li><a href="https://note.com/wakkyalcedo/n/n3cac58ecbdc4" target="_blank" rel="noopener noreferrer">トライアスロン参戦記</a></li>
-            </ul>
-          </div>
-        </div>
+      <div class="about-bio__quote">
+        <p class="about-bio__quote-title">「まだ見たことのないものを作りたい」</p>
+        <p>大学の学園祭で，子どもたち向けのリズムゲームやロボット体験企画を主催しています。「まだ誰も見たことがないものを」をコンセプトに，また，製作するゲームはすべてタンジブルなものです。スマホゲームなど，ディスプレイ上のゲームに慣れ親しんだ子どもたちに，あえて体を動かすフィジカルなゲームを体験してほしいという思いからです。子どもたちが，すごく楽しそうにいきいきと遊んでくれるのを見ると，企画してよかったなと思います。</p>
       </div>
 
-      <section class="about-section">
-        <h2 class="about-section__title">Skills</h2>
-        <div class="skills-detail">
-          <div class="skills-detail__group">
-            <h3 class="skills-detail__heading">組み込み制御</h3>
-            <p class="skills-detail__intro">メインスキルです。</p>
-            <ul>
-              <li><strong>STM32</strong>（CubeIDE or VSCode PlatformIO）：ロボコンや高専文化祭にて，STM32のCubeIDEを用いた組み込み制御を担当</li>
-              <li><strong>ESP32</strong>（VSCode PlatformIO、Arduinoベース）：趣味のIoT機器開発、およびアルバイト先で使用</li>
-              <li><strong>Raspberry Pi</strong>：趣味のIoT機器開発などで使用</li>
-              <li><strong>ROS2</strong>：アルバイトで7か月ほど使っていました。</li>
-            </ul>
-          </div>
-
-          <div class="skills-detail__group">
-            <h3 class="skills-detail__heading">機械設計等</h3>
-            <p class="skills-detail__intro">機械専攻なのと，趣味で色々作っているので，一通りはできます。</p>
-            <ul>
-              <li>2DCAD: <strong>jw_cad</strong>（約5年）</li>
-              <li>3DCAD: <strong>SOLIDWORKS</strong>（約8年），<strong>Fusion360</strong>（約1年），<strong>Inventor</strong>（約1年）</li>
-              <li>my <strong>3Dプリンタ</strong>: Artillery Sidewinder-X1(2020購入), Bambu Lab A1 mini(2025購入)</li>
-            </ul>
-          </div>
-
-          <div class="skills-detail__group">
-            <h3 class="skills-detail__heading">プログラム言語</h3>
-            <ul>
-              <li><strong>C/C++</strong>：メイン言語，組み込みなどで8年くらいの付き合いです</li>
-              <li><strong>Python</strong>：たまに...</li>
-              <li>その他，Matlab，Excel VBA，GoogleAppScriptなど経験あり</li>
-            </ul>
-          </div>
-
-          <div class="skills-detail__group">
-            <h3 class="skills-detail__heading">その他</h3>
-            <ul>
-              <li><strong>YOLO</strong>：アルバイトで7か月ほどやっていました。</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section class="about-section">
-        <h2 class="about-section__title">Timeline</h2>
-        <ol class="timeline">
-          {timeline.map(item => (
-            <li class="timeline__item">
-              <span class="timeline__year">{item.date}</span>
-              <span class="timeline__event">{item.event}</span>
-            </li>
-          ))}
-        </ol>
-
-        <div class="about-section__sub">
-          <h3 class="about-section__sub-title">Certification</h3>
-          <ul class="certification-list">
-            {certifications.map(cert => (
-              <li>{cert}</li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section class="about-section">
-        <h2 class="about-section__title">Link</h2>
-        <ul class="link-list">
-          <li class="link-list__item">
-            <span class="link-list__label">Email</span>
-            <EmailReveal class="link-list__email">クリックして表示</EmailReveal>
-          </li>
-          {links.map(link => (
-            <li class="link-list__item">
-              <span class="link-list__label">{link.label}</span>
-              <a href={link.href} target="_blank" rel="noopener noreferrer">{link.value}</a>
-            </li>
-          ))}
+      <div class="about-bio__quote">
+        <p class="about-bio__quote-title">「不満があるなら，自分で作ればいいじゃない」</p>
+        <p>例えば，</p>
+        <ul>
+          <li>照明やエアコンの自動化</li>
+          <li>自分用アプリ（ToDo管理，習慣管理，PC使用時間可視化）の開発</li>
+          <li>3Dプリンタによる蛇口のノブや靴棚の自作</li>
         </ul>
-      </section>
+        <p>など，身の回りの自動化や便利グッズを自作しています。</p>
+        <ul>
+          <li><a href="https://alcedoworks.com/works/2026-alcedo-personal-app/" target="_blank" rel="noopener noreferrer">自分用アプリ「Alcedo Personal App」(作品ページへ飛びます)</a></li>
+        </ul>
+      </div>
+
+      <div class="about-bio__quote">
+        <p class="about-bio__quote-title">「とりあえずポチる」</p>
+        <p>あのとき挑戦しておけばよかったという後悔はしたくないと思い，フットワーク軽く生きています。九州-群馬100km自転車旅をしたり，トライアスロンに参加したり，etc.</p>
+        <ul>
+          <li><a href="https://www.instagram.com/stories/highlights/18061523467329284/" target="_blank" rel="noopener noreferrer">九州-群馬自転車旅の様子(Instagramに飛びます)</a></li>
+          <li><a href="https://note.com/wakkyalcedo/n/n3cac58ecbdc4" target="_blank" rel="noopener noreferrer">トライアスロン参戦記</a></li>
+        </ul>
+      </div>
     </div>
-  </main>
-  <Footer />
-</BaseLayout>
+  </div>
+
+  <section class="about-section">
+    <h2 class="about-section__title">Skills</h2>
+    <div class="skills-detail">
+      <div class="skills-detail__group">
+        <h3 class="skills-detail__heading">組み込み制御</h3>
+        <p class="skills-detail__intro">メインスキルです。</p>
+        <ul>
+          <li><strong>STM32</strong>（CubeIDE or VSCode PlatformIO）：ロボコンや高専文化祭にて，STM32のCubeIDEを用いた組み込み制御を担当</li>
+          <li><strong>ESP32</strong>（VSCode PlatformIO、Arduinoベース）：趣味のIoT機器開発、およびアルバイト先で使用</li>
+          <li><strong>Raspberry Pi</strong>：趣味のIoT機器開発などで使用</li>
+          <li><strong>ROS2</strong>：アルバイトで7か月ほど使っていました。</li>
+        </ul>
+      </div>
+
+      <div class="skills-detail__group">
+        <h3 class="skills-detail__heading">機械設計等</h3>
+        <p class="skills-detail__intro">機械専攻なのと，趣味で色々作っているので，一通りはできます。</p>
+        <ul>
+          <li>2DCAD: <strong>jw_cad</strong>（約5年）</li>
+          <li>3DCAD: <strong>SOLIDWORKS</strong>（約8年），<strong>Fusion360</strong>（約1年），<strong>Inventor</strong>（約1年）</li>
+          <li>my <strong>3Dプリンタ</strong>: Artillery Sidewinder-X1(2020購入), Bambu Lab A1 mini(2025購入)</li>
+        </ul>
+      </div>
+
+      <div class="skills-detail__group">
+        <h3 class="skills-detail__heading">プログラム言語</h3>
+        <ul>
+          <li><strong>C/C++</strong>：メイン言語，組み込みなどで8年くらいの付き合いです</li>
+          <li><strong>Python</strong>：たまに...</li>
+          <li>その他，Matlab，Excel VBA，GoogleAppScriptなど経験あり</li>
+        </ul>
+      </div>
+
+      <div class="skills-detail__group">
+        <h3 class="skills-detail__heading">その他</h3>
+        <ul>
+          <li><strong>YOLO</strong>：アルバイトで7か月ほどやっていました。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="about-section">
+    <h2 class="about-section__title">Timeline</h2>
+    <ol class="timeline">
+      {timeline.map(item => (
+        <li class="timeline__item">
+          <span class="timeline__year">{item.date}</span>
+          <span class="timeline__event">{item.event}</span>
+        </li>
+      ))}
+    </ol>
+
+    <div class="about-section__sub">
+      <h3 class="about-section__sub-title">Certification</h3>
+      <ul class="certification-list">
+        {certifications.map(cert => (
+          <li>{cert}</li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="about-section">
+    <h2 class="about-section__title">Link</h2>
+    <ul class="link-list">
+      <li class="link-list__item">
+        <span class="link-list__label">Email</span>
+        <EmailReveal class="link-list__email">クリックして表示</EmailReveal>
+      </li>
+      {links.map(link => (
+        <li class="link-list__item">
+          <span class="link-list__label">{link.label}</span>
+          <a href={link.href} target="_blank" rel="noopener noreferrer">{link.value}</a>
+        </li>
+      ))}
+    </ul>
+  </section>
+</PageLayout>
 
 <style>
-.page-main { padding-top: 80px; min-height: 100vh; }
-.page-container { max-width: 800px; margin: 0 auto; padding: 4rem 2rem; }
 
 .about-profile {
   display: flex;
@@ -248,8 +234,8 @@ const links = Object.values(SOCIAL);
 .about-bio__quote {
   margin: 1.25rem 0;
   padding: 1rem 1.25rem;
-  background: rgba(0, 99, 170, 0.1);
-  border: 1px solid rgba(104, 206, 214, 0.2);
+  background: rgba(var(--color-primary-rgb), 0.1);
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.2);
   border-radius: 10px;
 }
 
@@ -280,7 +266,7 @@ const links = Object.values(SOCIAL);
   color: var(--color-secondary);
   margin-bottom: 1.25rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(104, 206, 214, 0.2);
+  border-bottom: 1px solid rgba(var(--color-secondary-rgb), 0.2);
 }
 
 .skills-detail__group {
@@ -307,7 +293,7 @@ const links = Object.values(SOCIAL);
 
 .timeline {
   list-style: none;
-  border-left: 2px solid rgba(104, 206, 214, 0.3);
+  border-left: 2px solid rgba(var(--color-secondary-rgb), 0.3);
   padding-left: 1.5rem;
   display: flex;
   flex-direction: column;

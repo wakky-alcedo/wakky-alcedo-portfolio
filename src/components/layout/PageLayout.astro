@@ -1,0 +1,39 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Header from './Header.astro';
+import Footer from './Footer.astro';
+import BackButton from '../common/BackButton.astro';
+import SectionTitle from '../common/SectionTitle.astro';
+
+interface Props {
+  /** <title> と見出し */
+  title: string;
+  description: string;
+  subtitle: string;
+  /** 本文の最大幅: narrow=600px / medium=800px / wide=1200px */
+  width: 'narrow' | 'medium' | 'wide';
+}
+
+const { title, description, subtitle, width } = Astro.props;
+---
+
+<!-- トップ以外の一覧・固定ページ共通の外枠（記事ページは ArticleLayout） -->
+<BaseLayout title={title} description={description}>
+  <Header />
+  <main class="page-main">
+    <div class:list={['page-container', `page-container--${width}`]}>
+      <BackButton href="/" label="トップへ戻る" />
+      <SectionTitle title={title} subtitle={subtitle} />
+      <slot />
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+.page-main { padding-top: 80px; min-height: 100vh; }
+.page-container { margin: 0 auto; padding: 4rem 2rem; }
+.page-container--narrow { max-width: 600px; }
+.page-container--medium { max-width: 800px; }
+.page-container--wide { max-width: 1200px; }
+</style>

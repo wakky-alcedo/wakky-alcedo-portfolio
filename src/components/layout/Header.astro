@@ -58,9 +58,9 @@ nav?.addEventListener('click', (event) => {
   left: 0;
   right: 0;
   z-index: var(--z-header);
-  background: rgba(0, 17, 44, 0.85);
+  background: rgba(var(--color-bg-rgb), 0.85);
   backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(104, 206, 214, 0.15);
+  border-bottom: 1px solid rgba(var(--color-secondary-rgb), 0.15);
 }
 
 .header__inner {
@@ -137,9 +137,9 @@ nav?.addEventListener('click', (event) => {
     top: 64px;
     left: 0;
     right: 0;
-    background: rgba(0, 17, 44, 0.95);
+    background: rgba(var(--color-bg-rgb), 0.95);
     backdrop-filter: blur(8px);
-    border-bottom: 1px solid rgba(104, 206, 214, 0.15);
+    border-bottom: 1px solid rgba(var(--color-secondary-rgb), 0.15);
   }
 
   .header__nav.is-open {

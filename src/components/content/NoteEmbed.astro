@@ -48,18 +48,18 @@ try {
   align-items: stretch;
   gap: 0;
   margin: 1.5rem auto;
-  border: 1px solid rgba(104, 206, 214, 0.2);
+  border: 1px solid rgba(var(--color-secondary-rgb), 0.2);
   border-radius: 10px;
   overflow: hidden;
-  background: rgba(0, 99, 170, 0.08);
+  background: rgba(var(--color-primary-rgb), 0.08);
   text-decoration: none;
   transition: background 0.2s, border-color 0.2s;
   max-width: 560px;
 }
 
 .note-card:hover {
-  background: rgba(0, 99, 170, 0.15);
-  border-color: rgba(104, 206, 214, 0.4);
+  background: rgba(var(--color-primary-rgb), 0.15);
+  border-color: rgba(var(--color-secondary-rgb), 0.4);
 }
 
 .note-card__thumb {
