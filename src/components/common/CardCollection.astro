@@ -1,8 +1,9 @@
 ---
-interface Props {
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends HTMLAttributes<'div'> {
   /** スマホ（〜640px）での並べ方: grid=1カラムで縦に積む / row=横スワイプ */
   mobile: 'grid' | 'row';
-  class?: string;
 }
 
 // rest には親の scoped スタイル用属性（data-astro-cid-*）が入るのでルート要素に渡す

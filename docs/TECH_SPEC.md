@@ -12,6 +12,7 @@
 | コンテンツ拡張 | **@astrojs/mdx** | Works/Blog記事内でAstroコンポーネント（画像レイアウト等）を使用可能にする |
 | ビルドツール | **Vite**（Astro内蔵） | 高速 HMR、アセット最適化 |
 | パッケージマネージャ | **npm** | `package-lock.json` を必ずコミットして依存を固定する |
+| 型チェック | **@astrojs/check** | `npm run check`（`astro check`）で .astro / .ts の型エラーを検出。変更後はビルド前に実行する |
 
 ---
 

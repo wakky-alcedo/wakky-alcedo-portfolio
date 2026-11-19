@@ -12,7 +12,7 @@
 import { chromium } from 'playwright';
 import { PDFDocument } from 'pdf-lib';
 import { readdir, readFile } from 'fs/promises';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
 import { basename, resolve } from 'path';
 import { execSync, spawn } from 'child_process';
 import { createServer } from 'net';
