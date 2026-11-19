@@ -1,10 +1,8 @@
 import { isMobile } from './device';
-
-const FRAME_BUDGET_MS = 16;
-const BAD_STREAK_LIMIT = 30; // 約0.5秒分の連続コマ落ちでliteMode発動
+import { ADAPTIVE_QUALITY } from '../../config/quality';
 
 /**
- * フレームレートを監視し、コマ落ちが連続したら liteMode に切り替える。
+ * フレーム間隔を監視し、コマ落ちが連続したら liteMode に切り替える。
  * スマホは起動直後から liteMode。一度 liteMode になったら自動復帰はしない。
  */
 export class AdaptiveQuality {
@@ -15,9 +13,9 @@ export class AdaptiveQuality {
   recordFrame(durationMs: number): void {
     if (this.lite) return;
 
-    if (durationMs > FRAME_BUDGET_MS) {
+    if (durationMs > ADAPTIVE_QUALITY.frameBudgetMs) {
       this.badStreak += 1;
-      if (this.badStreak >= BAD_STREAK_LIMIT) {
+      if (this.badStreak >= ADAPTIVE_QUALITY.badStreakLimit) {
         this.lite = true;
         this.listeners.forEach((cb) => cb(true));
       }
