@@ -89,7 +89,7 @@ export const CAUSTICS = {
   wrapMargin: 0.25,
   tiltParallaxPx: 12,
   /** 0=cyan, 1=blue と、cyan を選ぶ確率 */
-  colors: ['#68CED6', '#0063AA'],
+  colors: ['#5EBFC6', '#004F71'],
   primaryColorChance: 0.7,
   /** 放射グラデーションの中間点（位置, 不透明度） */
   gradientMidStop: [0.4, 0.55],
@@ -113,7 +113,7 @@ export const RIPPLE = {
   /** 飛び込みイベントに位置がないときの横位置（canvas 幅に対する比） */
   defaultDiveX: 0.7,
   /** 線色（RGB） */
-  colorRgb: '104, 206, 214',
+  colorRgb: '94, 191, 198',
   /** reduced-motion 時の静的グラデーション上端の不透明度 */
   staticAlpha: 0.25,
 } as const;

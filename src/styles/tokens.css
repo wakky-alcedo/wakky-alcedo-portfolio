@@ -1,17 +1,17 @@
 /* tokens.css — デザイントークン専用。アニメーション値には使わない */
 :root {
   /* カラーパレット */
-  --color-primary:    #0063AA;
-  --color-secondary:  #68CED6;
-  --color-accent:     #FFA100;
-  --color-bg:         #00112C;
-  --color-text:       #F9FFFD;
+  --color-primary:    #004F71;
+  --color-secondary:  #5EBFC6;
+  --color-accent:     #FFA200;
+  --color-bg:         #080B26;
+  --color-text:       #DCE0DF;
 
   /* 透明度付きで使うための RGB 成分（例: rgba(var(--color-secondary-rgb), 0.3)） */
-  --color-primary-rgb:   0, 99, 170;
-  --color-secondary-rgb: 104, 206, 214;
-  --color-accent-rgb:    255, 161, 0;
-  --color-bg-rgb:        0, 17, 44;
+  --color-primary-rgb:   0, 79, 113;
+  --color-secondary-rgb: 94, 191, 198;
+  --color-accent-rgb:    255, 162, 0;
+  --color-bg-rgb:        8, 11, 38;
 
   /* z-indexレイヤー（魚の4レイヤーは1枚の Canvas 内で描き分ける） */
   --z-caustics:    0;
