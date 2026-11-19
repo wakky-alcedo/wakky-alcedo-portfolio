@@ -180,7 +180,7 @@
     </div>
 
     <script>
-      const TILT_MAX_GAMMA = 30;
+      import { normalizeGamma, requestOrientationPermission } from '../../scripts/utils/deviceOrientation';
 
       const elStatus    = document.getElementById('status')!;
       const elAlpha     = document.getElementById('val-alpha')!;
@@ -218,8 +218,7 @@
           elGamma.textContent    = fmt(e.gamma);
           elAbsolute.textContent = String(e.absolute);
 
-          const gamma = e.gamma ?? 0;
-          const tiltX = Math.max(-1, Math.min(1, gamma / TILT_MAX_GAMMA));
+          const tiltX = normalizeGamma(e.gamma);
           elTiltX.textContent = tiltX.toFixed(4);
 
           // バー: tiltX -1〜1 → left 0〜100%, fill from center(50%)
@@ -254,28 +253,16 @@
       }
 
       btnRequest.addEventListener('click', async () => {
-        if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
-          // iOS 13+
-          try {
-            const result = await (DeviceOrientationEvent as any).requestPermission();
-            if (result === 'granted') {
-              setStatus('granted');
-              btnRequest.disabled = true;
-              btnRequest.textContent = '許可済み';
-              startListening();
-            } else {
-              setStatus('denied');
-              btnRequest.textContent = '拒否されました（設定 → Safari → モーションを許可）';
-            }
-          } catch {
-            setStatus('denied');
-          }
-        } else {
-          // Android: 許可不要
+        // iOS 13+ は許可ダイアログ、Android は許可不要（requestOrientationPermission 内で判定）
+        const needsPrompt = typeof (DeviceOrientationEvent as any).requestPermission === 'function';
+        if (await requestOrientationPermission()) {
           setStatus('granted');
           btnRequest.disabled = true;
-          btnRequest.textContent = '許可済み（Android/自動）';
+          btnRequest.textContent = needsPrompt ? '許可済み' : '許可済み（Android/自動）';
           startListening();
+        } else {
+          setStatus('denied');
+          btnRequest.textContent = '拒否されました（設定 → Safari → モーションを許可）';
         }
       });
     </script>

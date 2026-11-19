@@ -1,15 +1,16 @@
 import { TILT } from '../../config/scene';
 
+/** 端末の左右傾き(gamma, 度)を -1〜1 に正規化する */
+export function normalizeGamma(gamma: number | null): number {
+  return Math.max(-1, Math.min(1, (gamma ?? 0) / TILT.maxGammaDeg));
+}
+
 /**
  * 端末の左右傾き(gamma)を-1〜1に正規化してコールバックに渡す。
  * Footerのトグルで`orientation:enabled`が発火した後に呼び出すこと。
  */
 export function onOrientationChange(callback: (tiltX: number) => void): () => void {
-  const handler = (event: DeviceOrientationEvent) => {
-    const gamma = event.gamma ?? 0;
-    const normalized = Math.max(-1, Math.min(1, gamma / TILT.maxGammaDeg));
-    callback(normalized);
-  };
+  const handler = (event: DeviceOrientationEvent) => callback(normalizeGamma(event.gamma));
   window.addEventListener('deviceorientation', handler);
   return () => window.removeEventListener('deviceorientation', handler);
 }
