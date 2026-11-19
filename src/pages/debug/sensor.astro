@@ -1,5 +1,7 @@
 ---
 // 管理者用隠しデバッグページ — どこからもリンクされない
+// BaseLayout を使わない単体ページなので、配色トークンだけ読み込む（リセット等の global.css は使わない）
+import '../../styles/tokens.css';
 ---
 
 <!doctype html>
@@ -13,8 +15,8 @@
       * { box-sizing: border-box; margin: 0; padding: 0; }
 
       body {
-        background: #00112C;
-        color: #F9FFFD;
+        background: var(--color-bg);
+        color: var(--color-text);
         font-family: 'Courier New', Courier, monospace;
         font-size: 16px;
         padding: 16px;
@@ -24,7 +26,7 @@
       h1 {
         font-size: 18px;
         margin-bottom: 16px;
-        color: #68CED6;
+        color: var(--color-secondary);
       }
 
       .section {
@@ -37,7 +39,7 @@
 
       .section-title {
         font-size: 12px;
-        color: #FFA100;
+        color: var(--color-accent);
         text-transform: uppercase;
         letter-spacing: 0.1em;
         margin-bottom: 8px;
@@ -52,7 +54,7 @@
       }
       .row:last-child { border-bottom: none; }
 
-      .label { color: #68CED6; font-size: 14px; }
+      .label { color: var(--color-secondary); font-size: 14px; }
       .value { font-size: 18px; font-weight: bold; min-width: 80px; text-align: right; }
 
       .status-pending  { color: #888; }
@@ -81,7 +83,7 @@
         position: absolute;
         top: 0;
         height: 100%;
-        background: #0063AA;
+        background: var(--color-primary);
         transition: none;
       }
       .bar-labels {
@@ -97,8 +99,8 @@
         padding: 14px;
         font-size: 16px;
         font-family: inherit;
-        background: #0063AA;
-        color: #F9FFFD;
+        background: var(--color-primary);
+        color: var(--color-text);
         border: none;
         border-radius: 8px;
         cursor: pointer;
@@ -115,7 +117,7 @@
       }
       .log-entry:last-child { border-bottom: none; }
 
-      .hz { color: #FFA100; font-size: 22px; font-weight: bold; }
+      .hz { color: var(--color-accent); font-size: 22px; font-weight: bold; }
     </style>
   </head>
   <body>
