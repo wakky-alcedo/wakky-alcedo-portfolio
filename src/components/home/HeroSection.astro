@@ -3,6 +3,7 @@ import { Image } from 'astro:assets';
 import kawasemiPerch from '../../assets/images/kawasemi_perch.png';
 import kawasemiDive from '../../assets/images/kawasemi_dive.png';
 import kawasemiFly from '../../assets/images/kawasemi_fly.png';
+import fish1 from '../../assets/images/fish_1.png';
 import bgDay from '../../assets/images/bg_day.png';
 import WaterSurface from './WaterSurface.astro';
 ---
@@ -59,6 +60,15 @@ import WaterSurface from './WaterSurface.astro';
         densities={[1, 2]}
         class="hero__bird-img hero__bird-img--fly"
         loading="eager"
+      />
+      <!-- アイドルの飛び込みで魚を捕まえたときだけ、くちばしにくわえて見せる -->
+      <Image
+        src={fish1}
+        alt=""
+        width={80}
+        densities={[1, 2]}
+        class="hero__bird-catch"
+        id="hero-kingfisher-catch"
       />
     </div>
   </div>
@@ -182,6 +192,18 @@ import WaterSurface from './WaterSurface.astro';
   position: absolute;
   inset: 0;
   opacity: 0;
+}
+
+/* くちばしの先（左28%・上20%付近）に魚の胴体の中央がくるよう、頭を外側に向けて手前に重ねる */
+.hero__bird-catch {
+  position: absolute;
+  left: 10%;
+  top: 12%;
+  width: 34%;
+  height: auto;
+  opacity: 0;
+  pointer-events: none;
+  transform: scaleX(-1) rotate(-10deg);
 }
 
 .hero__scroll-hint {

@@ -39,6 +39,7 @@ export class Kingfisher implements SceneModule {
     this.scrollTimeline?.scrollTrigger?.kill();
     this.scrollTimeline?.kill();
     this.idleTimeline?.kill();
+    this.hideCatch();
     window.clearTimeout(this.idleTimerId);
     document.removeEventListener('scroll', this.resetIdle);
     document.removeEventListener('pointermove', this.resetIdle);
@@ -84,6 +85,11 @@ export class Kingfisher implements SceneModule {
     window.dispatchEvent(new CustomEvent('kingfisher:dive', { detail: { x: KINGFISHER.diveXRatio } }));
   }
 
+  private hideCatch(): void {
+    const fish = document.getElementById('hero-kingfisher-catch');
+    if (fish) gsap.set(fish, { opacity: 0 });
+  }
+
   private resetIdle = (): void => {
     window.clearTimeout(this.idleTimerId);
     const bird = document.getElementById('hero-kingfisher');
@@ -104,12 +110,15 @@ export class Kingfisher implements SceneModule {
 
     const cfg = KINGFISHER.idleDive;
     const caughtFish = Math.random() < cfg.catchChance;
+    const fish = document.getElementById('hero-kingfisher-catch');
 
-    this.idleTimeline = gsap.timeline({
+    const tl = gsap.timeline({
       onComplete: () => this.scheduleIdle(bird),
     })
       .to(bird, { ...cfg.dip, ease: 'power1.in' })
       .to(bird, { ...cfg.rise, ease: 'power2.out', onStart: () => this.dispatchDive() })
+      // 水面から出た瞬間に魚をくわえている
+      .set(fish, { opacity: caughtFish ? 1 : 0 }, '<')
       .to(bird, {
         y: 0,
         rotation: 0,
@@ -117,6 +126,12 @@ export class Kingfisher implements SceneModule {
         ease: 'bounce.out',
         delay: caughtFish ? cfg.catchDelay : 0,
       });
+
+    if (caughtFish && fish) {
+      tl.to(fish, { opacity: 0, duration: cfg.catchFade, delay: cfg.catchHold });
+    }
+
+    this.idleTimeline = tl;
   }
 }
 

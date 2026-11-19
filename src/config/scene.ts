@@ -142,6 +142,9 @@ export const KINGFISHER = {
     /** 魚を捕まえた演出にする確率と、そのときの着地の遅れ */
     catchChance: 0.4,
     catchDelay: 0.15,
+    /** 捕まえた魚を見せる時間（着地後）と、消えるまでの時間 */
+    catchHold: 1.5,
+    catchFade: 0.4,
   },
 } as const;
 
