@@ -1,8 +1,8 @@
 ---
-title: 高専ロボコン2021　群馬高専Aチーム「DOT]
-description: (執筆中)
+title: 高専ロボコン2021 群馬高専Aチーム「DOT」
+description: 「圧倒的なパワー」で巨大だるま落としに挑み，全国大会に出場したチームでリーダーを務めました．
 date: 2021-06-25
-thumbnail: ../../assets/images/thumbnail_work1.webp
+thumbnail: ../../assets/images/2021-robocon-presen-1.jpg
 tags:
   - チーム開発
   - ロボット
@@ -14,53 +14,66 @@ unpublished: true
 import CustomImage from '../../components/content/CustomImage.astro';
 import FlexRow from '../../components/content/FlexRow.astro';
 import YouTube from '../../components/content/YouTube.astro';
+import img_20260818_064248 from '../../assets/images/20260818_064248.jpg';
+import imgRobots from '../../assets/images/2021-robocon-presen-5.jpg';
 
 ## 概要
 
+アイデア対決・全国高等専門学校ロボットコンテスト（高専ロボコン）は，毎年異なる競技課題に対し，全国の高専生が創意工夫を凝らしたロボットで競うコンテストです．
+2021年の課題は「超絶機巧（すごロボ）」．端的に言えば「『すごい！技のロボット』を制作して，感動を巻き起こしてほしい」という，何でもありのルールでした．
 
-アイデア対決・全国高等専門学校ロボットコンテスト（高専ロボコン）は，毎年異なる競技課題に対し，全国の高専生が創意工夫を凝らしたロボットで競うロボットコンテストである．
-この年の競技課題は，「超絶機巧（すごロボ）」．端的に言えば，「『すごい！技のロボット』を制作して、感動を巻き起してほしい」という何でもありのルールだ．
-[第34回全国大会レポート｜全国高専ロボコン｜Honda](https://global.honda/jp/philanthropy/contents/next-generation/robocon/tournament/2021/report/)
-これについて，我々群馬高専Aチームは，凄さとは，
-「圧倒的なパワー！！！」
+私たち群馬高専Aチームは，すごさとは<strong>「圧倒的なパワー」</strong>であると定義し，それを観客に最も伝えやすい見せ方として<strong>「巨大だるま落とし」</strong>を考えました．
 
-import img_20260818_064248 from '../../assets/images/20260818_064248.jpg';
+<CustomImage src={img_20260818_064248} alt="開発中に破損したシャフト・カップリング・アルミフレーム・ボルトのコラージュ" width="100%" />
 
-<CustomImage src={img_20260818_064248} alt="" width={100} caption="" />
-
-であると定義し，それを最も観客に伝えやすい見せ方として「巨大だるま落とし」を考えました．
-
-ロボットは2台
-1台目は，横方向に回転するハンマーを搭載する”ローリングハンマー"です．
-フライホイールと呼ばれる回転するおもりにエネルギーを蓄え、それを一気に開放することによって、だるま落としを行います。
-2台目は，縦方向に回転するハンマーを搭載する"ビルダゴルファー”です．
-このように重りのついたハンマーをエアシリンダを用いて振り下ろすことで、だるま落としを行います。
-2台目には，ハンマーに加えて，駒を積む機構も搭載しています．
-
-見てもらう
-
-企画の概要
 - 制作期間：2021/05-10
 - 担当範囲：チームリーダー，制御ライブラリ開発
+- 結果：関東甲信越地区大会 特別賞（セメダイン株式会社）・全国大会出場推薦，全国大会 第12位
 
-`https://www.youtube.com/watch?v=DDOYuZO9zJw`
+まずはチーム紹介VTRをご覧ください．
+
 <YouTube id="DDOYuZO9zJw" />
-## 開発の思いor背景・課題
 
+## ロボット
+
+ロボットは2台です．
+
+- **ローリングハンマー**：横方向に回転するハンマーを搭載しています．フライホイール（回転するおもり）にエネルギーを蓄え，それを一気に開放してだるま落としを行います．
+- **ビルダゴルファー**：縦方向に回転するハンマーを搭載しています．おもりのついたハンマーをエアシリンダで振り下ろしてだるま落としを行います．ハンマーに加えて，駒を積む機構も搭載しています．
+
+<CustomImage src={imgRobots} alt="横回転ハンマーのローリングハンマー（左）と縦回転ハンマーのビルダゴルファー（右）" />
+
+## 開発の思い・背景
+
+{/* TODO: なぜ「パワー」を選んだか／リーダーとして意識したこと */}
 
 ## 製作
 
 ### 使用ツール・環境
 
+{/* TODO: CAD・マイコン・言語など */}
+
 ### こだわり
+
+{/* TODO: 制御ライブラリで工夫したこと など */}
+
+### 壊れ続けた部品たち
+
+パワーを追求した結果，開発中は多くの部品が壊れました．本番の1時間前にも部品を作り直すことになりました．
 
 ## 成果・実績
 
-## 今後の課題or今後の展望
+- **関東甲信越地区大会**（2021/10/31，オンライン開催）：校内の第二体育館から出場し，5段すべてのだるま落としに成功．特別賞（セメダイン株式会社）を受賞し，全国大会出場推薦チームに選ばれました．
+- **全国大会**（2021/11/28，両国国技館）：受賞は逃したものの，第12位．
+
+## 今後の課題・展望
+
+{/* TODO: 振り返り（壊れた部品から学んだ設計の反省など） */}
 
 ## 関連リンク
-- [【高専ロボコン2021全国大会】群馬高専　チーム紹介ＶＴＲ/ ROBOCON Official [robot contest] - YouTube](https://www.youtube.com/watch?v=DDOYuZO9zJw)
-- [高専ロボコン2021│群馬工業高等専門学校後援会](https://gunma-kousen.com/robokon_2021/
+- [【高専ロボコン2021全国大会】群馬高専 チーム紹介VTR - YouTube](https://www.youtube.com/watch?v=DDOYuZO9zJw)
+- [高専ロボコン2021 | 群馬工業高等専門学校後援会](https://gunma-kousen.com/robokon_2021/)
 - 群馬高専HP
-	- [高専ロボコン2021関東甲信越地区大会 | 群馬工業高等専門学校](https://www.gunma-ct.ac.jp/schoollife/event/robocon/2021tiku/)
-	- [高専ロボコン2021全国大会 | 群馬工業高等専門学校](https://www.gunma-ct.ac.jp/schoollife/event/robocon/2021-zenkoku/)
+  - [高専ロボコン2021関東甲信越地区大会 | 群馬工業高等専門学校](https://www.gunma-ct.ac.jp/schoollife/event/robocon/2021tiku/)
+  - [高専ロボコン2021全国大会 | 群馬工業高等専門学校](https://www.gunma-ct.ac.jp/schoollife/event/robocon/2021-zenkoku/)
+- [第34回全国大会レポート | 全国高専ロボコン | Honda](https://global.honda/jp/philanthropy/contents/next-generation/robocon/tournament/2021/report/)
