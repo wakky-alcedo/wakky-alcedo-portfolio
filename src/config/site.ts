@@ -9,6 +9,7 @@ export const SOCIAL = {
   note:      { label: 'note', value: 'note.com/wakkyalcedo', href: 'https://note.com/wakkyalcedo' },
   qiita:     { label: 'Qiita', value: 'qiita.com/wakky-alcedo', href: 'https://qiita.com/wakky-alcedo' },
   lab:       { label: '大学の所属研究室', value: 'Science Tokyo SDDL', href: 'http://www.sddl.mech.e.titech.ac.jp' },
+  arte:      { label: '中心メンバーのものづくり団体', value: '*ArTe', href: 'https://arte.alcedoworks.com' },
 } as const;
 
 /** スクレイピング対策で Base64 化したメールアドレス（クリック時に atob で復元） */
