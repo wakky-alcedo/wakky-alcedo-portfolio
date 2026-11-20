@@ -1,10 +1,10 @@
 ---
 import PageLayout from '../../components/layout/PageLayout.astro';
-import { getCollection } from 'astro:content';
+import { getVisibleEntries } from '../../lib/collections';
 import CardCollection from '../../components/common/CardCollection.astro';
 import EntryCard from '../../components/common/EntryCard.astro';
 
-const posts = (await getCollection('blog', ({ data }) => !data.unpublished))
+const posts = (await getVisibleEntries('blog'))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 ---
 

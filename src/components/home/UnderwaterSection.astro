@@ -1,5 +1,5 @@
 ---
-import { getCollection } from 'astro:content';
+import { getVisibleEntries } from '../../lib/collections';
 import { Image } from 'astro:assets';
 import SortableWorksGrid from '../works/SortableWorksGrid.astro';
 import CardCollection from '../common/CardCollection.astro';
@@ -10,9 +10,9 @@ import profilePicture from '../../assets/images/profile_picture.jpg';
 import EmailReveal from '../common/EmailReveal.astro';
 import { SOCIAL } from '../../config/site';
 
-const rawWorks = await getCollection('works', ({ data }) => !data.unpublished);
+const rawWorks = await getVisibleEntries('works');
 
-const allBlog = (await getCollection('blog', ({ data }) => !data.unpublished))
+const allBlog = (await getVisibleEntries('blog'))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 
 const skillTags = [

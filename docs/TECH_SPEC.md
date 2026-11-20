@@ -179,6 +179,8 @@ wakky-alcedo-portfolio/
 │   │   ├── scene.ts                 # トップページの演出パラメータ（Canvas・カワセミ）
 │   │   └── site.ts                  # SNSリンク・メールアドレス（全ページ共通）
 │   ├── content.config.ts            # コンテンツコレクションのzodスキーマ定義
+│   ├── lib/
+│   │   └── collections.ts           # 一覧・詳細ページに出すエントリの取得（unpublished の扱い）
 │   ├── content/
 │   │   ├── works/                   # 作品記事（YYYY-slug.mdx）
 │   │   └── blog/                    # ブログ記事（YYYYMM-slug.md / .mdx）
@@ -329,7 +331,7 @@ iOS 13+ では `requestPermission()` が必須（実装: `src/scripts/utils/devi
 | `thumbnail` | 必須 | 任意 | カードと記事ヒーローの画像。Blog で省略するとカードはグラデーションの仮画像 |
 | `tags` | 任意 | 任意 | 記事・カードのタグ |
 | `wip` | 任意 | 任意 | true でカード右上に WIP バッジを出して公開 |
-| `unpublished` | 任意 | 任意 | true で一覧・詳細ページ・PDF から除外 |
+| `unpublished` | 任意 | 任意 | true で build（本番）の一覧・詳細ページ・PDF から除外。`npm run dev` では「非公開」バッジ付きで表示する（`src/lib/collections.ts`） |
 | `featured` | 任意 | — | 大きいほど Featured 順で上位（同値は新しい順） |
 
 ---

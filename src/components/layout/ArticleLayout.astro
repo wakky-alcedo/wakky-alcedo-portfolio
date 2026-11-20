@@ -14,7 +14,7 @@ interface Props {
 }
 
 const { entry } = Astro.props;
-const { title, description, date, thumbnail, tags } = entry.data;
+const { title, description, date, thumbnail, tags, unpublished } = entry.data;
 const { Content } = await render(entry);
 const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -40,6 +40,7 @@ const listPage = {
           <ul class="article__tags">
             {tags.map((tag) => <li class="article__tag">{tag}</li>)}
           </ul>
+          {unpublished && <p class="article__unpublished">非公開（dev サーバーでのみ表示）</p>}
           <h1 class="article__title">{title}</h1>
           <time class="article__date" datetime={date.toISOString()}>{formattedDate}</time>
         </header>
@@ -91,6 +92,17 @@ const listPage = {
   color: var(--tag-text);
 }
 
+
+.article__unpublished {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.6rem;
+  border: 1px dashed var(--color-accent);
+  border-radius: 100px;
+  color: var(--color-accent);
+}
 
 .article__title {
   font-size: clamp(1.5rem, 4vw, 2.5rem);
