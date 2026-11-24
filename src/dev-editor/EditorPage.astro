@@ -157,7 +157,8 @@ const TOOLS: [string, string, string][] = [
   .ed-body .cm-editor.cm-focused { outline: none; }
   .ed-body .cm-scroller { font-family: inherit; }
   .ed-body .cm-content { font-family: inherit; line-height: 1.8; padding: 0 0 40vh; caret-color: var(--color-accent); }
-  .ed-body .cm-line { padding: 0; }
+  /* 行頭のカーソルがスクロール領域の端で切れないよう、左に少し余白を取る */
+  .ed-body .cm-line { padding: 0 2px 0 4px; }
   .ed-body .cm-cursor { border-left-color: var(--color-accent); }
   .ed-body .cm-selectionBackground, .ed-body .cm-focused .cm-selectionBackground { background: rgba(var(--color-secondary-rgb), 0.25) !important; }
   .ed-h { font-weight: 700; }
@@ -176,7 +177,8 @@ const TOOLS: [string, string, string][] = [
   .ed-dim { opacity: 0.45; font-size: 0.85em; }
   .ed-bullet { display: inline-block; width: 0.8em; color: var(--color-secondary); }
 
-  .ed-images { margin: 0.75rem 0; cursor: text; }
+  /* ブロックのウィジェットに上下の margin を付けると、CodeMirror の高さの計算がずれてクリック位置とカーソルが合わなくなるので padding で空ける */
+  .ed-images { padding: 0.75rem 0; cursor: text; }
   .ed-images--row { display: flex; gap: 1rem; }
   .ed-images--row .ed-image { flex: 1 1 0; min-width: 0; }
   .ed-image { margin: 0 auto; }
@@ -184,7 +186,7 @@ const TOOLS: [string, string, string][] = [
   .ed-image figcaption { text-align: center; font-size: 0.85rem; opacity: 0.7; margin-top: 0.4rem; }
   .ed-image--missing { padding: 1rem; border: 1px dashed var(--color-accent); border-radius: 8px; }
   .ed-image--missing::after { content: '画像が見つかりません: ' attr(data-src); color: var(--color-accent); font-size: 0.85rem; }
-  .ed-embed { margin: 0.75rem 0; }
+  .ed-embed { padding: 0.75rem 0; }
   .ed-embed__bar { font-size: 0.75rem; opacity: 0.6; padding: 0.2rem 0; cursor: text; }
   .ed-embed iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: none; border-radius: 8px; }
   .ed-embed__tweet { display: flex; justify-content: center; min-height: 3rem; }
@@ -201,7 +203,7 @@ const TOOLS: [string, string, string][] = [
   }
   .ed-toolbar button:hover { border-color: var(--color-accent); color: var(--color-accent); }
 
-  .ed-table-preview { margin: 0.75rem 0; overflow-x: auto; cursor: text; }
+  .ed-table-preview { padding: 0.75rem 0; overflow-x: auto; cursor: text; }
   .ed-table-preview table { border-collapse: collapse; width: 100%; font-size: 0.92rem; line-height: 1.6; overflow-wrap: anywhere; }
   .ed-table-preview th, .ed-table-preview td { border: 1px solid var(--line-strong); padding: 0.35rem 0.75rem; text-align: left; vertical-align: top; }
   .ed-table-preview th { background: var(--tag-bg); font-weight: 700; }
