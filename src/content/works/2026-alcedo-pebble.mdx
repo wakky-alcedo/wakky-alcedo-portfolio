@@ -11,11 +11,6 @@ wip: false
 unpublished: false
 featured: 0
 ---
-import CustomImage from '../../components/content/CustomImage.astro';
-import FlexRow from '../../components/content/FlexRow.astro';
-import imgA from '../../assets/images/20260616_050303.jpg';
-import imgB from '../../assets/images/20260616_050322.jpg';
-import img_20260616_061328 from '../../assets/images/20260616_061328.jpg';
 
 ## 概要
 1.28インチの円形タッチディスプレイを搭載した、キーホルダーとして日常的に持ち運べる小型デバイス「Alcedo Pebble (アルセド ぺブル)
@@ -46,24 +41,18 @@ import img_20260616_061328 from '../../assets/images/20260616_061328.jpg';
 
 また，組み立ては，磁石によってディスプレイを含む本体を，石の形状をした筐体内部に固定しており，激しく振ることで，分解し内部にアクセスできるようになる．これによってメンテナンス性が向上している．
 
-<FlexRow gap="15px">
-	<CustomImage src={imgA} alt="本体（バイブレーションモータ側）" caption="本体（バイブレーションモータ側）" />
-	<CustomImage src={imgB} alt="本体（usb側）" caption="本体（usb側）" />
-</FlexRow>
+![本体（バイブレーションモータ側）](../../assets/images/20260616_050303.jpg "本体（バイブレーションモータ側）")
+![本体（usb側）](../../assets/images/20260616_050322.jpg "本体（usb側）")
 
-<CustomImage src={img_20260616_061328} alt="筐体内側" width={350} caption="筐体内側" />
+![筐体内側|350](../../assets/images/20260616_061328.jpg "筐体内側")
 
 ### ソフト
 SquareLine Studio というUI作成ソフトを用いて製作した．
 画面をメイン画面である水上とメニュー画面である水中に分け，統一された世界観を作った．
 
-import img_20260616_101008 from '../../assets/images/20260616_101008.jpg';
-import img_20260616_101045 from '../../assets/images/20260616_101045.jpg';
 
-<FlexRow gap="15px">
-<CustomImage src={img_20260616_101008} alt="メイン画面（水上）" caption="メイン画面（水上）" />
-<CustomImage src={img_20260616_101045} alt="メニュー画面（水中）" caption="メニュー画面（水中）" />
-</FlexRow>
+![メイン画面（水上）](../../assets/images/20260616_101008.jpg "メイン画面（水上）")
+![メニュー画面（水中）](../../assets/images/20260616_101045.jpg "メニュー画面（水中）")
 
 ## 成果
 いくつかの交流会にこれを持って参加し，「かわいい！」や「面白い！」など肯定的な反応をもらうことができた．

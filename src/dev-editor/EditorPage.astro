@@ -1,0 +1,224 @@
+---
+/**
+ * dev 専用の記事エディタ（/_edit）。integration.ts が `astro dev` のときだけ追加する。
+ * 見た目は記事ページ（ArticleLayout の .prose）に合わせている。
+ */
+import '../styles/global.css';
+import { EDITOR } from '../config/editor';
+
+const collectionLabel: Record<string, string> = { works: 'Works', blog: 'Blog' };
+
+/** ツールバー：[コマンド名（client/main.ts の TOOLBAR）, 表示, ショートカット] */
+const TOOLS: [string, string, string][] = [
+  ['bold', '太字', 'Ctrl+B'],
+  ['italic', '斜体', 'Ctrl+I'],
+  ['strike', '取り消し線', 'Ctrl+Shift+X'],
+  ['code', 'コード', 'Ctrl+`'],
+  ['link', 'リンク', 'Ctrl+K'],
+  ['table', '表', ''],
+  ['search', '検索・置換', 'Ctrl+F'],
+  ['undo', '元に戻す', 'Ctrl+Z'],
+  ['redo', 'やり直す', 'Ctrl+Shift+Z'],
+];
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2" />
+    <title>記事エディタ</title>
+  </head>
+  <body>
+    <header class="ed-bar">
+      <a class="ed-bar__home" href="/_edit">記事エディタ</a>
+      <span id="ed-file" class="ed-bar__file"></span>
+      <span id="ed-status" class="ed-bar__status"></span>
+      <a id="ed-view" class="ed-bar__view" target="_blank" rel="noopener" hidden>記事を見る ↗</a>
+    </header>
+    <div id="ed-notice" class="ed-notice" role="alert" hidden></div>
+
+    <main id="ed-list" class="ed-main" hidden>
+      <form id="ed-new" class="ed-new">
+        <h2>新しい記事</h2>
+        <select name="collection" aria-label="種類">
+          {EDITOR.collections.map((c) => <option value={c}>{collectionLabel[c] ?? c}</option>)}
+        </select>
+        <input name="name" required pattern="[A-Za-z0-9][\w\-]*" placeholder="ファイル名（例：2026-new-robot）" aria-label="ファイル名" />
+        <input name="title" placeholder="タイトル" aria-label="タイトル" />
+        <button type="submit">作成（非公開で作ります）</button>
+      </form>
+      {EDITOR.collections.map((c) => (
+        <section class="ed-list">
+          <h2>{collectionLabel[c] ?? c}</h2>
+          <ul id={`ed-list-${c}`}></ul>
+        </section>
+      ))}
+    </main>
+
+    <main id="ed-editor" class="ed-main" hidden>
+      <details class="ed-meta" open>
+        <summary>記事の情報（タイトル・日付・タグなど）</summary>
+        <div id="ed-form" class="ed-form"></div>
+      </details>
+      <div id="ed-toolbar" class="ed-toolbar" role="toolbar" aria-label="書式">
+        {TOOLS.map(([cmd, label, key]) => (
+          <button type="button" data-cmd={cmd} title={key ? `${label}（${key}）` : label}>{label}</button>
+        ))}
+      </div>
+      <div id="ed-body" class="ed-body"></div>
+      <p class="ed-help">
+        画像はドロップまたは貼り付けで追加（画像の上に落とすと横並び）／ YouTube・X の URL は1行で貼ると埋め込み／
+        <code>![説明|80%](パス "キャプション")</code> で幅とキャプション／
+        表の中では Tab・Shift+Tab でセル移動、Enter で行を追加／自動保存（Ctrl+S ですぐ保存）
+      </p>
+    </main>
+
+    <script>
+      import './client/main';
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  .ed-bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.6rem 1.25rem;
+    background: var(--surface-bar);
+    border-bottom: 1px solid var(--line-subtle);
+    font-size: 0.85rem;
+  }
+  .ed-bar__home { color: var(--color-secondary); font-weight: 700; text-decoration: none; }
+  .ed-bar__file { opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ed-bar__status { margin-left: auto; opacity: 0.8; }
+  .ed-bar__status[data-state='dirty'], .ed-bar__status[data-state='saving'] { color: var(--color-secondary); }
+  .ed-bar__status[data-state='error'] { color: var(--color-accent); font-weight: 700; }
+  .ed-bar__view { color: var(--color-accent); }
+
+  .ed-notice {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;
+    margin: 0.75rem auto 0; max-width: 800px; padding: 0.6rem 1rem;
+    border: 1px solid var(--color-accent); border-radius: 8px; font-size: 0.9rem;
+  }
+  .ed-notice[hidden] { display: none; }
+  .ed-notice button {
+    background: none; color: var(--color-accent); border: 1px solid var(--color-accent);
+    border-radius: 6px; padding: 0.2rem 0.6rem; cursor: pointer; font: inherit;
+  }
+  .ed-notice .ed-notice__close { margin-left: auto; border: none; color: var(--color-text); }
+
+  .ed-main { max-width: 800px; margin: 0 auto; padding: 1.5rem 1rem 6rem; }
+
+  /* 一覧 */
+  .ed-new { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 2rem; }
+  .ed-new h2, .ed-list h2 { width: 100%; font-size: 1.2rem; color: var(--color-secondary); margin-bottom: 0.25rem; }
+  .ed-new input[name='name'] { flex: 1 1 14rem; }
+  .ed-new input[name='title'] { flex: 2 1 14rem; }
+  .ed-list { margin-bottom: 2rem; }
+  .ed-list ul { list-style: none; }
+  .ed-list li { display: flex; flex-direction: column; padding: 0.5rem 0; border-bottom: 1px solid var(--line-subtle); }
+  .ed-list a { color: var(--color-text); text-decoration: none; }
+  .ed-list a:hover { color: var(--color-accent); }
+  .ed-list__meta { font-size: 0.75rem; opacity: 0.55; }
+
+  /* フォーム共通 */
+  .ed-main input, .ed-main textarea, .ed-main select, .ed-new button {
+    font: inherit; color: var(--color-text);
+    background: var(--tag-bg); border: 1px solid var(--line-strong); border-radius: 6px; padding: 0.35rem 0.6rem;
+  }
+  .ed-new button { cursor: pointer; border-color: var(--color-accent); color: var(--color-accent); }
+
+  /* フロントマター */
+  .ed-meta { margin-bottom: 1.5rem; border: 1px solid var(--line-subtle); border-radius: 8px; padding: 0.5rem 1rem; }
+  .ed-meta summary { cursor: pointer; font-size: 0.85rem; opacity: 0.8; }
+  .ed-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 1rem; padding: 0.75rem 0 0.5rem; }
+  .ed-field { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem; }
+  .ed-field--text, .ed-field--textarea, .ed-field--tags, .ed-field--image { grid-column: 1 / -1; }
+  .ed-field--checkbox { flex-direction: row-reverse; justify-content: flex-end; align-items: center; gap: 0.5rem; }
+  .ed-field__label { opacity: 0.7; }
+  .ed-field--text input { font-size: 1.2rem; font-weight: 700; }
+  .ed-thumb {
+    position: relative; aspect-ratio: 1200 / 630; max-height: 240px;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    border: 1px dashed var(--line-strong); border-radius: 8px; cursor: pointer;
+  }
+  .ed-thumb.is-over { border-color: var(--color-accent); }
+  .ed-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .ed-thumb__hint {
+    position: absolute; bottom: 0.5rem; right: 0.5rem; font-size: 0.75rem;
+    background: rgba(var(--color-bg-rgb), 0.75); padding: 0.1rem 0.5rem; border-radius: 4px;
+  }
+
+  /* 本文（記事ページの .prose に合わせる） */
+  .ed-body .cm-editor { background: transparent; color: var(--color-text); font-size: 1rem; }
+  .ed-body .cm-editor.cm-focused { outline: none; }
+  .ed-body .cm-scroller { font-family: inherit; }
+  .ed-body .cm-content { font-family: inherit; line-height: 1.8; padding: 0 0 40vh; caret-color: var(--color-accent); }
+  .ed-body .cm-line { padding: 0; }
+  .ed-body .cm-cursor { border-left-color: var(--color-accent); }
+  .ed-body .cm-selectionBackground, .ed-body .cm-focused .cm-selectionBackground { background: rgba(var(--color-secondary-rgb), 0.25) !important; }
+  .ed-h { font-weight: 700; }
+  .ed-h1 { font-size: 1.8rem; }
+  .ed-h2 { font-size: 1.4rem; color: var(--color-secondary); padding-top: 1.25rem !important; }
+  .ed-h3 { font-size: 1.1rem; font-weight: 600; padding-top: 0.75rem !important; }
+  .ed-strong { font-weight: 700; }
+  .ed-em { font-style: italic; }
+  .ed-strike { text-decoration: line-through; }
+  .ed-code { background: var(--tag-bg); border-radius: 4px; font-family: ui-monospace, monospace; font-size: 0.9em; }
+  .ed-link { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; }
+  .ed-quote { border-left: 3px solid var(--line-strong); padding-left: 1rem !important; opacity: 0.85; }
+  .ed-hr { color: transparent; border-bottom: 1px solid var(--line-strong); }
+  .ed-codeblock, .ed-table, .ed-jsx { font-family: ui-monospace, monospace; font-size: 0.88em; background: var(--tag-bg); }
+  .ed-jsx { color: var(--color-secondary); }
+  .ed-dim { opacity: 0.45; font-size: 0.85em; }
+  .ed-bullet { display: inline-block; width: 0.8em; color: var(--color-secondary); }
+
+  .ed-images { margin: 0.75rem 0; cursor: text; }
+  .ed-images--row { display: flex; gap: 1rem; }
+  .ed-images--row .ed-image { flex: 1 1 0; min-width: 0; }
+  .ed-image { margin: 0 auto; }
+  .ed-image img { display: block; width: 100%; height: auto; border-radius: 8px; }
+  .ed-image figcaption { text-align: center; font-size: 0.85rem; opacity: 0.7; margin-top: 0.4rem; }
+  .ed-image--missing { padding: 1rem; border: 1px dashed var(--color-accent); border-radius: 8px; }
+  .ed-image--missing::after { content: '画像が見つかりません: ' attr(data-src); color: var(--color-accent); font-size: 0.85rem; }
+  .ed-embed { margin: 0.75rem 0; }
+  .ed-embed__bar { font-size: 0.75rem; opacity: 0.6; padding: 0.2rem 0; cursor: text; }
+  .ed-embed iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: none; border-radius: 8px; }
+  .ed-embed__tweet { display: flex; justify-content: center; min-height: 3rem; }
+
+  .ed-toolbar {
+    position: sticky; top: 2.6rem; z-index: 5;
+    display: flex; flex-wrap: wrap; gap: 0.25rem;
+    margin-bottom: 1rem; padding: 0.35rem 0;
+    background: var(--color-bg); border-bottom: 1px solid var(--line-subtle);
+  }
+  .ed-toolbar button {
+    font: inherit; font-size: 0.78rem; color: var(--color-text); cursor: pointer;
+    background: none; border: 1px solid var(--line-subtle); border-radius: 6px; padding: 0.15rem 0.55rem;
+  }
+  .ed-toolbar button:hover { border-color: var(--color-accent); color: var(--color-accent); }
+
+  .ed-table-preview { margin: 0.75rem 0; overflow-x: auto; cursor: text; }
+  .ed-table-preview table { border-collapse: collapse; width: 100%; font-size: 0.92rem; line-height: 1.6; overflow-wrap: anywhere; }
+  .ed-table-preview th, .ed-table-preview td { border: 1px solid var(--line-strong); padding: 0.35rem 0.75rem; text-align: left; vertical-align: top; }
+  .ed-table-preview th { background: var(--tag-bg); font-weight: 700; }
+  .ed-table-preview a { color: var(--color-accent); text-decoration: underline; }
+  .ed-table-preview code { background: var(--tag-bg); border-radius: 4px; padding: 0 0.3em; }
+
+  /* 検索パネル（CodeMirror） */
+  .ed-body .cm-panels { background: var(--surface-bar); color: var(--color-text); border-color: var(--line-subtle); }
+  .ed-body .cm-panels input, .ed-body .cm-panels button { color: var(--color-text); background: var(--tag-bg); border: 1px solid var(--line-strong); border-radius: 4px; }
+  .ed-body .cm-searchMatch { background: rgba(var(--color-accent-rgb), 0.3); }
+  .ed-body .cm-selectionMatch { background: rgba(var(--color-secondary-rgb), 0.15); }
+
+  .ed-help { margin-top: 2rem; font-size: 0.75rem; opacity: 0.55; }
+  .ed-help code { font-size: 0.95em; }
+
+  @media (max-width: 640px) {
+    .ed-form { grid-template-columns: 1fr; }
+    .ed-images--row { flex-direction: column; }
+  }
+</style>

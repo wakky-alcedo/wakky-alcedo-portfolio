@@ -8,6 +8,9 @@ import BackButton from '../common/BackButton.astro';
 import ExternalLink from '../content/ExternalLink.astro';
 import TwitterEmbed from '../content/TwitterEmbed.astro';
 import NoteEmbed from '../content/NoteEmbed.astro';
+import YouTube from '../content/YouTube.astro';
+import FlexRow from '../content/FlexRow.astro';
+import MarkdownImage from '../content/MarkdownImage.astro';
 
 interface Props {
   entry: CollectionEntry<'works'> | CollectionEntry<'blog'>;
@@ -19,6 +22,11 @@ const { Content } = await render(entry);
 const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
 
 // コレクションごとの一覧ページ（タグの配色も Works=シアン / Blog=アクセント で分ける）
+// dev のときだけ、記事エディタ（src/dev-editor/）を開くボタンを出す
+const editHref = import.meta.env.DEV && entry.filePath?.endsWith('.mdx')
+  ? `/_edit?file=${encodeURIComponent(`${entry.collection}/${entry.filePath.split('/').pop()}`)}`
+  : undefined;
+
 const listPage = {
   works: { href: '/works', name: 'Works' },
   blog: { href: '/blog', name: 'Blog' },
@@ -41,11 +49,13 @@ const listPage = {
             {tags.map((tag) => <li class="article__tag">{tag}</li>)}
           </ul>
           {unpublished && <p class="article__unpublished">非公開（dev サーバーでのみ表示）</p>}
+          {editHref && <a class="article__edit" href={editHref}>✎ 編集</a>}
           <h1 class="article__title">{title}</h1>
           <time class="article__date" datetime={date.toISOString()}>{formattedDate}</time>
         </header>
         <div class="prose">
-          <Content components={{ a: ExternalLink, TwitterEmbed, NoteEmbed }} />
+          {/* img・YouTube・FlexRow・TwitterEmbed は素の Markdown から変換される（src/lib/remark-embeds.ts） */}
+          <Content components={{ a: ExternalLink, img: MarkdownImage, YouTube, FlexRow, TwitterEmbed, NoteEmbed }} />
         </div>
         <a href={listPage.href} class="back-link">← {listPage.name} 一覧に戻る</a>
       </div>
@@ -107,6 +117,16 @@ const listPage = {
   color: var(--color-accent);
 }
 
+.article__edit {
+  display: inline-block;
+  margin: 0 0 0.5rem 0.5rem;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 100px;
+  color: var(--color-accent);
+}
+
 .article__title {
   font-size: clamp(1.5rem, 4vw, 2.5rem);
   font-weight: 700;
@@ -135,6 +155,12 @@ const listPage = {
 .prose :global(a) { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; }
 .prose :global(a:hover) { opacity: 0.8; }
 .prose :global(code) { background: var(--tag-bg); border-radius: 4px; padding: 0.1em 0.3em; font-size: 0.9em; }
+/* 表（dev エディタのプレビュー src/dev-editor/EditorPage.astro の .ed-table-preview と同じ見た目） */
+.prose :global(table) { border-collapse: collapse; width: 100%; margin-bottom: 1rem; font-size: 0.92rem; line-height: 1.6; overflow-wrap: anywhere; }
+.prose :global(th), .prose :global(td) { border: 1px solid var(--line-strong); padding: 0.35rem 0.75rem; vertical-align: top; }
+/* 列の寄せ（|:---:| など）を指定していないセルは左寄せ */
+.prose :global(th:not([align])), .prose :global(td:not([align])) { text-align: left; }
+.prose :global(th) { background: var(--tag-bg); font-weight: 700; }
 
 .back-link {
   display: inline-block;

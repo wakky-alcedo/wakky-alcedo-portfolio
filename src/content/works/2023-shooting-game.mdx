@@ -12,11 +12,6 @@ wip: false
 unpublished: false
 featured: 5
 ---
-import CustomImage from '../../components/content/CustomImage.astro';
-import FlexRow from '../../components/content/FlexRow.astro';
-import img_20260616_091543 from '../../assets/images/20260616_091543.jpg';
-import img_20260616_091318 from '../../assets/images/20260616_091318.jpg';
-import img_20260616_091258 from '../../assets/images/20260616_091258.jpg';
 
 # 対戦型列車戦（工華祭）
 
@@ -44,16 +39,14 @@ import img_20260616_091258 from '../../assets/images/20260616_091258.jpg';
 こだわりポイント：「発射（ガンベルト送り&玉出し(撃鉄)機能）」について，1つのモータで装填と弾出しを両方できる機構を作ってくれました
 外装：ミリオタに頼んで実在する戦車を参考に製作してもらった
 
-<CustomImage src={img_20260616_091543} alt="出番を待つ機体（左が外装つき，右が外装なし）" caption="出番を待つ機体（左が外装つき，右が外装なし）" />
+![出番を待つ機体（左が外装つき，右が外装なし）](../../assets/images/20260616_091543.jpg "出番を待つ機体（左が外装つき，右が外装なし）")
 
 ### コントローラ
 左右移動用のグリップと，砲塔旋回用のノブから成る．
 グリップはセンター復帰機構を，ラジコンのプロポを参考に製作してもらった．
 
-<FlexRow gap="15px">
-	<CustomImage src={img_20260616_091318} alt="砲塔旋回用のノブ" caption="砲塔旋回用のノブ" />
-	<CustomImage src={img_20260616_091258} alt="左右移動用のグリップ" caption="左右移動用のグリップ" />
-</FlexRow>
+![砲塔旋回用のノブ](../../assets/images/20260616_091318.jpg "砲塔旋回用のノブ")
+![左右移動用のグリップ](../../assets/images/20260616_091258.jpg "左右移動用のグリップ")
 
 ### 回路面
 同期がプリント基板を設計，製作してくれました．基本機能は，

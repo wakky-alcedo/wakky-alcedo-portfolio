@@ -11,9 +11,6 @@ wip: false
 unpublished: false
 featured: 5
 ---
-import CustomImage from '../../components/content/CustomImage.astro';
-import FlexRow from '../../components/content/FlexRow.astro';
-import YouTube from '../../components/content/YouTube.astro';
 
 ## 概要
 
@@ -26,7 +23,7 @@ import YouTube from '../../components/content/YouTube.astro';
 
 以下は，文化祭当日に来場者に実際にプレイしていただいた際の映像です．
 
-<YouTube id="uJ181_nTjNQ" />
+https://youtu.be/uJ181_nTjNQ
 
 ## 開発の思い
 
@@ -68,44 +65,28 @@ import YouTube from '../../components/content/YouTube.astro';
 工大祭の後，回路はプリント基板で製作し直しています．プリント基板の設計は，サークルの後輩に依頼しました．ありがとう！！！
 
 
-import img_20260616_095552 from '../../assets/images/20260616_095552.jpg';
-
-<CustomImage src={img_20260616_095552} alt="黄色く点灯させたノーツの様子" caption="黄色く点灯させたノーツの様子" />
+![黄色く点灯させたノーツの様子](../../assets/images/20260616_095552.jpg "黄色く点灯させたノーツの様子")
 
 
-
-import img_20260616_095005 from '../../assets/images/20260616_095005.webp';
-import img_20260616_095523 from '../../assets/images/20260616_095523.jpg';
-
-
-<FlexRow gap="15px">
-<CustomImage src={img_20260616_095005} alt="ノーツの内部の様子" caption="ノーツの内部の様子" />
-<CustomImage src={img_20260616_095523} alt="プリント基板で作り直した基盤" caption="プリント基板で作り直した基盤" />
-</FlexRow>
+![ノーツの内部の様子](../../assets/images/20260616_095005.webp "ノーツの内部の様子")
+![プリント基板で作り直した基盤](../../assets/images/20260616_095523.jpg "プリント基板で作り直した基盤")
 
 
 ### システム構成
 
 Unityで中央制御を行い，UDP通信で8台のESP32-C6に命令を送信します．各マイコン内で4系統（演出用LED×3，ノーツ×1）を制御しています．
 
-import img_20260616_095055 from '../../assets/images/20260616_095055.png';
 
-
-<CustomImage src={img_20260616_095055} alt="システム構成図" caption="システム構成図" />
-
+![システム構成図](../../assets/images/20260616_095055.png "システム構成図")
 
 
 ### 構造部
 
 構造はイベント用テントに，DAISOの伸縮棒と3Dプリンタ製の接続部品で追加フレームを組み，そこからLEDとノーツを垂らす方式です．
 
-import img_20260616_095201 from '../../assets/images/20260616_095201.png';
-import img_20260616_095232 from '../../assets/images/20260616_095232.webp';
 
-<FlexRow gap="15px">
-<CustomImage src={img_20260616_095201} alt="構造部の設計" caption="構造部の設計" />
-<CustomImage src={img_20260616_095232} alt="構造部の実装" caption="構造部の実装" />
-</FlexRow>
+![構造部の設計](../../assets/images/20260616_095201.png "構造部の設計")
+![構造部の実装](../../assets/images/20260616_095232.webp "構造部の実装")
 
 ## 成果・実績
 
@@ -121,9 +102,8 @@ import img_20260616_095232 from '../../assets/images/20260616_095232.webp';
 
 大学のSNSでも取り上げていただくなど好評をいただきました．
 
-import TwitterEmbed from '../../components/content/TwitterEmbed.astro';
 
-<TwitterEmbed url="https://x.com/sciencetokyo_ja/status/2034549232372445566" />
+https://x.com/sciencetokyo_ja/status/2034549232372445566
 
 ## 今後の課題
 

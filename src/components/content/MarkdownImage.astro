@@ -1,0 +1,22 @@
+---
+/**
+ * 記事の Markdown 画像 `![説明|幅](パス "キャプション")` を CustomImage で描画する。
+ * ArticleLayout が <Content components={{ img }}> で差し替える（記法の解釈は src/lib/embeds.ts）。
+ */
+import type { ImageMetadata } from 'astro';
+import CustomImage from './CustomImage.astro';
+import { parseImageAlt } from '../../lib/embeds';
+
+interface Props {
+  src: ImageMetadata | string;
+  alt?: string;
+  title?: string;
+}
+
+const { src, alt: rawAlt = '', title } = Astro.props;
+const { alt, width } = parseImageAlt(rawAlt);
+---
+
+{typeof src === 'string'
+  ? <img src={src} alt={alt} />
+  : <CustomImage src={src} alt={alt} width={width} caption={title} />}
