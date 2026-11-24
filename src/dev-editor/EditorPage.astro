@@ -139,6 +139,19 @@ const TOOLS: [string, string, string][] = [
   .ed-field--text, .ed-field--textarea, .ed-field--tags, .ed-field--image { grid-column: 1 / -1; }
   .ed-field--checkbox { flex-direction: row-reverse; justify-content: flex-end; align-items: center; gap: 0.5rem; }
   .ed-field__label { opacity: 0.7; }
+  .ed-tags__box {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem;
+    border: 1px solid var(--line-strong); border-radius: 6px; padding: 0.3rem 0.4rem; background: var(--tag-bg);
+  }
+  .ed-tags__chips { display: contents; }
+  .ed-tags__box input { flex: 1 1 8rem; min-width: 6rem; border: none !important; background: none !important; padding: 0.1rem !important; outline: none; }
+  .ed-tags__suggest { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
+  .ed-tag {
+    font: inherit; font-size: 0.78rem; color: var(--color-text); cursor: pointer;
+    background: none; border: 1px dashed var(--line-strong); border-radius: 999px; padding: 0.05rem 0.6rem;
+  }
+  .ed-tag:hover { border-color: var(--color-accent); color: var(--color-accent); }
+  .ed-tag.is-on { border-style: solid; border-color: var(--color-accent); background: rgba(var(--color-accent-rgb), 0.15); }
   .ed-field--text input { font-size: 1.2rem; font-weight: 700; }
   .ed-thumb {
     position: relative; aspect-ratio: 1200 / 630; max-height: 240px;

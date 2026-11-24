@@ -7,7 +7,7 @@ import { defaultKeymap, history, historyKeymap, indentWithTab, undo, redo } from
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { search, searchKeymap, highlightSelectionMatches, openSearchPanel } from '@codemirror/search';
 import { EDITOR } from '../../config/editor';
-import { api, ApiError, type ArticleData } from './server';
+import { api, ApiError, type ArticleData, type ListEntry } from './server';
 import { livePreview } from './livePreview';
 import { mediaHandlers } from './media';
 import { renderForm } from './form';
@@ -50,6 +50,13 @@ function showNotice(message: string, actions: { label: string; run: () => void }
   box.hidden = false;
 }
 
+/** 全記事のタグを、使われている記事が多い順に並べる（同数なら名前順） */
+function tagsByUse(entries: ListEntry[]): string[] {
+  const count = new Map<string, number>();
+  for (const e of entries) for (const t of e.tags) count.set(t, (count.get(t) ?? 0) + 1);
+  return [...count].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ja')).map(([t]) => t);
+}
+
 async function openEditor(file: string) {
   $('#ed-list').hidden = true;
   $('#ed-editor').hidden = false;
@@ -60,7 +67,9 @@ async function openEditor(file: string) {
   viewLink.href = `/${collection}/${slug}`;
   viewLink.hidden = false;
 
-  let data: ArticleData = await api.read(file);
+  const [first, entries] = await Promise.all([api.read(file), api.list()]);
+  let data: ArticleData = first;
+  const knownTags = tagsByUse(entries);
   let frontmatter = data.frontmatter;
   let mtime = data.mtime;
   let timer: number | undefined;
@@ -106,7 +115,7 @@ async function openEditor(file: string) {
   };
 
   const renderFrontmatter = () => renderForm($('#ed-form'), {
-    collection, frontmatter, resolveImage, upload, onError, onChange: schedule,
+    collection, frontmatter, knownTags, resolveImage, upload, onError, onChange: schedule,
   });
 
   /** ファイルの内容で画面を置き換える（外で編集されたとき） */

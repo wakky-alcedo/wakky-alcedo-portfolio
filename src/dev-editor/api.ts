@@ -88,6 +88,7 @@ export function editorApi(): Plugin {
         entries.push({
           file: `${collection}/${file}`, collection, title: fm.title ?? file,
           date: fm.date ?? '', wip: !!fm.wip, unpublished: !!fm.unpublished,
+          tags: Array.isArray(fm.tags) ? fm.tags.map(String) : [],
         });
       }
     }

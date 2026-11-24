@@ -14,6 +14,7 @@ export interface ListEntry {
   date: string;
   wip: boolean;
   unpublished: boolean;
+  tags: string[];
 }
 
 export class ApiError extends Error {

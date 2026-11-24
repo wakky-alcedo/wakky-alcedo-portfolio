@@ -12,4 +12,6 @@ export const EDITOR = {
   maxUploadBytes: 30 * 1024 * 1024,
   /** 新規作成時の works のサムネイル（works は thumbnail 必須のため仮の画像を入れておく） */
   placeholderThumbnail: 'src/assets/images/placeholder-thumbnail.png',
+  /** フロントマターのタグ欄に候補として出す、よく使うタグの数 */
+  tagSuggestions: 24,
 } as const;
