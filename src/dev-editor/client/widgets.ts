@@ -6,6 +6,7 @@ import { WidgetType, type EditorView } from '@codemirror/view';
 import { parseImageAlt, type Embed } from '../../lib/embeds';
 import type { ImageToken } from './blocks';
 import { renderInline, type Table } from './tables';
+import { focusCell } from './tableEdit';
 
 declare global {
   interface Window {
@@ -151,7 +152,20 @@ export class TableWidget extends BlockWidget {
       row.forEach((t, i) => tr.append(cell('td', t, i)));
     }
     wrap.append(table);
-    editOnClick(wrap, view);
+    // クリックしたセルにカーソルを置く（セルの外なら表の先頭）
+    wrap.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      const cell = (e.target as HTMLElement).closest<HTMLTableCellElement>('th, td');
+      const from = view.posAtDOM(wrap);
+      if (!cell) {
+        view.dispatch({ selection: { anchor: from } });
+        view.focus();
+        return;
+      }
+      const tr = cell.parentElement as HTMLTableRowElement;
+      const row = cell.tagName === 'TH' ? -1 : tr.sectionRowIndex;
+      focusCell(view, from, row, cell.cellIndex);
+    });
     return wrap;
   }
 }

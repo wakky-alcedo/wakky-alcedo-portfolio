@@ -12,11 +12,14 @@ import { livePreview } from './livePreview';
 import { mediaHandlers } from './media';
 import { renderForm } from './form';
 import { addRow, nextCell, prevCell } from './tables';
+import { deleteColumn, deleteRow, insertColumnLeft, insertColumnRight, insertRowAbove, insertRowBelow, tableAt } from './tableEdit';
 import { bold, code, formattingKeymap, insertLink, insertTable, italic, strike } from './formatting';
 
 /** ツールバーのボタン（data-cmd）と実行するコマンド */
 const TOOLBAR: Record<string, Command> = {
   bold, italic, strike, code, link: insertLink, table: insertTable, undo, redo, search: openSearchPanel,
+  rowAbove: insertRowAbove, rowBelow: insertRowBelow, rowDelete: deleteRow,
+  colLeft: insertColumnLeft, colRight: insertColumnRight, colDelete: deleteColumn,
 };
 
 // 記事を保存すると Astro が全ページを再読み込みさせるので、この画面だけは再読み込みしない
@@ -147,6 +150,12 @@ async function openEditor(file: string) {
         Prec.highest(keymap.of([
           { key: 'Tab', run: nextCell, shift: prevCell },
           { key: 'Enter', run: addRow },
+          { key: 'Mod-Alt-ArrowUp', run: insertRowAbove },
+          { key: 'Mod-Alt-ArrowDown', run: insertRowBelow },
+          { key: 'Mod-Alt-ArrowLeft', run: insertColumnLeft },
+          { key: 'Mod-Alt-ArrowRight', run: insertColumnRight },
+          { key: 'Mod-Alt-Backspace', run: deleteRow },
+          { key: 'Mod-Alt-Shift-Backspace', run: deleteColumn },
           ...formattingKeymap,
           { key: 'Mod-s', preventDefault: true, run: () => { clearTimeout(timer); void save(); return true; } },
         ])),
@@ -157,6 +166,8 @@ async function openEditor(file: string) {
         livePreview(resolveImage),
         mediaHandlers({ upload, onError }),
         EditorView.updateListener.of((u) => {
+          // 表の中にカーソルがあるときだけ、表の行・列のボタンを出す
+          if (u.docChanged || u.selectionSet) $('#ed-toolbar').classList.toggle('is-table', !!tableAt(u.state));
           if (u.docChanged && !u.transactions.some((t) => t.annotation(external))) schedule();
         }),
       ],

@@ -20,6 +20,16 @@ const TOOLS: [string, string, string][] = [
   ['undo', '元に戻す', 'Ctrl+Z'],
   ['redo', 'やり直す', 'Ctrl+Shift+Z'],
 ];
+
+/** 表の中にカーソルがあるときだけ出すボタン */
+const TABLE_TOOLS: [string, string, string][] = [
+  ['rowAbove', '↑ 行を追加', 'Ctrl+Alt+↑'],
+  ['rowBelow', '↓ 行を追加', 'Ctrl+Alt+↓'],
+  ['rowDelete', '行を削除', 'Ctrl+Alt+Backspace'],
+  ['colLeft', '← 列を追加', 'Ctrl+Alt+←'],
+  ['colRight', '→ 列を追加', 'Ctrl+Alt+→'],
+  ['colDelete', '列を削除', 'Ctrl+Alt+Shift+Backspace'],
+];
 ---
 
 <!doctype html>
@@ -67,12 +77,18 @@ const TOOLS: [string, string, string][] = [
         {TOOLS.map(([cmd, label, key]) => (
           <button type="button" data-cmd={cmd} title={key ? `${label}（${key}）` : label}>{label}</button>
         ))}
+        <span class="ed-toolbar__table">
+          <span class="ed-toolbar__label">表：</span>
+          {TABLE_TOOLS.map(([cmd, label, key]) => (
+            <button type="button" data-cmd={cmd} title={`${label}（${key}）`}>{label}</button>
+          ))}
+        </span>
       </div>
       <div id="ed-body" class="ed-body"></div>
       <p class="ed-help">
         画像はドロップまたは貼り付けで追加（画像の上に落とすと横並び）／ YouTube・X の URL は1行で貼ると埋め込み／
         <code>![説明|80%](パス "キャプション")</code> で幅とキャプション／
-        表の中では Tab・Shift+Tab でセル移動、Enter で行を追加／自動保存（Ctrl+S ですぐ保存）
+        表の中では Tab・Shift+Tab でセル移動、Enter で行を追加、ツールバーの「表：」か Ctrl+Alt+矢印で行・列の追加と削除／自動保存（Ctrl+S ですぐ保存）
       </p>
     </main>
 
@@ -215,6 +231,9 @@ const TOOLS: [string, string, string][] = [
     background: none; border: 1px solid var(--line-subtle); border-radius: 6px; padding: 0.15rem 0.55rem;
   }
   .ed-toolbar button:hover { border-color: var(--color-accent); color: var(--color-accent); }
+  .ed-toolbar__table { display: none; flex-wrap: wrap; align-items: center; gap: 0.25rem; padding-left: 0.5rem; border-left: 1px solid var(--line-subtle); }
+  .ed-toolbar.is-table .ed-toolbar__table { display: flex; }
+  .ed-toolbar__label { font-size: 0.75rem; opacity: 0.7; }
 
   .ed-table-preview { padding: 0.75rem 0; overflow-x: auto; cursor: text; }
   .ed-table-preview table { border-collapse: collapse; width: 100%; font-size: 0.92rem; line-height: 1.6; overflow-wrap: anywhere; }
