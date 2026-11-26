@@ -14,4 +14,11 @@ export const EDITOR = {
   placeholderThumbnail: 'src/assets/images/placeholder-thumbnail.png',
   /** フロントマターのタグ欄に候補として出す、よく使うタグの数 */
   tagSuggestions: 24,
+  /**
+   * 保存時に、どこからも使われていない記事の画像（imageDir/<記事名>/ の中）を移す先。
+   * 元に戻す（Ctrl+Z）で記事に戻ったときは、次の保存でここから戻す。git には含めない
+   */
+  trashDir: '.dev-editor-trash',
+  /** アップロードしてからこの時間（ms）は、使われていなくても移さない（貼り付けと保存が行き違うため） */
+  orphanGraceMs: 60 * 1000,
 } as const;

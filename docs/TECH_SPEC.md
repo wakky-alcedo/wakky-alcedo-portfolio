@@ -363,6 +363,7 @@ iOS 13+ では `requestPermission()` が必須（実装: `src/scripts/utils/devi
 `npm run dev` のときだけ `/_edit`（一覧・新規作成）と、記事ページの「✎ 編集」ボタンが出る。
 カーソル行だけ Markdown を見せるライブプレビュー、画像のドロップ／貼り付け、YouTube / X の URL の埋め込み表示、表のプレビュー（セルをクリックでそのセルを編集、中では Tab でセル移動・Enter で行追加、ツールバーか Ctrl+Alt+矢印で行・列の追加と削除：`client/tableEdit.ts`）、書式のショートカットとツールバー（`client/formatting.ts`）、入力が止まって 1 秒後の自動保存（エディタ外で変更されていたら確認する）。
 記事を保存すると Astro が開いているページを再読み込みさせるが、エディタの画面だけは再読み込みしない（`src/dev-editor/client/main.ts`）。
+保存のたびに、その記事の画像フォルダのうち src/ のどこからも参照されていない画像を `.dev-editor-trash/`（git 管理外）へ移す。アップロードから 1 分以内の画像は残し、元に戻す操作で参照が復活したら次の保存で戻す（`src/dev-editor/api.ts` の `tidyImages`）。
 
 ---
 

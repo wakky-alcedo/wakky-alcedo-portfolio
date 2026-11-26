@@ -2,10 +2,11 @@
  * dev エディタのファイル操作 API（Vite の dev サーバーにだけ載せるミドルウェア）。
  *
  * 書き込めるのは src/content/<コレクション>/*.mdx と、画像の保存先（EDITOR.imageDir）の中だけ。
+ * 保存のたびに、その記事の画像フォルダのうちどこからも使われていない画像を EDITOR.trashDir へ移す。
  *
  * - GET  /__edit-api/list                          記事一覧
  * - GET  /__edit-api/file?file=works/x.mdx         フロントマター（オブジェクト）・本文・更新時刻
- * - PUT  /__edit-api/file?file=works/x.mdx         保存（他で更新されていたら 409）
+ * - PUT  /__edit-api/file?file=works/x.mdx         保存（他で更新されていたら 409）。使われなくなった画像を片付ける
  * - POST /__edit-api/new                           記事の新規作成
  * - POST /__edit-api/upload?file=…&name=元の名前    画像を保存し、記事から見た相対パスを返す
  * - GET  /__edit-api/asset?file=…&src=相対パス      プレビュー用に画像を返す
@@ -112,8 +113,67 @@ export function editorApi(): Plugin {
     const fm = isDeepStrictEqual(YAML.parse(fmRaw) ?? {}, input.frontmatter)
       ? fmRaw
       : YAML.stringify(input.frontmatter, { lineWidth: 0 }).trimEnd();
-    await fs.writeFile(ref.abs, `---\n${fm}\n---\n${input.body}`);
-    return { mtime: (await fs.stat(ref.abs)).mtimeMs };
+    const text = `---\n${fm}\n---\n${input.body}`;
+    await fs.writeFile(ref.abs, text);
+    const images = await tidyImages(ref, text);
+    return { mtime: (await fs.stat(ref.abs)).mtimeMs, ...images };
+  }
+
+  // ---- 使われていない画像の片付け ----
+
+  const imageDirOf = (ref: ArticleRef) => path.join(root, EDITOR.imageDir, ref.name);
+  const trashDirOf = (ref: ArticleRef) => path.join(root, EDITOR.trashDir, ref.name);
+  const readdir = (dir: string) => fs.readdir(dir).catch(() => [] as string[]);
+
+  /** src/ の中のテキストファイル（画像フォルダを除く）をすべて読む。画像を参照しうるのは記事・設定・コンポーネント */
+  async function sourceTexts(): Promise<string[]> {
+    const texts: string[] = [];
+    const skip = path.join(root, EDITOR.imageDir);
+    const walk = async (dir: string) => {
+      for (const entry of await fs.readdir(dir, { withFileTypes: true })) {
+        const abs = path.join(dir, entry.name);
+        if (entry.isDirectory()) { if (abs !== skip) await walk(abs); continue; }
+        if (/\.(mdx?|astro|[cm]?[jt]s|json|ya?ml|css)$/.test(entry.name)) texts.push(await fs.readFile(abs, 'utf8'));
+      }
+    };
+    await walk(path.join(root, 'src'));
+    return texts;
+  }
+
+  /**
+   * 記事の画像フォルダ（imageDir/<記事名>/）を片付ける。
+   * - どのファイルからも `<記事名>/<画像>` で参照されていない画像は trashDir へ移す（アップロード直後は除く）
+   * - この記事が参照しているのに無い画像が trashDir にあれば戻す（元に戻す操作で参照が復活したとき）
+   */
+  async function tidyImages(ref: ArticleRef, articleText: string) {
+    const dir = imageDirOf(ref);
+    const trash = trashDirOf(ref);
+    const removed: string[] = [];
+    const restored: string[] = [];
+    const present = new Set(await readdir(dir));
+
+    for (const file of await readdir(trash)) {
+      if (!present.has(file) && articleText.includes(`${ref.name}/${file}`)) {
+        await fs.mkdir(dir, { recursive: true });
+        await fs.rename(path.join(trash, file), path.join(dir, file));
+        present.add(file);
+        restored.push(file);
+      }
+    }
+    if (!present.size) return { removed, restored };
+
+    const texts = await sourceTexts();
+    for (const file of present) {
+      if (texts.some((t) => t.includes(`${ref.name}/${file}`))) continue;
+      const stat = await fs.stat(path.join(dir, file));
+      if (!stat.isFile() || Date.now() - stat.mtimeMs < EDITOR.orphanGraceMs) continue;
+      await fs.mkdir(trash, { recursive: true });
+      await fs.rename(path.join(dir, file), path.join(trash, file));
+      removed.push(file);
+    }
+    // 空になったフォルダは消す
+    if (removed.length && !(await readdir(dir)).length) await fs.rmdir(dir);
+    return { removed, restored };
   }
 
   async function createArticle(input: { collection: string; name: string; title: string }) {
@@ -140,7 +200,8 @@ export function editorApi(): Plugin {
     const dir = path.join(root, EDITOR.imageDir, ref.name);
     await fs.mkdir(dir, { recursive: true });
     const numbered = new RegExp(`^${ref.name}-(\\d+)\\.`);
-    const used = (await fs.readdir(dir)).map((f) => Number(numbered.exec(f)?.[1] ?? 0));
+    // 片付けた画像と番号がぶつからないよう、trashDir の分も数える（元に戻したときに取り違えないため）
+    const used = [...await fs.readdir(dir), ...await readdir(trashDirOf(ref))].map((f) => Number(numbered.exec(f)?.[1] ?? 0));
     const file = path.join(dir, `${ref.name}-${Math.max(0, ...used) + 1}.${ext}`);
     await fs.writeFile(file, data, { flag: 'wx' });
     return { src: path.relative(ref.dir, file).split(path.sep).join('/') };
