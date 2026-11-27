@@ -33,7 +33,7 @@ const listPage = {
 }[entry.collection];
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} ogImage={thumbnail} article={{ publishedTime: date, tags }}>
   <Header />
   <main class="page-main">
     <article class:list={['article', `article--${entry.collection}`]}>

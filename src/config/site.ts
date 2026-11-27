@@ -1,3 +1,17 @@
+import defaultOgImage from '../assets/images/2026-portfolio-top.webp';
+
+/** サイト全体のメタ情報（<head> の meta・OGP・構造化データで使う。公開 URL は astro.config.mjs の site） */
+export const SITE = {
+  name: "Wakky-Alcedo's Portfolio",
+  author: 'Wakky-Alcedo',
+  description: 'Wakky-Alcedo のポートフォリオサイト。ロボット・IoT・トライアスロンなど、作品と活動を紹介。',
+  locale: 'ja_JP',
+  /** 記事にサムネイルがないページの OGP 画像 */
+  ogImage: defaultOgImage,
+  /** OGP 画像の出力サイズ（X / Facebook の推奨 1.91:1。元画像より小さいときは拡大されず元のサイズのまま） */
+  ogImageSize: { width: 1200, height: 630 },
+} as const;
+
 /**
  * 連絡先・SNSリンク（About / Contact / トップの Contact / Footer で共通）。
  * 並び順は About の Link 一覧の表示順。
