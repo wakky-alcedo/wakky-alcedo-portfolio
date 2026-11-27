@@ -5,9 +5,12 @@ import Footer from '../components/layout/Footer.astro';
 import HeroSection from '../components/home/HeroSection.astro';
 import UnderwaterSection from '../components/home/UnderwaterSection.astro';
 import ScrollKingfisher from '../components/home/ScrollKingfisher.astro';
+import JsonLd from '../components/common/JsonLd.astro';
+import { homeSchema } from '../lib/seo';
 ---
 
 <BaseLayout title="Home">
+  <JsonLd slot="head" data={homeSchema(Astro.site!)} />
   <Header />
   <main>
     <HeroSection />
