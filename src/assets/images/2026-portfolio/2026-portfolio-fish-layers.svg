@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" width="760" height="400" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5EBFC6"/></marker><marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#FFA200"/></marker><filter id="f0" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5"/></filter><filter id="f1" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.25"/></filter><filter id="f2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="0.4166666666666667"/></filter></defs>
+<rect x="0" y="0" width="760" height="400" rx="16" fill="#0B1433"/>
+<text x="185" y="30" text-anchor="end" font-size="14" font-weight="700" fill="#FFA200">奥</text>
+<text x="740" y="30" text-anchor="end" font-size="14" font-weight="700" fill="#FFA200">手前</text>
+<polyline points="200,25 690,25" fill="none" stroke="#4A6A7A" stroke-width="2" marker-end="url(#b)"/>
+<rect x="170" y="50" width="130" height="140" rx="10" fill="rgba(0,79,113,0.18)" stroke="#4A6A7A" stroke-width="1.5"/>
+<text x="235" y="74" text-anchor="middle" font-size="14" font-weight="700" fill="#DCE0DF">層 1</text>
+<g filter="url(#f0)" fill="#5EBFC6" opacity="0.67"><ellipse cx="241" cy="130" rx="14.0" ry="6.0"/><path d="M231.0,130 L217.2,123.4 L217.2,136.6 z"/><circle cx="248.84" cy="128.56" r="1.5" fill="#0B1433"/></g>
+<rect x="315" y="50" width="130" height="140" rx="10" fill="rgba(0,79,113,0.18)" stroke="#4A6A7A" stroke-width="1.5"/>
+<text x="380" y="74" text-anchor="middle" font-size="14" font-weight="700" fill="#DCE0DF">層 2</text>
+<g filter="url(#f1)" fill="#5EBFC6" opacity="0.78"><ellipse cx="386" cy="130" rx="21.0" ry="9.0"/><path d="M369.0,130 L350.3,120.1 L350.3,139.9 z"/><circle cx="397.76" cy="127.84" r="1.7999999999999998" fill="#0B1433"/></g>
+<rect x="460" y="50" width="130" height="140" rx="10" fill="rgba(0,79,113,0.18)" stroke="#4A6A7A" stroke-width="1.5"/>
+<text x="525" y="74" text-anchor="middle" font-size="14" font-weight="700" fill="#DCE0DF">層 3</text>
+<g filter="url(#f2)" fill="#5EBFC6" opacity="0.89"><ellipse cx="531" cy="130" rx="28.0" ry="12.0"/><path d="M507.0,130 L483.4,116.8 L483.4,143.2 z"/><circle cx="546.68" cy="127.12" r="2.4000000000000004" fill="#0B1433"/></g>
+<rect x="605" y="50" width="130" height="140" rx="10" fill="rgba(0,79,113,0.18)" stroke="#4A6A7A" stroke-width="1.5"/>
+<text x="670" y="74" text-anchor="middle" font-size="14" font-weight="700" fill="#DCE0DF">層 4</text>
+<g fill="#5EBFC6" opacity="1.00"><ellipse cx="676" cy="130" rx="35.0" ry="15.0"/><path d="M645.0,130 L616.5,113.5 L616.5,146.5 z"/><circle cx="695.6" cy="126.4" r="3.0" fill="#0B1433"/></g>
+<line x1="20" y1="206" x2="740" y2="206" stroke="#4A6A7A" stroke-width="0.8"/>
+<text x="20" y="228" font-size="13" fill="#A9BFC3">大きさ</text>
+<text x="235" y="228" text-anchor="middle" font-size="14" fill="#DCE0DF">×0.4</text>
+<text x="380" y="228" text-anchor="middle" font-size="14" fill="#DCE0DF">×0.6</text>
+<text x="525" y="228" text-anchor="middle" font-size="14" fill="#DCE0DF">×0.8</text>
+<text x="670" y="228" text-anchor="middle" font-size="14" fill="#DCE0DF">×1.0</text>
+<line x1="20" y1="240" x2="740" y2="240" stroke="#4A6A7A" stroke-width="0.8"/>
+<text x="20" y="262" font-size="13" fill="#A9BFC3">ぼかし</text>
+<text x="235" y="262" text-anchor="middle" font-size="14" fill="#DCE0DF">3px</text>
+<text x="380" y="262" text-anchor="middle" font-size="14" fill="#DCE0DF">1.5px</text>
+<text x="525" y="262" text-anchor="middle" font-size="14" fill="#DCE0DF">0.5px</text>
+<text x="670" y="262" text-anchor="middle" font-size="14" fill="#DCE0DF">なし</text>
+<line x1="20" y1="274" x2="740" y2="274" stroke="#4A6A7A" stroke-width="0.8"/>
+<text x="20" y="296" font-size="13" fill="#A9BFC3">速さ</text>
+<text x="235" y="296" text-anchor="middle" font-size="14" fill="#DCE0DF">22</text>
+<text x="380" y="296" text-anchor="middle" font-size="14" fill="#DCE0DF">32</text>
+<text x="525" y="296" text-anchor="middle" font-size="14" fill="#DCE0DF">44</text>
+<text x="670" y="296" text-anchor="middle" font-size="14" fill="#DCE0DF">58</text>
+<line x1="20" y1="308" x2="740" y2="308" stroke="#4A6A7A" stroke-width="0.8"/>
+<text x="20" y="330" font-size="13" fill="#A9BFC3">傾けたときのずれ</text>
+<text x="235" y="330" text-anchor="middle" font-size="14" fill="#DCE0DF">3px</text>
+<text x="380" y="330" text-anchor="middle" font-size="14" fill="#DCE0DF">7px</text>
+<text x="525" y="330" text-anchor="middle" font-size="14" fill="#DCE0DF">13px</text>
+<text x="670" y="330" text-anchor="middle" font-size="14" fill="#DCE0DF">20px</text>
+<line x1="20" y1="342" x2="740" y2="342" stroke="#4A6A7A" stroke-width="0.8"/>
+<text x="20" y="364" font-size="13" fill="#A9BFC3">カーソルから逃げる</text>
+<text x="235" y="364" text-anchor="middle" font-size="14" fill="#DCE0DF">—</text>
+<text x="380" y="364" text-anchor="middle" font-size="14" fill="#DCE0DF">—</text>
+<text x="525" y="364" text-anchor="middle" font-size="14" fill="#DCE0DF">○</text>
+<text x="670" y="364" text-anchor="middle" font-size="14" fill="#DCE0DF">○</text>
+<text x="20" y="388" font-size="12" fill="#A9BFC3">速さは基準値（px/秒）．値は src/config/scene.ts の FISH.layers．軽いモードでは層1と層4だけを描き，数を半分にする</text>
+</svg>

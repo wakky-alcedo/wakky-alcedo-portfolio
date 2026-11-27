@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 400" width="760" height="400" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5EBFC6"/></marker><marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#FFA200"/></marker></defs>
+<rect x="0" y="0" width="760" height="400" rx="16" fill="#0B1433"/>
+<text x="20" y="28" text-anchor="start" font-size="14" font-weight="700" fill="#FFA200">ページを開いてから</text>
+<polyline points="20,52 740,52" fill="none" stroke="#4A6A7A" stroke-width="2" marker-end="url(#b)"/>
+<rect x="20" y="72" width="220" height="84" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="130.0" y="101.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">本文を表示</text>
+<text x="130.0" y="121.0" text-anchor="middle" font-size="13" fill="#A9BFC3">ビルド時に作ったHTML</text>
+<text x="130.0" y="140.0" text-anchor="middle" font-size="13" fill="#A9BFC3">文章・画像はすぐ読める</text>
+<rect x="270" y="72" width="200" height="84" rx="10" fill="none" stroke="#4A6A7A" stroke-width="1.5"/>
+<text x="370.0" y="110.0" text-anchor="middle" font-size="15" font-weight="700" fill="#DCE0DF">読み込み完了</text>
+<text x="370.0" y="130.0" text-anchor="middle" font-size="13" fill="#A9BFC3">window.load</text>
+<rect x="500" y="72" width="240" height="84" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="620.0" y="101.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">演出を起動</text>
+<text x="620.0" y="121.0" text-anchor="middle" font-size="13" fill="#A9BFC3">GSAP（カワセミ）</text>
+<text x="620.0" y="140.0" text-anchor="middle" font-size="13" fill="#A9BFC3">Canvas（水面・光・魚）</text>
+<polyline points="240,114 270,114" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<polyline points="470,114 500,114" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<text x="20" y="202" text-anchor="start" font-size="14" font-weight="700" fill="#FFA200">動いている間</text>
+<rect x="20" y="216" width="220" height="84" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="130.0" y="254.5" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">描画の間隔を監視</text>
+<text x="130.0" y="274.5" text-anchor="middle" font-size="13" fill="#A9BFC3">フレームが遅れ続けたら</text>
+<rect x="270" y="216" width="200" height="84" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="370.0" y="245.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">軽いモード</text>
+<text x="370.0" y="265.0" text-anchor="middle" font-size="13" fill="#A9BFC3">魚の層を4→2</text>
+<text x="370.0" y="284.0" text-anchor="middle" font-size="13" fill="#A9BFC3">数を半分に</text>
+<polyline points="240,258 270,258" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<rect x="500" y="216" width="240" height="84" rx="10" fill="none" stroke="#4A6A7A" stroke-width="1.5"/>
+<text x="620.0" y="244.5" text-anchor="middle" font-size="15" font-weight="700" fill="#DCE0DF">スマホ</text>
+<text x="620.0" y="264.5" text-anchor="middle" font-size="13" fill="#A9BFC3">最初から軽いモード</text>
+<text x="620.0" y="283.5" text-anchor="middle" font-size="13" fill="#A9BFC3">ぼかしも省略</text>
+<polyline points="500,258 470,258" fill="none" stroke="#4A6A7A" stroke-width="2" marker-end="url(#b)"/>
+<rect x="20" y="320" width="220" height="64" rx="10" fill="none" stroke="#4A6A7A" stroke-width="1.5"/>
+<text x="130.0" y="357.5" text-anchor="middle" font-size="15" font-weight="700" fill="#DCE0DF">別のタブを見ている</text>
+<rect x="270" y="320" width="200" height="64" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="370.0" y="348.5" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">描画を止める</text>
+<text x="370.0" y="368.5" text-anchor="middle" font-size="13" fill="#A9BFC3">戻ってきたら再開</text>
+<polyline points="240,352 270,352" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+</svg>
