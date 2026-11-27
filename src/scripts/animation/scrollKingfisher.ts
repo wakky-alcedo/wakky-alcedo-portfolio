@@ -1,0 +1,95 @@
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import type { SceneModule } from '../utils/visibility';
+import { prefersReducedMotion } from '../utils/motionPreference';
+import { SCROLL_KINGFISHER } from '../../config/scene';
+
+gsap.registerPlugin(ScrollTrigger);
+
+/**
+ * 水中パートの右端スクロールバー役カワセミ。
+ * #underwater のスクロール進捗に応じて上下移動し、
+ * クリックでトップ（水上）へ浮上する。
+ */
+export class ScrollKingfisher implements SceneModule {
+  private trigger?: ScrollTrigger;
+  private el: HTMLElement | null = null;
+  private workCards: HTMLAnchorElement[] = [];
+
+  init(): void {
+    this.el = document.getElementById('scroll-kingfisher');
+    const underwater = document.getElementById('underwater');
+    if (!this.el || !underwater) return;
+
+    this.el.addEventListener('click', this.handleClick);
+
+    this.workCards = Array.from(document.querySelectorAll<HTMLAnchorElement>('.entry-card[data-collection="works"]'));
+    this.workCards.forEach((card) => card.addEventListener('click', this.handleWorkCardClick));
+
+    if (prefersReducedMotion()) {
+      this.el.classList.add('is-visible');
+      return;
+    }
+
+    this.trigger = ScrollTrigger.create({
+      trigger: underwater,
+      start: 'top bottom',
+      end: 'bottom bottom',
+      onUpdate: (self) => {
+        if (!this.el) return;
+        const { topMinPct, topMaxPct } = SCROLL_KINGFISHER;
+        const top = topMinPct + self.progress * (topMaxPct - topMinPct);
+        gsap.set(this.el, { top: `${top}%` });
+      },
+      onToggle: (self) => {
+        this.el?.classList.toggle('is-visible', self.isActive);
+      },
+    });
+  }
+
+  destroy(): void {
+    this.trigger?.kill();
+    this.el?.removeEventListener('click', this.handleClick);
+    this.workCards.forEach((card) => card.removeEventListener('click', this.handleWorkCardClick));
+  }
+
+  private handleClick = (): void => {
+    this.playCatchAnimation();
+    this.dispatchCatch();
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+  };
+
+  private handleWorkCardClick = (event: MouseEvent): void => {
+    if (prefersReducedMotion()) return;
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+    const card = event.currentTarget as HTMLAnchorElement;
+    event.preventDefault();
+    this.playCatchAnimation();
+    this.dispatchCatch();
+    window.setTimeout(() => {
+      window.location.href = card.href;
+    }, SCROLL_KINGFISHER.navigateDelayMs);
+  };
+
+  private dispatchCatch(): void {
+    if (!this.el) return;
+    const rect = this.el.getBoundingClientRect();
+    window.dispatchEvent(
+      new CustomEvent('kingfisher:catch', {
+        detail: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
+      }),
+    );
+  }
+
+  private playCatchAnimation(): void {
+    if (!this.el || prefersReducedMotion()) return;
+    const { grab, release } = SCROLL_KINGFISHER.catchAnimation;
+    gsap
+      .timeline()
+      .to(this.el, { ...grab, ease: 'power1.out' })
+      .to(this.el, { scale: 1, rotation: 0, duration: release.duration, ease: 'bounce.out' });
+  }
+}
+
+export const scrollKingfisher = new ScrollKingfisher();

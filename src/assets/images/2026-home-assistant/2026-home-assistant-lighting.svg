@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 690" width="760" height="690" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5EBFC6"/></marker></defs>
+<rect x="0" y="0" width="760" height="690" rx="16" fill="#0B1433"/>
+<text x="20" y="24" text-anchor="start" font-size="14" font-weight="700" fill="#FFA200">入力</text>
+<rect x="20" y="34" width="232" height="56" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="136.0" y="59.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">スマホの位置</text>
+<text x="136.0" y="79.0" text-anchor="middle" font-size="13" fill="#A9BFC3">Companionアプリ</text>
+<rect x="264" y="34" width="232" height="56" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="380.0" y="59.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">カメラ</text>
+<text x="380.0" y="79.0" text-anchor="middle" font-size="13" fill="#A9BFC3">人物検知（Reolink）</text>
+<rect x="508" y="34" width="232" height="56" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="624.0" y="59.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">ドアセンサ</text>
+<text x="624.0" y="79.0" text-anchor="middle" font-size="13" fill="#A9BFC3">開閉・モーション</text>
+<rect x="20" y="98" width="232" height="56" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="136.0" y="123.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">スマートロック</text>
+<text x="136.0" y="143.0" text-anchor="middle" font-size="13" fill="#A9BFC3">解錠（セサミ5）</text>
+<rect x="264" y="98" width="232" height="56" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="380.0" y="123.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">ミリ波センサ</text>
+<text x="380.0" y="143.0" text-anchor="middle" font-size="13" fill="#A9BFC3">玄関の在室（LD2410）</text>
+<rect x="508" y="98" width="232" height="56" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="624.0" y="123.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">NFCタグ</text>
+<text x="624.0" y="143.0" text-anchor="middle" font-size="13" fill="#A9BFC3">いってきます／おやすみ</text>
+<path d="M380,156 L380,192" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<rect x="20" y="194" width="720" height="356" rx="10" fill="rgba(0,79,113,0.75)" stroke="#FFA200" stroke-width="2"/>
+<text x="380" y="222" text-anchor="middle" font-size="20" font-weight="700" fill="#DCE0DF">Home Assistant</text>
+<rect x="40" y="236" width="680" height="156" rx="10" fill="rgba(11,20,51,0.55)" stroke="#5EBFC6" stroke-width="1"/>
+<text x="56" y="260" text-anchor="start" font-size="16" font-weight="700" fill="#DCE0DF">外出フラグ</text>
+<text x="56" y="288" text-anchor="start" font-size="14" font-weight="700" fill="#FFA200">外出扱いにする</text>
+<text x="56" y="312" text-anchor="start" font-size="14" font-weight="400" fill="#DCE0DF">・スマホが10分続けて外出，かつ</text>
+<text x="56" y="334" text-anchor="start" font-size="14" font-weight="400" fill="#DCE0DF">　人物・ドアの動きが10分なし</text>
+<text x="56" y="356" text-anchor="start" font-size="14" font-weight="400" fill="#DCE0DF">・ドアが閉まって60分，動きなし</text>
+<text x="56" y="378" text-anchor="start" font-size="14" font-weight="400" fill="#DCE0DF">・「いってきます」タグ</text>
+<text x="396" y="288" text-anchor="start" font-size="14" font-weight="700" fill="#FFA200">在宅扱いにする</text>
+<text x="396" y="312" text-anchor="start" font-size="14" font-weight="400" fill="#DCE0DF">・ドアが開いて10秒以内に解錠</text>
+<text x="396" y="334" text-anchor="start" font-size="14" font-weight="400" fill="#DCE0DF">・カメラが人物を検知</text>
+<text x="396" y="356" text-anchor="start" font-size="14" font-weight="400" fill="#DCE0DF">・スマホが3分続けて在宅</text>
+<path d="M380,392 L380,420" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<rect x="40" y="422" width="680" height="112" rx="10" fill="rgba(11,20,51,0.55)" stroke="#5EBFC6" stroke-width="1"/>
+<text x="56" y="446" text-anchor="start" font-size="16" font-weight="700" fill="#DCE0DF">照明・家電</text>
+<text x="56" y="472" text-anchor="start" font-size="14" font-weight="400" fill="#DCE0DF">・外出扱い，かつ全センサーが5分動きなし → 消灯・エアコン停止・ディスプレイオフ</text>
+<text x="56" y="496" text-anchor="start" font-size="14" font-weight="400" fill="#DCE0DF">・在宅扱いでセンサーが反応 → 点灯（ミリ波センサは在宅扱いのときだけ使う）</text>
+<text x="56" y="520" text-anchor="start" font-size="14" font-weight="400" fill="#DCE0DF">・おやすみ：すべて消灯し，以後6時間はセンサーが反応しても点灯しない</text>
+<path d="M136,550 L136,590" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<rect x="20" y="592" width="232" height="56" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="136.0" y="617.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">照明</text>
+<text x="136.0" y="637.0" text-anchor="middle" font-size="13" fill="#A9BFC3">tapo・SwitchBot</text>
+<path d="M380,550 L380,590" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<rect x="264" y="592" width="232" height="56" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="380.0" y="617.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">エアコン</text>
+<text x="380.0" y="637.0" text-anchor="middle" font-size="13" fill="#A9BFC3">赤外線（Tasmota IR）</text>
+<path d="M624,550 L624,590" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<rect x="508" y="592" width="232" height="56" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="624.0" y="617.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">PCのディスプレイ</text>
+<text x="624.0" y="637.0" text-anchor="middle" font-size="13" fill="#A9BFC3">HASS.Agent</text>
+<text x="20" y="674" text-anchor="start" font-size="14" font-weight="700" fill="#FFA200">出力</text>
+</svg>

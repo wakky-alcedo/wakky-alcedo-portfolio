@@ -1,0 +1,255 @@
+---
+import { Image } from 'astro:assets';
+import kawasemiPerch from '../../assets/images/kawasemi_perch.png';
+import kawasemiDive from '../../assets/images/kawasemi_dive.png';
+import kawasemiFly from '../../assets/images/kawasemi_fly.png';
+import fish1 from '../../assets/images/fish_1.png';
+import bgDay from '../../assets/images/bg_day.png';
+import WaterSurface from './WaterSurface.astro';
+---
+
+<section class="hero" id="hero">
+  <div class="hero__bg">
+    <Image
+      src={bgDay}
+      alt=""
+      width={1920}
+      height={1080}
+      class="hero__bg-img"
+      loading="eager"
+    />
+  </div>
+
+  <!-- 水面ライン -->
+  <div class="hero__water-line" aria-hidden="true"></div>
+  <WaterSurface />
+
+  <div class="hero__content">
+    <div class="hero__text-box">
+      <p class="hero__catch">作る・走る・飛び込む</p>
+      <h1 class="hero__title">Wakky-Alcedo's<br />Portfolio</h1>
+      <p class="hero__sub">ロボット・IoT・トライアスロン<br />作品と活動の記録</p>
+      <a href="#works" class="hero__cta">作品を見る</a>
+    </div>
+
+    <div class="hero__bird" id="hero-kingfisher">
+      <Image
+        src={kawasemiPerch}
+        alt="とまり木に止まるカワセミのイラスト"
+        width={220}
+        height={220}
+        densities={[1, 2]}
+        class="hero__bird-img hero__bird-img--perch animate-float"
+        loading="eager"
+        fetchpriority="high"
+      />
+      <Image
+        src={kawasemiDive}
+        alt=""
+        width={220}
+        height={220}
+        densities={[1, 2]}
+        class="hero__bird-img hero__bird-img--dive"
+        loading="eager"
+      />
+      <Image
+        src={kawasemiFly}
+        alt=""
+        width={220}
+        height={220}
+        densities={[1, 2]}
+        class="hero__bird-img hero__bird-img--fly"
+        loading="eager"
+      />
+      <!-- アイドルの飛び込みで魚を捕まえたときだけ、くちばしにくわえて見せる -->
+      <Image
+        src={fish1}
+        alt=""
+        width={80}
+        densities={[1, 2]}
+        class="hero__bird-catch"
+        id="hero-kingfisher-catch"
+      />
+    </div>
+  </div>
+
+  <div class="hero__scroll-hint" aria-hidden="true">
+    <span class="hero__scroll-text">scroll</span>
+    <span class="hero__scroll-arrow"></span>
+  </div>
+</section>
+
+<style>
+.hero {
+  position: relative;
+  height: 100vh;
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hero__bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.4;
+}
+
+.hero__water-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--color-secondary), transparent);
+  z-index: 2;
+}
+
+.hero__content {
+  position: relative;
+  z-index: var(--z-ui);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 2rem 2rem;
+  width: 100%;
+}
+
+.hero__text-box {
+  max-width: 480px;
+}
+
+.hero__catch {
+  font-size: 0.9rem;
+  color: var(--color-accent);
+  letter-spacing: 0.15em;
+  margin-bottom: 0.75rem;
+  opacity: 0.9;
+}
+
+.hero__title {
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text);
+  margin-bottom: 1rem;
+}
+
+.hero__sub {
+  font-size: 1rem;
+  color: var(--color-text);
+  opacity: 0.75;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.hero__cta {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background: var(--color-accent);
+  border: 2px solid var(--color-accent);
+  border-radius: 100px;
+  color: var(--color-bg);
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.hero__cta:hover {
+  background: transparent;
+  color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.hero__bird {
+  position: relative;
+  flex-shrink: 0;
+  width: 220px;
+  height: 220px;
+  will-change: transform, opacity;
+}
+
+.hero__bird-img {
+  filter: drop-shadow(0 8px 24px rgba(var(--color-secondary-rgb), 0.3));
+}
+
+.hero__bird-img--perch {
+  position: relative;
+}
+
+.hero__bird-img--dive,
+.hero__bird-img--fly {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+/* くちばしの先（左28%・上20%付近）に魚の胴体の中央がくるよう、頭を外側に向けて手前に重ねる */
+.hero__bird-catch {
+  position: absolute;
+  left: 10%;
+  top: 12%;
+  width: 34%;
+  height: auto;
+  opacity: 0;
+  pointer-events: none;
+  transform: scaleX(-1) rotate(-10deg);
+}
+
+.hero__scroll-hint {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-ui);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hero__scroll-text {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--color-text);
+  opacity: 0.5;
+  text-transform: uppercase;
+}
+
+.hero__scroll-arrow {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, transparent, var(--color-secondary));
+  animation: scrollPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 0.9; }
+}
+
+@media (max-width: 640px) {
+  .hero__content {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    gap: 2rem;
+  }
+
+  .hero__bird {
+    order: -1;
+    width: 140px;
+    height: 140px;
+  }
+}
+</style>

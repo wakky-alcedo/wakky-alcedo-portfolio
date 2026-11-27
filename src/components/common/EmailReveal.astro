@@ -1,0 +1,47 @@
+---
+import { EMAIL_ENCODED } from '../../config/site';
+
+interface Props {
+  /** 見た目は親が決める（表示後の <a> にも引き継がれる） */
+  class?: string;
+}
+
+// rest には親の scoped スタイル用属性（data-astro-cid-*）が入るのでルート要素に渡す
+const { class: className, ...rest } = Astro.props;
+---
+
+<!--
+  スクレイピング対策でメールアドレスを Base64 で持ち、クリックで復元して mailto リンクに置き換える。
+  slot 内の [data-email-text] がアドレスに書き換わる（なければボタン全体のテキスト）。
+-->
+<button
+  type="button"
+  class={className}
+  data-email-reveal
+  data-email={EMAIL_ENCODED}
+  aria-label="メールアドレスを表示"
+  {...rest}
+>
+  <slot />
+</button>
+
+<script>
+  const OMIT_ATTRS = ['type', 'data-email-reveal', 'data-email', 'aria-label'];
+
+  document.querySelectorAll<HTMLButtonElement>('[data-email-reveal]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const decoded = atob(btn.dataset.email ?? '');
+      const target = btn.querySelector<HTMLElement>('[data-email-text]') ?? btn;
+      target.textContent = decoded;
+
+      // class・scoped スタイル用属性はそのまま引き継いで <a> に置き換える
+      const link = document.createElement('a');
+      for (const { name, value } of Array.from(btn.attributes)) {
+        if (!OMIT_ATTRS.includes(name)) link.setAttribute(name, value);
+      }
+      link.href = `mailto:${decoded}`;
+      link.innerHTML = btn.innerHTML;
+      btn.replaceWith(link);
+    });
+  });
+</script>

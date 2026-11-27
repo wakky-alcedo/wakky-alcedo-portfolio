@@ -1,0 +1,11 @@
+---
+import PageLayout from '../../components/layout/PageLayout.astro';
+import { getVisibleEntries } from '../../lib/collections';
+import SortableWorksGrid from '../../components/works/SortableWorksGrid.astro';
+
+const allWorks = await getVisibleEntries('works');
+---
+
+<PageLayout title="Works" description="制作物・プロジェクト一覧" subtitle="制作物・プロジェクト" width="wide">
+  <SortableWorksGrid works={allWorks} mobile="grid" />
+</PageLayout>

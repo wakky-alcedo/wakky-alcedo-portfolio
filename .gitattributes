@@ -1,0 +1,7 @@
+# Git がリポジトリにコミットする際に，すべてのテキストファイルの改行コードを LF に固定する
+* text=auto eol=lf
+
+# 画像などのバイナリファイルは変更しない
+*.png binary
+*.jpg binary
+*.pdf binary

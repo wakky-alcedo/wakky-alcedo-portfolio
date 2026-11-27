@@ -1,0 +1,13 @@
+---
+import { getVisibleEntries } from '../../lib/collections';
+import ArticleLayout from '../../components/layout/ArticleLayout.astro';
+
+export async function getStaticPaths() {
+  const works = await getVisibleEntries('works');
+  return works.map((work) => ({ params: { slug: work.id }, props: { work } }));
+}
+
+const { work } = Astro.props;
+---
+
+<ArticleLayout entry={work} />

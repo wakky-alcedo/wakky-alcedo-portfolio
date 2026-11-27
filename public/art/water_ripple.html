@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>水の波紋</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#000;overflow:hidden;cursor:crosshair;}
+canvas{display:block;position:fixed;top:0;left:0;}
+.ui{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;width:min(480px,90vw);z-index:10;}
+.panel{background:rgba(2,8,18,0.88);backdrop-filter:blur(14px);border:0.5px solid rgba(255,255,255,0.1);border-radius:14px;padding:12px 16px;width:100%;}
+.sliders{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;}
+.sl{display:flex;flex-direction:column;gap:3px;}
+.sl label{font-size:11px;color:rgba(255,255,255,0.4);display:flex;justify-content:space-between;font-family:sans-serif;}
+.sl label span{color:rgba(255,255,255,0.8);}
+input[type=range]{width:100%;accent-color:#85B7EB;cursor:pointer;}
+.btns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
+button{padding:8px 16px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.75);font-size:12px;cursor:pointer;font-family:sans-serif;transition:background 0.15s;}
+button:hover{background:rgba(255,255,255,0.12);}
+button.on{background:rgba(133,183,235,0.2);border-color:rgba(133,183,235,0.5);color:#85B7EB;}
+.hint{font-size:11px;color:rgba(255,255,255,0.2);text-align:center;font-family:sans-serif;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui">
+  <div class="panel">
+    <div class="sliders">
+      <div class="sl">
+        <label>減衰（小=早く消える） <span id="vDamp">0.991</span></label>
+        <input type="range" id="sDamp" min="0.80" max="0.999" step="0.001" value="0.991">
+      </div>
+      <div class="sl">
+        <label>波の強さ <span id="vForce">9.5</span></label>
+        <input type="range" id="sForce" min="1" max="10" step="0.5" value="9.5">
+      </div>
+      <div class="sl">
+        <label>明るさ <span id="vBright">8.0</span></label>
+        <input type="range" id="sBright" min="0.5" max="8" step="0.5" value="8.0">
+      </div>
+      <div class="sl">
+        <label>色テーマ <span id="vTheme">深海</span></label>
+        <input type="range" id="sTheme" min="0" max="3" step="1" value="0">
+      </div>
+      <div class="sl">
+        <label>雨の量 <span id="vRain">0.1</span></label>
+        <input type="range" id="sRain" min="0.1" max="5" step="0.1" value="0.1">
+      </div>
+      <div class="sl">
+        <label>波の速さ <span id="vSpeed">0.40</span></label>
+        <input type="range" id="sSpeed" min="0.05" max="0.70" step="0.01" value="0.40">
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="btns">
+      <button id="btnAuto" class="on" onclick="toggleAuto()">💧 自動で雨粒</button>
+      <button onclick="bigWave()">🌊 大波</button>
+      <button onclick="clearWave()">✕ リセット</button>
+    </div>
+  </div>
+  <div class="hint">クリック・ドラッグで波紋を起こす</div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+
+const SCALE = 3; // 1セル = 3px（軽さと品質のバランス）
+let W, H, CW, CH;
+let buf0, buf1; // ダブルバッファ — swapして使う
+let img, pix;
+
+function resize() {
+  W  = window.innerWidth;
+  H  = window.innerHeight;
+  CW = Math.floor(W / SCALE);
+  CH = Math.floor(H / SCALE);
+  canvas.width  = W;
+  canvas.height = H;
+  buf0 = new Float32Array(CW * CH); // 現フレーム
+  buf1 = new Float32Array(CW * CH); // 前フレーム
+  img  = ctx.createImageData(W, H);
+  pix  = img.data;
+  for (let i = 3; i < pix.length; i += 4) pix[i] = 255;
+}
+resize();
+window.addEventListener('resize', resize);
+
+let DAMP=0.991, FORCE=9.5, BRIGHT=8.0, THEME=0, RAIN=0.1, SPEED=0.40;
+let C2 = SPEED * SPEED; // 伝播速度の二乗（スライダーで変更）
+const THEMES = [
+  { name:'深海',       bg:[4,12,28],  wave:[60,140,255] },
+  { name:'夕暮れ',     bg:[18,8,6],   wave:[255,160,80] },
+  { name:'エメラルド', bg:[4,18,10],  wave:[80,255,180] },
+  { name:'夜光',       bg:[8,4,20],   wave:[180,100,255] },
+];
+
+// 伝播速度 c=0.4 → c²=0.16（安定条件 c≤0.5 をクリア）
+
+function step() {
+  const w=CW, h=CH;
+  const cur=buf0, prv=buf1;
+  // next は cur を上書きせず、prv（前フレーム）側に書き込む
+  // 最後にswapして cur↔prv を入れ替える
+  const nxt = prv; // 書き込み先 = 前フレームバッファ（もう不要なので再利用）
+
+  for (let y = 1; y < h-1; y++) {
+    for (let x = 1; x < w-1; x++) {
+      const i   = y*w + x;
+      const lap = cur[i-1] + cur[i+1] + cur[i-w] + cur[i+w] - 4*cur[i];
+      let   val = 2*cur[i] - prv[i] + C2*lap;
+      val *= DAMP;
+      if (val >  80) val =  80;
+      if (val < -80) val = -80;
+      nxt[i] = val;
+    }
+  }
+
+  // 境界を0に固定
+  for (let x=0; x<w; x++) { nxt[x]=0; nxt[(h-1)*w+x]=0; }
+  for (let y=0; y<h; y++) { nxt[y*w]=0; nxt[y*w+w-1]=0; }
+
+  // バッファスワップ：buf0が常に「現フレーム」
+  buf0 = nxt;  // 新しく計算した値 → 現フレーム
+  buf1 = cur;  // 1フレーム前の値として保存
+}
+
+function render() {
+  const th=THEMES[THEME];
+  const bgR=th.bg[0],   bgG=th.bg[1],   bgB=th.bg[2];
+  const wvR=th.wave[0], wvG=th.wave[1], wvB=th.wave[2];
+  const w=CW, bright=BRIGHT;
+  const cur=buf0;
+
+  for (let py=0; py<H; py++) {
+    const gy  = (py/SCALE)|0;
+    const gy1 = gy+1 < CH ? gy+1 : gy;
+    const fy  = (py/SCALE) - gy;
+    for (let px=0; px<W; px++) {
+      const gx  = (px/SCALE)|0;
+      const gx1 = gx+1 < CW ? gx+1 : gx;
+      const fx  = (px/SCALE) - gx;
+
+      // バイリニア補間
+      const v =
+        cur[gy *w+gx ] * (1-fx)*(1-fy) +
+        cur[gy *w+gx1] *    fx *(1-fy) +
+        cur[gy1*w+gx ] * (1-fx)*   fy  +
+        cur[gy1*w+gx1] *    fx *   fy;
+
+      // 波高 → 0〜1（最大振幅80を基準）
+      const t = Math.max(0, Math.min(1, v * bright / 80));
+
+      const pi=(py*W+px)*4;
+      pix[pi]   = (bgR + (wvR-bgR)*t)|0;
+      pix[pi+1] = (bgG + (wvG-bgG)*t)|0;
+      pix[pi+2] = (bgB + (wvB-bgB)*t)|0;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function drop(px, py, amp) {
+  const gx=Math.round(px/SCALE), gy=Math.round(py/SCALE);
+  const r=4;
+  for (let dy=-r; dy<=r; dy++) {
+    for (let dx=-r; dx<=r; dx++) {
+      if (dx*dx+dy*dy > r*r) continue;
+      const x=gx+dx, y=gy+dy;
+      if (x>0 && x<CW-1 && y>0 && y<CH-1) {
+        buf0[y*CW+x] -= amp * Math.exp(-(dx*dx+dy*dy)/(r*r)*3);
+      }
+    }
+  }
+}
+
+function bigWave() {
+  for (let i=0; i<8; i++)
+    setTimeout(()=>drop(Math.random()*W, Math.random()*H, FORCE*3), i*180);
+}
+function clearWave() { buf0.fill(0); buf1.fill(0); }
+
+let autoRain=true, rainAcc=0;
+function toggleAuto() {
+  autoRain=!autoRain;
+  document.getElementById('btnAuto').classList.toggle('on', autoRain);
+}
+
+let dragging=false;
+canvas.addEventListener('mousedown',  e=>{ dragging=true;  drop(e.clientX,e.clientY,FORCE*2); });
+canvas.addEventListener('mousemove',  e=>{ if(dragging) drop(e.clientX,e.clientY,FORCE*0.5); });
+canvas.addEventListener('mouseup',    ()=>dragging=false);
+canvas.addEventListener('mouseleave', ()=>dragging=false);
+canvas.addEventListener('touchstart', e=>{ e.preventDefault(); dragging=true;  drop(e.touches[0].clientX,e.touches[0].clientY,FORCE*2); },{passive:false});
+canvas.addEventListener('touchmove',  e=>{ e.preventDefault(); drop(e.touches[0].clientX,e.touches[0].clientY,FORCE*0.5); },{passive:false});
+canvas.addEventListener('touchend',   ()=>dragging=false);
+
+document.getElementById('sDamp').oninput  =e=>{ DAMP=parseFloat(e.target.value);   document.getElementById('vDamp').textContent=DAMP.toFixed(3); };
+document.getElementById('sForce').oninput =e=>{ FORCE=parseFloat(e.target.value);  document.getElementById('vForce').textContent=FORCE; };
+document.getElementById('sBright').oninput=e=>{ BRIGHT=parseFloat(e.target.value); document.getElementById('vBright').textContent=BRIGHT.toFixed(1); };
+document.getElementById('sTheme').oninput =e=>{ THEME=parseInt(e.target.value);    document.getElementById('vTheme').textContent=THEMES[THEME].name; };
+document.getElementById('sRain').oninput  =e=>{ RAIN=parseFloat(e.target.value);   document.getElementById('vRain').textContent=RAIN.toFixed(1); };
+document.getElementById('sSpeed').oninput =e=>{ SPEED=parseFloat(e.target.value);  C2=SPEED*SPEED; document.getElementById('vSpeed').textContent=SPEED.toFixed(2); };
+
+let last=0;
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt=Math.min((now-last)/1000, 0.05); last=now;
+  if (autoRain) {
+    rainAcc+=dt;
+    if (rainAcc > (0.4+Math.random()*0.8) / RAIN) { rainAcc=0; drop(Math.random()*W, Math.random()*H, FORCE*0.8); }
+  }
+  step();
+  render();
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

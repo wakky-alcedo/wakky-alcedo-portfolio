@@ -1,0 +1,32 @@
+---
+interface Props {
+  gap?: string;
+}
+
+const { gap = '1rem' } = Astro.props;
+---
+
+<div class="flex-row" style={`--flex-row-gap: ${gap}`}>
+  <slot />
+</div>
+
+<style>
+.flex-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--flex-row-gap, 1rem);
+  margin: 1.5rem 0;
+}
+
+.flex-row > :global(*) {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .flex-row {
+    flex-direction: column;
+  }
+}
+</style>

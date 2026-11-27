@@ -1,0 +1,49 @@
+/* tokens.css — デザイントークン専用。アニメーション値には使わない */
+:root {
+  /* カラーパレット */
+  --color-primary:    #004F71;
+  --color-secondary:  #5EBFC6;
+  --color-accent:     #FFA200;
+  --color-bg:         #080B26;
+  --color-text:       #DCE0DF;
+
+  /* 透明度付きで使うための RGB 成分（例: rgba(var(--color-secondary-rgb), 0.3)） */
+  --color-primary-rgb:   0, 79, 113;
+  --color-secondary-rgb: 94, 191, 198;
+  --color-accent-rgb:    255, 162, 0;
+  --color-bg-rgb:        8, 11, 38;
+  --color-text-rgb:      220, 224, 223;
+
+  /*
+   * 役割ごとの色（比率の目安: ベース紺 70 : メイン青緑 25 : アクセント橙 5）
+   * - 青緑はヘッダー・フッターの帯と、カードの半透明の面に使う（カードは透明感を残す）
+   * - 水色はブランド・水のモチーフ（ロゴ・見出し・水面演出）だけに使う
+   * - 橙は操作できるところ（ボタン・リンク・選択中）と強調だけに使う
+   * - 線・タグ・補足は文字色の透明度で控えめにする
+   */
+  --surface-card:       rgba(var(--color-primary-rgb), 0.1);
+  --surface-card-hover: rgba(var(--color-primary-rgb), 0.2);
+  --surface-bar:        color-mix(in srgb, var(--color-primary) 30%, var(--color-bg));
+  --line-subtle:        rgba(var(--color-text-rgb), 0.12);
+  --line-strong:        rgba(var(--color-text-rgb), 0.3);
+  --tag-bg:             rgba(var(--color-text-rgb), 0.06);
+  --tag-border:         rgba(var(--color-text-rgb), 0.4);
+  --tag-text:           rgba(var(--color-text-rgb), 0.8);
+
+  /* z-indexレイヤー（魚の4レイヤーは1枚の Canvas 内で描き分ける） */
+  --z-caustics:    0;
+  --z-fish-bg:     1;
+  --z-ui:          10;
+  --z-kingfisher:  20;
+  --z-header:      100;
+}
+
+/* アクセシビリティ：アニメーション全停止 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

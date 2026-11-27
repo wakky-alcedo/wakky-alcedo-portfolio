@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>パーティクル物理サンドボックス</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0a0e1a;color:#fff;font-family:sans-serif;padding:16px;}
+.stage{background:#080c18;border-radius:12px;overflow:hidden;cursor:crosshair;}
+canvas{display:block;width:100%;}
+.mode-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.mode-btn{flex:1;padding:8px 6px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.5);font-size:12px;cursor:pointer;text-align:center;min-width:70px;}
+.mode-btn.active{background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.4);}
+.panel{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ctrl{background:rgba(255,255,255,0.05);border-radius:8px;padding:10px 12px;border:1px solid rgba(255,255,255,0.08);}
+.ctrl-label{font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;display:flex;justify-content:space-between;}
+.ctrl-label span{font-weight:500;color:#fff;}
+input[type=range]{width:100%;accent-color:#534AB7;}
+.hint{font-size:12px;color:rgba(255,255,255,0.25);margin-top:8px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="stage">
+  <canvas id="pc" width="680" height="380"></canvas>
+</div>
+<div class="mode-row">
+  <button class="mode-btn active" id="m-attract" onclick="setMode('attract')">🌀 引力</button>
+  <button class="mode-btn" id="m-repel" onclick="setMode('repel')">💥 斥力</button>
+  <button class="mode-btn" id="m-wind" onclick="setMode('wind')">🌬 風</button>
+  <button class="mode-btn" id="m-vortex" onclick="setMode('vortex')">🌪 渦</button>
+  <button class="mode-btn" id="m-spawn" onclick="setMode('spawn')">✨ 生成</button>
+  <button class="mode-btn" id="m-black" onclick="setMode('black')">⚫ 重力井戸</button>
+</div>
+<div class="panel">
+  <div class="ctrl">
+    <div class="ctrl-label">重力 <span id="gravVal">0.00</span></div>
+    <input type="range" id="grav" min="-0.2" max="0.3" step="0.01" value="0">
+  </div>
+  <div class="ctrl">
+    <div class="ctrl-label">パーティクル数 <span id="countVal">300</span></div>
+    <input type="range" id="pcount" min="50" max="800" step="50" value="300">
+  </div>
+  <div class="ctrl">
+    <div class="ctrl-label">摩擦 <span id="fricVal">1.000</span></div>
+    <input type="range" id="fric" min="0.8" max="1.0" step="0.005" value="1.0">
+  </div>
+  <div class="ctrl">
+    <div class="ctrl-label">力の強さ <span id="forceVal">2.0</span></div>
+    <input type="range" id="force" min="0.5" max="6" step="0.5" value="2.0">
+  </div>
+</div>
+<div class="hint">クリック＆ドラッグで力を与える</div>
+
+<script>
+const canvas = document.getElementById('pc');
+const ctx = canvas.getContext('2d');
+const W = 680, H = 380;
+let mode='attract', gravity=0, friction=1.0, forcePow=2.0;
+let mouseX=-999, mouseY=-999, mouseDown=false;
+let particles=[], blackHoles=[];
+const COLORS=[[83,74,183],[29,158,117],[239,159,39],[216,90,48],[212,83,126],[133,183,235],[175,169,236],[93,202,165]];
+function rnd(a,b){return a+Math.random()*(b-a);}
+class Particle{
+  constructor(x,y){
+    this.x=x??rnd(0,W); this.y=y??rnd(0,H);
+    this.vx=rnd(-1,1); this.vy=rnd(-1,1);
+    const c=COLORS[Math.floor(Math.random()*COLORS.length)];
+    this.r=c[0];this.g=c[1];this.b=c[2];
+    this.size=rnd(1.2,2.8);
+  }
+}
+function initParticles(n){particles=[];for(let i=0;i<n;i++)particles.push(new Particle());}
+initParticles(300);
+function update(){
+  for(let i=0;i<particles.length;i++){
+    const p=particles[i];
+    p.vy+=gravity; p.vx*=friction; p.vy*=friction;
+    if(mouseDown&&mouseX>0){
+      const dx=mouseX-p.x,dy=mouseY-p.y,d=Math.sqrt(dx*dx+dy*dy)+1,d2=Math.max(d,20);
+      const f=forcePow*300/(d2*d2);
+      if(mode==='attract'){p.vx+=dx/d*f;p.vy+=dy/d*f;}
+      else if(mode==='repel'){p.vx-=dx/d*f*1.5;p.vy-=dy/d*f*1.5;}
+      else if(mode==='wind'){p.vx+=forcePow*0.3;p.vy+=forcePow*0.05;}
+      else if(mode==='vortex'){p.vx+=(-dy/d)*f;p.vy+=(dx/d)*f;}
+      else if(mode==='spawn'&&Math.random()<0.08)particles.push(new Particle(mouseX+rnd(-20,20),mouseY+rnd(-20,20)));
+    }
+    blackHoles.forEach(bh=>{
+      const dx=bh.x-p.x,dy=bh.y-p.y,d=Math.sqrt(dx*dx+dy*dy)+1;
+      if(d<10){p.x=rnd(0,W);p.y=rnd(0,H);p.vx=rnd(-1,1);p.vy=rnd(-1,1);return;}
+      const f=bh.strength*200/(d*d);
+      p.vx+=dx/d*f;p.vy+=dy/d*f;
+    });
+    const spd=Math.sqrt(p.vx*p.vx+p.vy*p.vy);
+    if(spd>12){const s=12/spd;p.vx*=s;p.vy*=s;}
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0){p.x=0;p.vx=Math.abs(p.vx)*0.6;}
+    if(p.x>W){p.x=W;p.vx=-Math.abs(p.vx)*0.6;}
+    if(p.y<0){p.y=0;p.vy=Math.abs(p.vy)*0.6;}
+    if(p.y>H){p.y=H;p.vy=-Math.abs(p.vy)*0.6;}
+  }
+  if(particles.length>800)particles.splice(0,particles.length-800);
+}
+function draw(){
+  ctx.fillStyle='rgba(8,12,24,0.18)';ctx.fillRect(0,0,W,H);
+  for(let i=0;i<particles.length;i++){
+    const p=particles[i];
+    const spd=Math.sqrt(p.vx*p.vx+p.vy*p.vy);
+    const alpha=Math.min(1,0.4+spd*0.06);
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${p.r},${p.g},${p.b},${alpha.toFixed(2)})`;ctx.fill();
+  }
+  blackHoles.forEach(bh=>{
+    ctx.beginPath();ctx.arc(bh.x,bh.y,bh.r,0,Math.PI*2);ctx.fillStyle='#000';ctx.fill();
+    ctx.beginPath();ctx.arc(bh.x,bh.y,bh.r+4,0,Math.PI*2);
+    ctx.strokeStyle='rgba(239,159,39,0.7)';ctx.lineWidth=1.5;ctx.stroke();
+    bh.r=Math.min(bh.r+0.002,20);
+  });
+}
+function loop(){requestAnimationFrame(loop);update();draw();}
+loop();
+function setMode(m){
+  mode=m;
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('m-'+m).classList.add('active');
+}
+canvas.addEventListener('mousedown',e=>{
+  const r=canvas.getBoundingClientRect(),sx=W/r.width;
+  mouseX=(e.clientX-r.left)*sx;mouseY=(e.clientY-r.top)*sx;mouseDown=true;
+  if(mode==='black'){blackHoles.push({x:mouseX,y:mouseY,r:6,strength:forcePow});if(blackHoles.length>4)blackHoles.shift();}
+});
+canvas.addEventListener('mousemove',e=>{
+  if(!mouseDown)return;
+  const r=canvas.getBoundingClientRect(),sx=W/r.width;
+  mouseX=(e.clientX-r.left)*sx;mouseY=(e.clientY-r.top)*sx;
+});
+canvas.addEventListener('mouseup',()=>{mouseDown=false;mouseX=-999;});
+canvas.addEventListener('mouseleave',()=>{mouseDown=false;mouseX=-999;});
+canvas.addEventListener('touchstart',e=>{e.preventDefault();
+  const r=canvas.getBoundingClientRect(),t=e.touches[0],sx=W/r.width;
+  mouseX=(t.clientX-r.left)*sx;mouseY=(t.clientY-r.top)*sx;mouseDown=true;
+  if(mode==='black'){blackHoles.push({x:mouseX,y:mouseY,r:6,strength:forcePow});if(blackHoles.length>4)blackHoles.shift();}
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{e.preventDefault();
+  const r=canvas.getBoundingClientRect(),t=e.touches[0],sx=W/r.width;
+  mouseX=(t.clientX-r.left)*sx;mouseY=(t.clientY-r.top)*sx;
+},{passive:false});
+canvas.addEventListener('touchend',()=>{mouseDown=false;mouseX=-999;});
+document.getElementById('grav').oninput=e=>{gravity=parseFloat(e.target.value);document.getElementById('gravVal').textContent=gravity.toFixed(2);};
+document.getElementById('pcount').oninput=e=>{const n=parseInt(e.target.value);document.getElementById('countVal').textContent=n;initParticles(n);};
+document.getElementById('fric').oninput=e=>{friction=parseFloat(e.target.value);document.getElementById('fricVal').textContent=friction.toFixed(3);};
+document.getElementById('force').oninput=e=>{forcePow=parseFloat(e.target.value);document.getElementById('forceVal').textContent=forcePow.toFixed(1);};
+</script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+/* print.css — 印刷時の配色モード切り替え
+   data-print-mode="economy"（既定）: 白ベースでインクを節約
+   data-print-mode="vivid"          : 画面の配色をそのまま再現
+*/
+
+/* 共通: 画面専用要素は印刷時に隠す */
+@media print {
+  .header,
+  .scroll-kingfisher,
+  .print-mode-toggle {
+    display: none !important;
+  }
+
+  body {
+    overflow: visible !important;
+  }
+}
+
+/* economy（既定）: 背景を白に、文字を黒系にしてインク消費を抑える */
+@media print {
+  html:not([data-print-mode="vivid"]) {
+    background: #fff !important;
+  }
+
+  html:not([data-print-mode="vivid"]) body,
+  html:not([data-print-mode="vivid"]) * {
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    color: #111 !important;
+    border-color: #999 !important;
+  }
+
+  html:not([data-print-mode="vivid"]) a {
+    color: #0063AA !important;
+    text-decoration: underline;
+  }
+}
+
+/* vivid: 画面の配色（背景色・画像）をそのまま印刷に反映 */
+@media print {
+  html[data-print-mode="vivid"],
+  html[data-print-mode="vivid"] * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}

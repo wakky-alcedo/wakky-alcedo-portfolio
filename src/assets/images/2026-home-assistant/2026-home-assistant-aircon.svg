@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 220" width="760" height="220" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5EBFC6"/></marker></defs>
+<rect x="0" y="0" width="760" height="220" rx="16" fill="#0B1433"/>
+<rect x="20" y="40" width="162" height="90" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="101.0" y="82.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">温湿度計</text>
+<text x="101.0" y="102.0" text-anchor="middle" font-size="13" fill="#A9BFC3">SwitchBot（卓上）</text>
+<rect x="206" y="40" width="162" height="90" rx="10" fill="rgba(0,79,113,0.75)" stroke="#FFA200" stroke-width="2"/>
+<text x="287.0" y="73.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">Home Assistant</text>
+<text x="287.0" y="93.0" text-anchor="middle" font-size="13" fill="#A9BFC3">Versatile Thermostat</text>
+<text x="287.0" y="111.0" text-anchor="middle" font-size="13" fill="#A9BFC3">（SmartPI）</text>
+<rect x="392" y="40" width="162" height="90" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="473.0" y="82.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">赤外線リモコン</text>
+<text x="473.0" y="102.0" text-anchor="middle" font-size="13" fill="#A9BFC3">Tasmota IR</text>
+<rect x="578" y="40" width="162" height="90" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="659.0" y="82.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">エアコン</text>
+<text x="659.0" y="102.0" text-anchor="middle" font-size="13" fill="#A9BFC3">SmartIR で操作</text>
+<path d="M182,85 L204,85" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<text x="194.0" y="30" text-anchor="middle" font-size="13" font-weight="400" fill="#A9BFC3">卓上の室温</text>
+<path d="M368,85 L390,85" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<text x="380.0" y="30" text-anchor="middle" font-size="13" font-weight="400" fill="#A9BFC3">MQTT</text>
+<path d="M554,85 L576,85" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<text x="566.0" y="30" text-anchor="middle" font-size="13" font-weight="400" fill="#A9BFC3">赤外線</text>
+<path d="M659,130 L659,190 L101,190 L101,132" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<text x="380" y="182" text-anchor="middle" font-size="14" font-weight="400" fill="#A9BFC3">冷気・暖気で卓上の室温が変わる（フィードバック）</text>
+</svg>

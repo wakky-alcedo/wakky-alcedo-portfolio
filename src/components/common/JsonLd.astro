@@ -1,0 +1,11 @@
+---
+/** 構造化データ（JSON-LD）。BaseLayout の slot="head" に入れて使う */
+interface Props {
+  data: object;
+}
+
+// 本文中の "</script>" で script 要素が閉じないよう < をエスケープする
+const json = JSON.stringify(Astro.props.data).replace(/</g, '\\u003c');
+---
+
+<script type="application/ld+json" set:html={json} />
