@@ -1,4 +1,5 @@
-import defaultOgImage from '../assets/images/2026-portfolio-top.webp';
+// トップのヒーローを 1200×630 で撮ったもの（ヘッダー・SCROLL 表示は消している）。見た目を変えたら撮り直す
+import defaultOgImage from '../assets/images/og-default.webp';
 
 /** サイト全体のメタ情報（<head> の meta・OGP・構造化データで使う。公開 URL は astro.config.mjs の site） */
 export const SITE = {
