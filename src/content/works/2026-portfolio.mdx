@@ -18,7 +18,7 @@ featured: 0
 
 - 制作期間：2026/06-（運用しながら改良中）
 - 担当範囲：企画・デザイン・実装・運用（個人開発）
-- 主要技術：Astro，TypeScript，GSAP，Canvas API，CodeMirror 6，Docker，Cloudflare Tunnel
+- 主要技術：Astro，TypeScript，GSAP，Canvas API，CodeMirror 6，Cloudflare Pages
 
 ![止まり木のカワセミがいる水上の画面](../../assets/images/2026-portfolio/2026-portfolio-above-water.webp "水上：最初の画面")
 ![スクロールに合わせてカワセミが水に飛び込む画面](../../assets/images/2026-portfolio/2026-portfolio-dive.webp "飛び込み：スクロールに連動")
@@ -47,12 +47,8 @@ Claude Code を使うようになって，自分用のホームページも作�
 | スクロール演出 | GSAP + ScrollTrigger | スクロールに連動したカワセミの飛び込みを精密に制御できる |
 | 背景演出 | Canvas API | 魚・水面の波紋・水中の光を，外部ライブラリなしで軽量に描ける |
 | 記事エディタ | CodeMirror 6 | ブラウザ上で Markdown をプレビューしながら書けるエディタを自作できる（開発時のみ） |
-| 公開 | Docker + nginx + Cloudflare Tunnel | 自宅サーバーからポートを開けずに安全に公開できる |
+| 公開 | Cloudflare Pages | ビルドした静的なファイルをそのまま配信でき，GitHub に push すれば公開まで自動で進む |
 | 開発 | Claude Code | 仕様書を書き，AIと一緒に実装・レビュー・リファクタリングを回した |
-
-自宅のサーバーで公開しています．サーバーからCloudflareへ外向きにつなぐ Cloudflare Tunnel を使っているので，ルーターのポートを開けていません．
-
-![公開の構成図](../../assets/images/2026-portfolio/2026-portfolio-hosting.svg "公開の構成：Cloudflare Tunnel でポートを開けずに公開")
 
 ## こだわったポイント
 

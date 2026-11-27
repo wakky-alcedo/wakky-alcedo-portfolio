@@ -31,12 +31,12 @@
 <text x="120.0" y="454.5" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">git commit</text>
 <text x="120.0" y="474.5" text-anchor="middle" font-size="13" fill="#A9BFC3">GitHub に push</text>
 <rect x="280" y="416" width="200" height="84" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
-<text x="380.0" y="445.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">サーバーで更新</text>
-<text x="380.0" y="465.0" text-anchor="middle" font-size="13" fill="#A9BFC3">git pull</text>
-<text x="380.0" y="484.0" text-anchor="middle" font-size="13" fill="#A9BFC3">docker compose up --build</text>
+<text x="380.0" y="445.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">Cloudflare Pages</text>
+<text x="380.0" y="465.0" text-anchor="middle" font-size="13" fill="#A9BFC3">npm run build で</text>
+<text x="380.0" y="484.0" text-anchor="middle" font-size="13" fill="#A9BFC3">静的なファイルを作る</text>
 <rect x="540" y="416" width="200" height="84" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
 <text x="640.0" y="454.5" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">公開</text>
-<text x="640.0" y="474.5" text-anchor="middle" font-size="13" fill="#A9BFC3">Cloudflare Tunnel 経由</text>
+<text x="640.0" y="474.5" text-anchor="middle" font-size="13" fill="#A9BFC3">alcedoworks.com</text>
 <polyline points="430,364 430,390 120,390 120,416" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
 <polyline points="220,458 280,458" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
 <polyline points="480,458 540,458" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
