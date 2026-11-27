@@ -37,6 +37,18 @@ function editOnClick(el: HTMLElement, view: EditorView) {
   });
 }
 
+/**
+ * 画像の縦横（記事から見た相対パス → 縦横）。開くときにサーバーで調べておき（main.ts）、
+ * 読み込み前の <img> に付けて高さを確保する。新しく追加した画像は、読み込んだときに覚える
+ */
+const imageSizes = new Map<string, { width: number; height: number }>();
+export function rememberImageSizes(sizes: Record<string, { width: number; height: number }>) {
+  for (const [src, size] of Object.entries(sizes)) imageSizes.set(src, size);
+}
+
+/** 本文の幅（画面外の画像の高さを見積もるため。画像を描くたびに測る） */
+let contentWidth = 0;
+
 abstract class BlockWidget extends WidgetType {
   abstract readonly key: string;
   eq(other: WidgetType) { return other instanceof BlockWidget && other.key === this.key; }
@@ -51,9 +63,21 @@ export class ImagesWidget extends BlockWidget {
     this.key = JSON.stringify(images);
   }
 
-  get estimatedHeight() { return 320; }
+  /**
+   * 画面外にあるときの高さの見積もり。実際と違うと、上にスクロールして描かれたときに本文が動くので、
+   * 縦横がわかっていれば本文の幅から計算する（.ed-images の上下の padding と、キャプションの分を足す）
+   */
+  get estimatedHeight() {
+    const sizes = this.images.map((image) => imageSizes.get(image.src));
+    if (!contentWidth || sizes.some((s) => !s)) return 320;
+    const gap = 16;
+    const each = (contentWidth - gap * (this.images.length - 1)) / this.images.length;
+    const caption = this.images.some((image) => image.caption) ? 28 : 0;
+    return Math.max(...sizes.map((s) => (each * s!.height) / s!.width)) + 24 + caption;
+  }
 
   toDOM(view: EditorView) {
+    contentWidth = view.contentDOM.clientWidth || contentWidth;
     const row = document.createElement('div');
     row.className = `ed-images${this.images.length > 1 ? ' ed-images--row' : ''}`;
     for (const image of this.images) {
@@ -62,9 +86,18 @@ export class ImagesWidget extends BlockWidget {
       figure.className = 'ed-image';
       if (width !== undefined) figure.style.maxWidth = typeof width === 'number' ? `${width}px` : width;
       const img = document.createElement('img');
+      const size = imageSizes.get(image.src);
+      if (size) {
+        // CSS の width: 100%; height: auto と合わせて、読み込み前から縦横比どおりの高さになる
+        img.width = size.width;
+        img.height = size.height;
+      }
       img.src = this.resolve(image.src);
       img.alt = alt;
-      img.onload = () => view.requestMeasure();
+      img.onload = () => {
+        imageSizes.set(image.src, { width: img.naturalWidth, height: img.naturalHeight });
+        view.requestMeasure();
+      };
       img.onerror = () => { figure.classList.add('ed-image--missing'); figure.dataset.src = image.src; };
       figure.append(img);
       if (image.caption) {
