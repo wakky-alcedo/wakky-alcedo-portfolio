@@ -325,7 +325,7 @@ iOS 13+ では `requestPermission()` が必須（実装: `src/scripts/utils/devi
 | Retina対応 | DPR を `canvasDpr()` でキャップ（スマホ 1.5 / PC 2） |
 | 画像最適化 | Astro `<Image>` コンポーネント（`width`/`height` 必須指定）|
 | CLS防止 | 全`<Image>`に`width`/`height`明示 |
-| SEO / OGP | BaseLayout.astroでコレクションのfrontmatterからdynamic meta生成 |
+| SEO / OGP | 公開 URL は `astro.config.mjs` の `site`。canonical・OGP は `BaseLayout.astro`、構造化データ（JSON-LD）は `src/lib/seo.ts`、サイト名などは `src/config/site.ts` の `SITE`。`@astrojs/sitemap` で `/sitemap-index.xml`、`src/pages/robots.txt.ts` で `/robots.txt` を出力 |
 | メールアドレス保護 | Base64エンコードをJSで復元する難読化を適用 |
 
 ---
