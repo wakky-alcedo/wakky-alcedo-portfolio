@@ -1,7 +1,7 @@
 /**
  * dev エディタの画面（/_edit）。?file=works/x.mdx があれば編集画面、なければ記事一覧。
  */
-import { EditorState, Annotation, Prec } from '@codemirror/state';
+import { EditorState, Annotation, Prec, Text } from '@codemirror/state';
 import { EditorView, keymap, drawSelection, type Command } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab, undo, redo } from '@codemirror/commands';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
@@ -15,6 +15,8 @@ import { addRow, nextCell, prevCell } from './tables';
 import { deleteColumn, deleteRow, insertColumnLeft, insertColumnRight, insertRowAbove, insertRowBelow, tableAt } from './tableEdit';
 import { bold, code, formattingKeymap, insertLink, insertTable, italic, strike } from './formatting';
 import { DiffView } from './diff';
+import { findBlocks } from './blocks';
+import { rememberImageSizes } from './widgets';
 
 /** ツールバーのボタン（data-cmd）と実行するコマンド */
 const TOOLBAR: Record<string, Command> = {
@@ -72,6 +74,9 @@ async function openEditor(file: string) {
   viewLink.hidden = false;
 
   const [first, entries] = await Promise.all([api.read(file), api.list()]);
+  // 画像の縦横を先に調べておき、プレビューの画像が読み込みで伸びて本文が動かないようにする
+  const srcs = findBlocks(Text.of(first.body.split('\n'))).flatMap((b) => b.images?.map((i) => i.src) ?? []);
+  rememberImageSizes(await api.imageSizes(file, srcs).catch(() => ({})));
   let data: ArticleData = first;
   const knownTags = tagsByUse(entries);
   let frontmatter = data.frontmatter;

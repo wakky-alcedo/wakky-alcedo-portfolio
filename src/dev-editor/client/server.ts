@@ -60,6 +60,8 @@ export const api = {
     request<{ file: string }>('/new', jsonBody('POST', input)),
   upload: (file: string, image: File) =>
     request<{ src: string }>(`/upload${q({ file, name: image.name || 'pasted.png' })}`, { method: 'POST', body: image }),
+  imageSizes: (file: string, srcs: string[]) =>
+    request<Record<string, { width: number; height: number }>>(`/image-sizes${q({ file })}`, jsonBody('POST', srcs)),
   history: (file: string) => request<Commit[]>(`/history${q({ file })}`),
   revision: (file: string, rev: string) => request<Revision>(`/revision${q({ file, rev })}`),
   mine: (file: string) => request<Mine | null>(`/mine${q({ file })}`),

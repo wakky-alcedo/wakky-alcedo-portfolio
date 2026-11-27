@@ -10,6 +10,7 @@
  * - POST /__edit-api/new                           記事の新規作成
  * - POST /__edit-api/upload?file=…&name=元の名前    画像を保存し、記事から見た相対パスを返す
  * - GET  /__edit-api/asset?file=…&src=相対パス      プレビュー用に画像を返す
+ * - POST /__edit-api/image-sizes?file=…            画像の縦横（["相対パス", …] → { 相対パス: { width, height } }）
  * - GET  /__edit-api/history?file=…                その記事の git の履歴（新しい順）
  * - GET  /__edit-api/revision?file=…&rev=ハッシュ    その版のフロントマターと本文（差分表示の比較元）
  * - GET  /__edit-api/mine?file=…                   最後に自分で書いた版（なければ null）
@@ -20,6 +21,7 @@
  */
 import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { isDeepStrictEqual, promisify } from 'node:util';
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -130,6 +132,39 @@ export function editorApi(): Plugin {
     await writeSnapshot(snapshotOf(ref, 'saved'), text);
     const images = await tidyImages(ref, text);
     return { mtime: (await fs.stat(ref.abs)).mtimeMs, ...images };
+  }
+
+  // ---- 画像の縦横 ----
+
+  /**
+   * sharp は Astro が画像処理に使っていて node_modules にある。この API は Astro の設定と一緒に Vite で読み込まれ、
+   * そこでの import() は設定の読み込み後に使えなくなるので、Node の require で読む。無ければ縦横なしで動く
+   */
+  let sharpModule: typeof import('sharp') | null | undefined;
+  function loadSharp() {
+    if (sharpModule === undefined) {
+      try { sharpModule = createRequire(import.meta.url)('sharp'); } catch { sharpModule = null; }
+    }
+    return sharpModule;
+  }
+
+  /**
+   * プレビューの画像に読み込み前から縦横を付けて、読み込み後に高さが変わって本文が動かないようにする。
+   * 読めない画像（外部 URL・壊れたファイル）は返さない
+   */
+  async function imageSizes(ref: ArticleRef, srcs: unknown) {
+    if (!Array.isArray(srcs)) throw new HttpError(400, '画像のパスの配列を送ってください');
+    const sizes: Record<string, { width: number; height: number }> = {};
+    const sharp = loadSharp();
+    if (!sharp) return sizes;
+    await Promise.all(srcs.filter((src): src is string => typeof src === 'string' && !/^https?:\/\//.test(src)).map(async (src) => {
+      const meta = await sharp(resolveAsset(ref, src)).metadata().catch(() => null);
+      if (!meta?.width || !meta.height) return;
+      // EXIF で 90° 回転する写真は、ブラウザでは縦横が入れ替わって表示される
+      const rotated = (meta.orientation ?? 1) >= 5;
+      sizes[src] = rotated ? { width: meta.height, height: meta.width } : { width: meta.width, height: meta.height };
+    }));
+    return sizes;
   }
 
   // ---- 差分表示の比較元（最後に自分で書いた版・git の履歴） ----
@@ -295,6 +330,7 @@ export function editorApi(): Plugin {
       }
       case 'GET /revision': return json(await revision(article(q('file')), q('rev')));
       case 'POST /upload': return json(await upload(article(q('file')), q('name') ?? '', await readBody(req)));
+      case 'POST /image-sizes': return json(await imageSizes(article(q('file')), await readJson(req)));
       case 'GET /asset': {
         const abs = resolveAsset(article(q('file')), q('src'));
         const data = await fs.readFile(abs).catch(() => { throw new HttpError(404, '画像がありません'); });
