@@ -109,6 +109,12 @@ const TABLE_TOOLS: [string, string, string][] = [
 </html>
 
 <style is:global>
+  /*
+   * サイト全体の scroll-behavior: smooth（global.css）を止める。CodeMirror は画面より上の行や画像の高さが
+   * 測り直されると window.scrollBy で位置を補正するが、それがアニメーションになると手でのスクロールと
+   * 取り合って画面が戻る
+   */
+  html { scroll-behavior: auto; }
   .ed-bar {
     position: sticky; top: 0; z-index: 10;
     display: flex; align-items: center; gap: 1rem;
