@@ -14,6 +14,7 @@ import { renderForm } from './form';
 import { addRow, nextCell, prevCell } from './tables';
 import { deleteColumn, deleteRow, insertColumnLeft, insertColumnRight, insertRowAbove, insertRowBelow, tableAt } from './tableEdit';
 import { bold, code, formattingKeymap, insertLink, insertTable, italic, strike } from './formatting';
+import { DiffView } from './diff';
 
 /** ツールバーのボタン（data-cmd）と実行するコマンド */
 const TOOLBAR: Record<string, Command> = {
@@ -82,6 +83,21 @@ async function openEditor(file: string) {
   const resolveImage = (src: string) => api.assetUrl(file, src);
   const upload = async (image: File) => (await api.upload(file, image)).src;
   const onError = (message: string) => { setStatus('エラー', 'error'); showNotice(message); };
+  const diff = new DiffView({
+    file,
+    opened: { frontmatter: first.frontmatter, body: first.body },
+    frontmatter: () => frontmatter,
+    elements: {
+      select: $<HTMLSelectElement>('#ed-diff-base'),
+      prev: $<HTMLButtonElement>('#ed-diff-prev'),
+      next: $<HTMLButtonElement>('#ed-diff-next'),
+      collapse: $<HTMLInputElement>('#ed-diff-collapse'),
+      finish: $<HTMLButtonElement>('#ed-diff-finish'),
+      count: $('#ed-diff-count'),
+      meta: $('#ed-diff-meta'),
+    },
+    onError,
+  });
 
   const save = async (force = false) => {
     if (saving) await saving;
@@ -111,6 +127,7 @@ async function openEditor(file: string) {
   };
 
   const schedule = () => {
+    diff.refresh();
     dirty = true;
     setStatus('未保存', 'dirty');
     clearTimeout(timer);
@@ -134,6 +151,8 @@ async function openEditor(file: string) {
       annotations: [external.of(true)],
     });
     renderFrontmatter();
+    diff.refresh();
+    void diff.reloaded();
     setStatus('保存済み');
   };
 
@@ -163,10 +182,12 @@ async function openEditor(file: string) {
         keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
         markdown({ base: markdownLanguage }),
         EditorView.lineWrapping,
+        diff.extension,
         livePreview(resolveImage),
         mediaHandlers({ upload, onError }),
         EditorView.updateListener.of((u) => {
           // 表の中にカーソルがあるときだけ、表の行・列のボタンを出す
+          if (u.docChanged || u.transactions.some((t) => t.reconfigured || t.effects.length)) diff.refresh();
           if (u.docChanged || u.selectionSet) $('#ed-toolbar').classList.toggle('is-table', !!tableAt(u.state));
           if (u.docChanged && !u.transactions.some((t) => t.annotation(external))) schedule();
         }),
@@ -184,6 +205,7 @@ async function openEditor(file: string) {
 
   renderFrontmatter();
   setStatus('保存済み');
+  void diff.start(view);
   document.title = `編集: ${String(frontmatter.title ?? file)}`;
 
   // 他のタブやエディタで編集されていたら、戻ってきたときに読み直す

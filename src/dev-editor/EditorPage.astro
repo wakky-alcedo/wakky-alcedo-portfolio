@@ -73,6 +73,15 @@ const TABLE_TOOLS: [string, string, string][] = [
         <summary>記事の情報（タイトル・日付・タグなど）</summary>
         <div id="ed-form" class="ed-form"></div>
       </details>
+      <div class="ed-diff" role="group" aria-label="差分表示">
+        <label class="ed-diff__base">比較：<select id="ed-diff-base"></select></label>
+        <button type="button" id="ed-diff-prev" title="前の変更へ">← 前の変更</button>
+        <button type="button" id="ed-diff-next" title="次の変更へ">次の変更 →</button>
+        <label class="ed-diff__collapse"><input type="checkbox" id="ed-diff-collapse" /> 変更のない部分を折りたたむ</label>
+        <span id="ed-diff-count" class="ed-diff__count"></span>
+        <button type="button" id="ed-diff-finish" title="「最後に自分で書いた版」を消して、差分の確認を終える" hidden>確認を終える</button>
+        <p id="ed-diff-meta" class="ed-diff__meta" hidden></p>
+      </div>
       <div id="ed-toolbar" class="ed-toolbar" role="toolbar" aria-label="書式">
         {TOOLS.map(([cmd, label, key]) => (
           <button type="button" data-cmd={cmd} title={key ? `${label}（${key}）` : label}>{label}</button>
@@ -88,6 +97,7 @@ const TABLE_TOOLS: [string, string, string][] = [
       <p class="ed-help">
         画像はドロップまたは貼り付けで追加（画像の上に落とすと横並び）／ YouTube・X の URL は1行で貼ると埋め込み／
         <code>![説明|80%](パス "キャプション")</code> で幅とキャプション／
+        「比較」で選んだ版との違いを本文に重ねて表示（緑が追加・赤が削除。エディタの外で変更されると、直前にエディタで保存した内容が「最後に自分で書いた版」になる。差分を出したまま編集でき、変更ごとに「残す」「元に戻す」）／
         表の中では Tab・Shift+Tab でセル移動、Enter で行を追加、ツールバーの「表：」か Ctrl+Alt+矢印で行・列の追加と削除／自動保存（Ctrl+S ですぐ保存）
       </p>
     </main>
@@ -243,6 +253,32 @@ const TABLE_TOOLS: [string, string, string][] = [
   .ed-table-preview code { background: var(--tag-bg); border-radius: 4px; padding: 0 0.3em; }
 
   /* 検索パネル（CodeMirror） */
+  /* 差分表示（client/diff.ts）。@codemirror/merge の既定の色は明るい背景向けなので上書きする */
+  .ed-diff {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem;
+    margin-bottom: 0.5rem; font-size: 0.8rem;
+  }
+  .ed-diff select { max-width: min(36rem, 100%); color: var(--color-text); background: var(--tag-bg); border: 1px solid var(--line-strong); border-radius: 4px; padding: 0.2rem; }
+  .ed-diff button { color: var(--color-text); background: transparent; border: 1px solid var(--line-strong); border-radius: 4px; padding: 0.15rem 0.5rem; cursor: pointer; }
+  .ed-diff button:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-accent); }
+  .ed-diff button:disabled, .ed-diff input:disabled + * { opacity: 0.4; cursor: default; }
+  .ed-diff__count { opacity: 0.8; }
+  .ed-diff__meta { flex-basis: 100%; margin: 0; opacity: 0.8; }
+  .ed-body { --diff-add-rgb: 110, 210, 140; --diff-del-rgb: 255, 120, 110; }
+  .ed-body .cm-changedLine { background: rgba(var(--diff-add-rgb), 0.08) !important; box-shadow: inset 3px 0 0 rgb(var(--diff-add-rgb)); }
+  .ed-body .cm-changedText { background: rgba(var(--diff-add-rgb), 0.3) !important; border-radius: 2px; }
+  .ed-body .cm-deletedChunk {
+    position: relative; margin: 2px 0; padding: 2px 6px 2px 8px;
+    background: rgba(var(--diff-del-rgb), 0.08) !important; box-shadow: inset 3px 0 0 rgb(var(--diff-del-rgb));
+    opacity: 0.85;
+  }
+  .ed-body .cm-deletedChunk .cm-deletedText { background: rgba(var(--diff-del-rgb), 0.3) !important; border-radius: 2px; }
+  .ed-body .cm-deletedChunk .cm-chunkButtons { z-index: 1; }
+  .ed-body .cm-deletedChunk button { font-size: 0.75rem; padding: 0.05rem 0.5rem; color: var(--color-text); border: 1px solid var(--line-strong); }
+  .ed-body .cm-deletedChunk button[name='accept'] { background: rgba(var(--diff-add-rgb), 0.35); }
+  .ed-body .cm-deletedChunk button[name='reject'] { background: rgba(var(--diff-del-rgb), 0.35); }
+  .ed-body .cm-collapsedLines { color: var(--color-text); background: rgba(var(--color-secondary-rgb), 0.08) !important; font-size: 0.8rem; opacity: 0.8; }
+
   .ed-body .cm-panels { background: var(--surface-bar); color: var(--color-text); border-color: var(--line-subtle); }
   .ed-body .cm-panels input, .ed-body .cm-panels button { color: var(--color-text); background: var(--tag-bg); border: 1px solid var(--line-strong); border-radius: 4px; }
   .ed-body .cm-searchMatch { background: rgba(var(--color-accent-rgb), 0.3); }

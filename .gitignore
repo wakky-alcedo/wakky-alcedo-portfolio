@@ -21,6 +21,7 @@ node_modules/
 .astro
 # dev エディタが片付けた画像（src/config/editor.ts の trashDir）
 .dev-editor-trash/
+.dev-editor-history/
 
 
 # ==========================================

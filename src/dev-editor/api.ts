@@ -10,10 +10,18 @@
  * - POST /__edit-api/new                           記事の新規作成
  * - POST /__edit-api/upload?file=…&name=元の名前    画像を保存し、記事から見た相対パスを返す
  * - GET  /__edit-api/asset?file=…&src=相対パス      プレビュー用に画像を返す
+ * - GET  /__edit-api/history?file=…                その記事の git の履歴（新しい順）
+ * - GET  /__edit-api/revision?file=…&rev=ハッシュ    その版のフロントマターと本文（差分表示の比較元）
+ * - GET  /__edit-api/mine?file=…                   最後に自分で書いた版（なければ null）
+ * - DELETE /__edit-api/mine?file=…                 「確認を終える」：最後に自分で書いた版を消す
+ *
+ * 差分表示のため、エディタで保存するたびにその内容を EDITOR.diff.snapshotDir に残す（saved）。
+ * 記事を読んだときに中身が saved と違えば、エディタの外で変更されたので、saved を「自分で書いた版」（mine）として残す。
  */
+import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { isDeepStrictEqual } from 'node:util';
+import { isDeepStrictEqual, promisify } from 'node:util';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
 import YAML from 'yaml';
@@ -27,6 +35,9 @@ const MIME: Record<string, string> = {
   jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
   gif: 'image/gif', avif: 'image/avif', svg: 'image/svg+xml',
 };
+
+const COMMIT_HASH = /^[0-9a-f]{7,40}$/;
+const run = promisify(execFile);
 
 class HttpError extends Error {
   constructor(readonly status: number, message: string) { super(message); }
@@ -98,6 +109,7 @@ export function editorApi(): Plugin {
 
   async function readArticle(ref: ArticleRef) {
     const [text, stat] = await Promise.all([fs.readFile(ref.abs, 'utf8'), fs.stat(ref.abs)]);
+    await keepMine(ref, text);
     const { fmRaw, body } = split(text);
     return { frontmatter: YAML.parse(fmRaw) ?? {}, body, mtime: stat.mtimeMs };
   }
@@ -115,8 +127,62 @@ export function editorApi(): Plugin {
       : YAML.stringify(input.frontmatter, { lineWidth: 0 }).trimEnd();
     const text = `---\n${fm}\n---\n${input.body}`;
     await fs.writeFile(ref.abs, text);
+    await writeSnapshot(snapshotOf(ref, 'saved'), text);
     const images = await tidyImages(ref, text);
     return { mtime: (await fs.stat(ref.abs)).mtimeMs, ...images };
+  }
+
+  // ---- 差分表示の比較元（最後に自分で書いた版・git の履歴） ----
+
+  const snapshotOf = (ref: ArticleRef, kind: 'saved' | 'mine') =>
+    path.join(root, EDITOR.diff.snapshotDir, ref.collection, `${ref.name}.${kind}.mdx`);
+  const readSnapshot = (file: string) => fs.readFile(file, 'utf8').catch(() => null);
+  async function writeSnapshot(file: string, text: string) {
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(file, text);
+  }
+
+  /** エディタの外で変更されていたら（saved と違えば）、saved を「自分で書いた版」として残す。すでにあれば古いほうを残す */
+  async function keepMine(ref: ArticleRef, text: string) {
+    const saved = await readSnapshot(snapshotOf(ref, 'saved'));
+    // 初めて開いた記事は、いまの内容を起点にする
+    if (saved === null) return writeSnapshot(snapshotOf(ref, 'saved'), text);
+    if (saved === text || await readSnapshot(snapshotOf(ref, 'mine')) !== null) return;
+    await writeSnapshot(snapshotOf(ref, 'mine'), saved);
+  }
+
+  async function mine(ref: ArticleRef) {
+    const file = snapshotOf(ref, 'mine');
+    const text = await readSnapshot(file);
+    if (text === null) return null;
+    const { fmRaw, body } = split(text);
+    return { frontmatter: YAML.parse(fmRaw) ?? {}, body, savedAt: (await fs.stat(file)).mtimeMs };
+  }
+
+  /** git を引数の配列で呼ぶ（シェルを通さない） */
+  const git = async (args: string[]) =>
+    (await run('git', ['-C', root, ...args], { maxBuffer: EDITOR.maxUploadBytes })).stdout;
+
+  /** リポジトリのルートから見た記事のパス */
+  const gitPath = async (ref: ArticleRef) =>
+    path.relative((await git(['rev-parse', '--show-toplevel'])).trim(), ref.abs).split(path.sep).join('/');
+
+  /** 記事のコミット履歴。git が使えない・まだコミットしていない記事は空 */
+  async function history(ref: ArticleRef) {
+    const out = await git(['log', `-n${EDITOR.diff.historyLimit}`, '--format=%H%x1f%aI%x1f%s', '--', await gitPath(ref)])
+      .catch(() => '');
+    return out.split('\n').filter(Boolean).map((line) => {
+      const [hash, date, subject] = line.split('\x1f');
+      return { hash, date, subject };
+    });
+  }
+
+  async function revision(ref: ArticleRef, rev: string | null) {
+    if (!COMMIT_HASH.test(rev ?? '')) throw new HttpError(400, `コミットの指定が正しくありません: ${rev}`);
+    const text = await git(['show', `${rev}:${await gitPath(ref)}`])
+      .catch(() => { throw new HttpError(404, 'その版にはこの記事がありません'); });
+    const { fmRaw, body } = split(text);
+    return { frontmatter: YAML.parse(fmRaw) ?? {}, body };
   }
 
   // ---- 使われていない画像の片付け ----
@@ -221,6 +287,13 @@ export function editorApi(): Plugin {
       case 'GET /file': return json(await readArticle(article(q('file'))));
       case 'PUT /file': return json(await writeArticle(article(q('file')), await readJson(req)));
       case 'POST /new': return json(await createArticle(await readJson(req)));
+      case 'GET /history': return json(await history(article(q('file'))));
+      case 'GET /mine': return json(await mine(article(q('file'))));
+      case 'DELETE /mine': {
+        await fs.rm(snapshotOf(article(q('file')), 'mine'), { force: true });
+        return json({});
+      }
+      case 'GET /revision': return json(await revision(article(q('file')), q('rev')));
       case 'POST /upload': return json(await upload(article(q('file')), q('name') ?? '', await readBody(req)));
       case 'GET /asset': {
         const abs = resolveAsset(article(q('file')), q('src'));

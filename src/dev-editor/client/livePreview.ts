@@ -4,11 +4,13 @@
  * - 行内（見出し・太字・リンクなど）：ViewPlugin が記号を隠し、見た目のクラスを付ける
  * - 画像・埋め込みのブロック：StateField がウィジェットに置き換える（カーソルがあるときは下に並べる）
  * - 表：カーソルが外にあるときだけ HTML の表に置き換える
+ * - 差分表示中は、変更のあるブロックも編集中と同じく Markdown のまま見せる（変更の印が隠れないように）
  */
 import { StateField, type EditorState, type Range } from '@codemirror/state';
 import { Decoration, EditorView, ViewPlugin, type DecorationSet, type ViewUpdate } from '@codemirror/view';
 import { syntaxTree } from '@codemirror/language';
 import { findBlocks } from './blocks';
+import { changedRanges } from './diff';
 import { BulletWidget, EmbedWidget, ImagesWidget, TableWidget } from './widgets';
 
 const hide = Decoration.replace({});
@@ -127,9 +129,11 @@ const inlinePreview = ViewPlugin.fromClass(
 function blockPreview(resolveImage: (src: string) => string) {
   const build = (state: EditorState): DecorationSet => {
     const decos: Range<Decoration>[] = [];
+    const changed = changedRanges(state);
     for (const block of findBlocks(state.doc)) {
       if (block.kind === 'other') continue;
-      const editing = state.selection.ranges.some((r) => r.from <= block.to && r.to >= block.from);
+      const editing = state.selection.ranges.some((r) => r.from <= block.to && r.to >= block.from)
+        || changed.some((c) => c.from <= block.to && c.to > block.from);
       // 表は編集中ならプレビューを出さず、等幅の Markdown のまま（Tab でセル移動）
       if (block.kind === 'table') {
         if (!editing) decos.push(Decoration.replace({ widget: new TableWidget(block.table!), block: true }).range(block.from, block.to));
@@ -147,7 +151,8 @@ function blockPreview(resolveImage: (src: string) => string) {
 
   return StateField.define<DecorationSet>({
     create: build,
-    update: (value, tr) => (tr.docChanged || tr.selection ? build(tr.state) : value),
+    // 差分の比較元の切り替え（reconfigure）や「残す」（effect）でも変更の範囲が変わるので作り直す
+    update: (value, tr) => (tr.docChanged || tr.selection || tr.reconfigured || tr.effects.length ? build(tr.state) : value),
     provide: (f) => EditorView.decorations.from(f),
   });
 }

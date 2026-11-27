@@ -10,7 +10,7 @@
 | Canvas演出 | **Canvas API（ネイティブ）** | 魚シミュレーション・水面リプル。外部ライブラリ不要で軽量 |
 | スタイリング | **CSS Custom Properties** | デザイントークン（カラーパレット）を変数管理。Phase 2の時間帯変化にも対応しやすい |
 | コンテンツ拡張 | **@astrojs/mdx** | Works/Blog記事内でAstroコンポーネント（画像レイアウト等）を使用可能にする |
-| 記事エディタ（dev のみ） | **CodeMirror 6**, **yaml** | `npm run dev` の `/_edit` で記事をライブプレビュー編集する（build には含めない） |
+| 記事エディタ（dev のみ） | **CodeMirror 6**（差分表示は **@codemirror/merge**）, **yaml** | `npm run dev` の `/_edit` で記事をライブプレビュー編集する（build には含めない） |
 | ビルドツール | **Vite**（Astro内蔵） | 高速 HMR、アセット最適化 |
 | パッケージマネージャ | **npm** | `package-lock.json` を必ずコミットして依存を固定する |
 | 型チェック | **@astrojs/check** | `npm run check`（`astro check`）で .astro / .ts の型エラーを検出。変更後はビルド前に実行する |
@@ -178,7 +178,7 @@ wakky-alcedo-portfolio/
 │   │   ├── art.ts                   # ArtCard のプレビュー読み込み範囲
 │   │   ├── breakpoints.ts           # 画面幅の切り替え点（CSS の @media にも同じ値を使う）
 │   │   ├── image.ts                 # ライトボックス画像の最大幅
-│   │   ├── editor.ts                # dev エディタの自動保存間隔・画像の保存先
+│   │   ├── editor.ts                # dev エディタの自動保存間隔・画像の保存先・差分表示の設定
 │   │   ├── scene.ts                 # トップページの演出パラメータ（Canvas・カワセミ）
 │   │   └── site.ts                  # SNSリンク・メールアドレス（全ページ共通）
 │   ├── content.config.ts            # コンテンツコレクションのzodスキーマ定義
@@ -188,9 +188,9 @@ wakky-alcedo-portfolio/
 │   │   └── remark-embeds.ts         # 画像だけ・URL だけの段落を FlexRow / YouTube / TwitterEmbed にする
 │   ├── dev-editor/                  # dev 専用の記事エディタ（integration.ts が astro dev のときだけ追加）
 │   │   ├── integration.ts           # /_edit の追加・API の登録
-│   │   ├── api.ts                   # 記事の読み書き・画像の保存（src/content と画像フォルダの中だけ）
+│   │   ├── api.ts                   # 記事の読み書き・画像の保存（src/content と画像フォルダの中だけ）・差分の比較元（git の履歴・最後に自分で書いた版）
 │   │   ├── EditorPage.astro         # 一覧・編集画面
-│   │   └── client/                  # ライブプレビュー・ドロップ／貼り付け・フロントマターのフォーム
+│   │   └── client/                  # ライブプレビュー・ドロップ／貼り付け・フロントマターのフォーム・差分表示（diff.ts）
 │   ├── content/
 │   │   ├── works/                   # 作品記事（YYYY-slug.mdx）
 │   │   └── blog/                    # ブログ記事（YYYYMM-slug.mdx）
@@ -364,6 +364,9 @@ iOS 13+ では `requestPermission()` が必須（実装: `src/scripts/utils/devi
 カーソル行だけ Markdown を見せるライブプレビュー、画像のドロップ／貼り付け、YouTube / X の URL の埋め込み表示、表のプレビュー（セルをクリックでそのセルを編集、中では Tab でセル移動・Enter で行追加、ツールバーか Ctrl+Alt+矢印で行・列の追加と削除：`client/tableEdit.ts`）、書式のショートカットとツールバー（`client/formatting.ts`）、入力が止まって 1 秒後の自動保存（エディタ外で変更されていたら確認する）。
 記事を保存すると Astro が開いているページを再読み込みさせるが、エディタの画面だけは再読み込みしない（`src/dev-editor/client/main.ts`）。
 保存のたびに、その記事の画像フォルダのうち src/ のどこからも参照されていない画像を `.dev-editor-trash/`（git 管理外）へ移す。アップロードから 1 分以内の画像は残し、元に戻す操作で参照が復活したら次の保存で戻す（`src/dev-editor/api.ts` の `tidyImages`）。
+
+差分表示（`client/diff.ts`）：比較元との違いを本文に重ね、変更ごとに「残す」「元に戻す」を選べる。比較元は「最後に自分で書いた版」（既定）・開いたときの内容・その記事の過去のコミット。
+コミットは AI と一緒に作るため、自分で書いた版はコミットからは見分けられない。そこで保存のたびに内容を `.dev-editor-history/`（git 管理外）に残し、記事を読んだときに中身がそれと違えば（＝エディタの外で書き換えられた）、それを「最後に自分で書いた版」として「確認を終える」まで残す（`src/dev-editor/api.ts` の `keepMine`）。
 
 ---
 
