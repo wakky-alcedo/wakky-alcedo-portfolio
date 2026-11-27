@@ -5,6 +5,7 @@
  * - 差分を出したままでも本文は編集でき、差分はその場で計算し直される
  * - 変更ごとに「残す」（比較元をいまの内容に合わせて印を消す）と「元に戻す」（本文を比較元の内容に戻す）を選べる
  * - フロントマターはフォームで編集するので、変わった項目の名前だけを出す
+ * - 差分は見出しごとに取る（同じ見出しで変更の塊を分ける：client/sectionDiff.ts）
  * - 「最後に自分で書いた版」の仕組みは src/dev-editor/api.ts の冒頭を参照
  */
 import { Compartment, type EditorState } from '@codemirror/state';
@@ -12,6 +13,7 @@ import type { EditorView } from '@codemirror/view';
 import { getChunks, goToNextChunk, goToPreviousChunk, unifiedMergeView } from '@codemirror/merge';
 import { EDITOR } from '../../config/editor';
 import { api, type Commit, type Mine, type Revision } from './server';
+import { sectionDiff } from './sectionDiff';
 
 const OFF = 'off';
 const MINE = 'mine';
@@ -160,6 +162,7 @@ export class DiffView {
         original: this.base.body,
         mergeControls: control,
         gutter: false,
+        diffConfig: { override: sectionDiff({ scanLimit: EDITOR.diff.scanLimit }) },
         collapseUnchanged: collapse.checked
           ? { margin: EDITOR.diff.collapseMargin, minSize: EDITOR.diff.collapseMinSize }
           : undefined,

@@ -32,6 +32,10 @@ export const EDITOR = {
      * 「確認を終える」まで比較元にする
      */
     snapshotDir: '.dev-editor-history',
+    /**
+     * 見出しの間ごとの差分で、これを超えて込み入った区間は精度を落として速く計算する（@codemirror/merge の DiffConfig.scanLimit）
+     */
+    scanLimit: 500,
     /** 変更のない部分を折りたたむとき、変更の前後に残す行数 */
     collapseMargin: 3,
     /** これより短い変更のない部分は折りたたまない（行） */
