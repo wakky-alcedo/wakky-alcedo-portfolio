@@ -1,10 +1,10 @@
 ---
-import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import '../../styles/global.css';
 import '../../styles/animations.css';
 import '../../styles/print.css';
 import { SITE, SOCIAL } from '../../config/site';
+import { getOgImageUrl } from '../../lib/seo';
 
 interface Props {
   title: string;
@@ -20,9 +20,7 @@ const { title, description = SITE.description, ogImage = SITE.ogImage, article }
 const siteTitle = title === 'Home' ? SITE.name : `${title} | ${SITE.author}`;
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
 
-// SNS のクローラーが読める JPEG に変換し、絶対 URL にする
-const ogImageAsset = await getImage({ src: ogImage, ...SITE.ogImageSize, format: 'jpeg' });
-const ogImageUrl = new URL(ogImageAsset.src, Astro.site).href;
+const ogImageUrl = await getOgImageUrl(ogImage, Astro.site!);
 const twitterHandle = SOCIAL.twitter.value;
 ---
 
@@ -51,6 +49,7 @@ const twitterHandle = SOCIAL.twitter.value;
     <meta name="twitter:site" content={twitterHandle} />
     <meta name="twitter:creator" content={twitterHandle} />
 
+    <!-- 構造化データ（JSON-LD）など、ページ固有の <head> 要素 -->
     <slot name="head" />
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2" />

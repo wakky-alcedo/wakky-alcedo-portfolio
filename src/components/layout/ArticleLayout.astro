@@ -11,6 +11,9 @@ import NoteEmbed from '../content/NoteEmbed.astro';
 import YouTube from '../content/YouTube.astro';
 import FlexRow from '../content/FlexRow.astro';
 import MarkdownImage from '../content/MarkdownImage.astro';
+import JsonLd from '../common/JsonLd.astro';
+import { SITE } from '../../config/site';
+import { articleSchema, getOgImageUrl } from '../../lib/seo';
 
 interface Props {
   entry: CollectionEntry<'works'> | CollectionEntry<'blog'>;
@@ -19,7 +22,10 @@ interface Props {
 const { entry } = Astro.props;
 const { title, description, date, thumbnail, tags, unpublished } = entry.data;
 const { Content } = await render(entry);
-const formattedDate = date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+const site = Astro.site!;
+const canonicalUrl = new URL(Astro.url.pathname, site).href;
+const ogImageUrl = await getOgImageUrl(thumbnail ?? SITE.ogImage, site);
+const formattedDate =date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
 
 // コレクションごとの一覧ページ（タグの配色も Works=シアン / Blog=アクセント で分ける）
 // dev のときだけ、記事エディタ（src/dev-editor/）を開くボタンを出す
@@ -34,6 +40,7 @@ const listPage = {
 ---
 
 <BaseLayout title={title} description={description} ogImage={thumbnail} article={{ publishedTime: date, tags }}>
+  <JsonLd slot="head" data={articleSchema(entry, canonicalUrl, ogImageUrl, site)} />
   <Header />
   <main class="page-main">
     <article class:list={['article', `article--${entry.collection}`]}>
