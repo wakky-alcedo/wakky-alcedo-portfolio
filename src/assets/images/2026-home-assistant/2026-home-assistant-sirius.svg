@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 416" width="760" height="416" font-family="'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#5EBFC6"/></marker></defs>
+<rect x="0" y="0" width="760" height="416" rx="16" fill="#0B1433"/>
+<text x="20" y="24" text-anchor="start" font-size="14" font-weight="700" fill="#FFA200">入力</text>
+<rect x="20" y="34" width="350" height="60" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="195.0" y="61.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">古いAndroidスマホ</text>
+<text x="195.0" y="81.0" text-anchor="middle" font-size="13" fill="#A9BFC3">VACA で話しかける端末に</text>
+<rect x="390" y="34" width="350" height="60" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="565.0" y="61.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">ReSpeaker Lite</text>
+<text x="565.0" y="81.0" text-anchor="middle" font-size="13" fill="#A9BFC3">ESPHome</text>
+<path d="M195,94 L195,112 L380,112 L380,130" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<path d="M565,94 L565,112 L380,112" fill="none" stroke="#5EBFC6" stroke-width="2"/>
+<rect x="20" y="132" width="720" height="140" rx="12" fill="none" stroke="#A9BFC3" stroke-width="1.5" stroke-dasharray="6 5"/>
+<text x="36" y="156" text-anchor="start" font-size="15" font-weight="700" fill="#DCE0DF">サーバーPC（Home Assistant）</text>
+<rect x="40" y="170" width="150" height="86" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="115.0" y="210.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">ウェイクワード</text>
+<text x="115.0" y="230.0" text-anchor="middle" font-size="13" fill="#A9BFC3">openWakeWord</text>
+<path d="M190,213 L215,213" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<rect x="217" y="170" width="150" height="86" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="292.0" y="201.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">音声認識</text>
+<text x="292.0" y="221.0" text-anchor="middle" font-size="13" fill="#A9BFC3">Whisper</text>
+<text x="292.0" y="239.0" text-anchor="middle" font-size="13" fill="#A9BFC3">Speech-to-Phrase</text>
+<path d="M367,213 L391,213" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<rect x="393" y="170" width="150" height="86" rx="10" fill="rgba(0,79,113,0.75)" stroke="#FFA200" stroke-width="2"/>
+<text x="468.0" y="201.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">会話</text>
+<text x="468.0" y="221.0" text-anchor="middle" font-size="13" fill="#A9BFC3">Extended OpenAI</text>
+<text x="468.0" y="239.0" text-anchor="middle" font-size="13" fill="#A9BFC3">Conversation</text>
+<path d="M543,213 L568,213" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<rect x="570" y="170" width="150" height="86" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="645.0" y="210.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">読み上げ</text>
+<text x="645.0" y="230.0" text-anchor="middle" font-size="13" fill="#A9BFC3">Piper</text>
+<path d="M480,258 L480,308" fill="none" stroke="#5EBFC6" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+<rect x="405" y="310" width="150" height="64" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="480.0" y="339.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">Groq（クラウド）</text>
+<text x="480.0" y="359.0" text-anchor="middle" font-size="13" fill="#A9BFC3">LLM：gpt-oss-120b</text>
+<path d="M420,256 L420,290 L190,290 L190,308" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<rect x="40" y="310" width="300" height="64" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="190.0" y="339.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">照明・家電の操作</text>
+<text x="190.0" y="359.0" text-anchor="middle" font-size="13" fill="#A9BFC3">LLMがHome Assistantの機能を呼ぶ</text>
+<path d="M645,256 L645,308" fill="none" stroke="#5EBFC6" stroke-width="2" marker-end="url(#a)"/>
+<rect x="580" y="310" width="160" height="64" rx="10" fill="rgba(0,79,113,0.35)" stroke="#5EBFC6" stroke-width="1.5"/>
+<text x="660.0" y="339.0" text-anchor="middle" font-size="16" font-weight="700" fill="#DCE0DF">スピーカー</text>
+<text x="660.0" y="359.0" text-anchor="middle" font-size="13" fill="#A9BFC3">Snapcastで家中に</text>
+<text x="20" y="400" text-anchor="start" font-size="14" font-weight="700" fill="#FFA200">出力</text>
+</svg>
